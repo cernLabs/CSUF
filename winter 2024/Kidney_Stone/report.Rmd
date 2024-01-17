@@ -1,0 +1,211 @@
+---
+title: "kidneystone"
+output: pdf_document
+date: "2024-01-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r message=FALSE}
+# loading packages
+library(caret)
+library(yardstick)
+library(dplyr)
+library(modelr)
+library(ggplot2)
+library(GGally)
+
+```
+
+```{r}
+# loading data into dataframes
+stone <- read.csv("kindey stone urine analysis.csv")
+```
+
+```{r}
+#split data for train and testing 
+set.seed(530)
+
+#building a new column called "train"
+stone <- stone %>% mutate(train = FALSE) 
+trainIndex <- createDataPartition(stone$target, p = 0.7, list = FALSE, times = 1)
+stone$train[trainIndex] <- TRUE
+
+#rename the new test a train sets
+stone_train <- stone %>%  filter(train == TRUE)
+stone_test <- stone %>% filter(train == FALSE)
+```
+
+
+```{r}
+stone_train$target <- as.character(stone_train$target)
+```
+
+
+
+```{r message=FALSE}
+ggpairs(stone_train,aes(color = target))
+```
+gravity
+specific gravity of urine
+
+ph
+ph of urine
+
+osmo
+osmolarity of urine
+
+cond
+conductivity of urine
+
+urea
+concentration of urea in urine
+
+calc
+concentration of calcium in urine
+
+target
+0- absence of stone 1- presence of stone
+
+
+## our new math model
+Y : target
+X_i's : gravity + osmo + cond + urea + calc
+
+## our math model to copy+paste
+target ~ gravity + osmo + cond + urea + calc
+
+# train data with stone_train set 
+
+```{r}
+# train a logistic model
+fit_logit <- train(target ~ gravity + osmo + cond + urea + calc,
+                   data = stone_train,
+                   method = "glm",
+                   family = "binomial",
+                   trControl = trainControl(method = 'LOOCV'))
+```
+
+```{r}
+# train a naives-bayes model
+fit_nb <- train(target ~ gravity + osmo + cond + urea + calc,
+                data = stone_train,
+                method = "naive_bayes")
+```
+
+```{r}
+# train a LDA model
+fit_lda <- train(target ~ gravity + osmo + cond + urea + calc,
+                 data = stone_train,
+                 method = "lda")
+```
+
+```{r}
+# train a QDA model
+fit_qda <- train(target ~ gravity + osmo + cond + urea + calc,
+                 data = stone_train,
+                 method = "qda")
+```
+
+
+# test with the test set
+
+```{r}
+# making new columns on the test set
+stone_test  <- stone_test %>% 
+  mutate(logit_yhat = predict(fit_logit,newdata=.,type="raw")) %>%
+  mutate(logit_prob = predict(fit_logit, newdata = .,type="prob")$'1')
+```
+
+```{r}
+# making even more new columns on the test set
+
+# columns for naive_bayes predictions
+stone_test <- stone_test %>%
+  mutate(nb_yhat = predict(fit_nb, newdata =., type = "raw")) %>%
+  mutate(nb_prob = predict(fit_nb, newdata=., type = "prob")$'1')
+
+# columns for LDA predictions
+stone_test <- stone_test %>%
+  mutate(lda_yhat = predict(fit_lda, newdata=., type="raw")) %>%
+  mutate(lda_prob = predict(fit_lda, newdata=., type="prob")$'1')
+
+# columns for QDA predictions
+stone_test <- stone_test %>%
+  mutate(qda_yhat = predict(fit_qda, newdata=., type = "raw")) %>%
+  mutate(qda_prob = predict(fit_qda, newdata=., type = "prob")$'1')
+```
+
+
+```{r}
+stone_test$target <- as.factor(stone_test$target)
+
+stone_test %>% accuracy(truth=target,estimate=logit_yhat)
+  stone_test %>% accuracy(truth = target, estimate = nb_yhat)
+  stone_test %>% accuracy(truth = target, estimate = lda_yhat)
+  stone_test %>% accuracy(truth = target, estimate = qda_yhat)
+```
+
+# make confidence matrices
+```{r}
+# for logistic
+stone_test %>% conf_mat(target,logit_yhat)
+# for naive-bayes
+stone_test %>% conf_mat(target,nb_yhat)
+#for lda
+stone_test %>% conf_mat(target,lda_yhat)
+# for qda
+stone_test %>% conf_mat(target,qda_yhat)
+```
+
+# make ROC curve
+```{r}
+#ROC for logistic 
+stone_test %>% 
+  roc_curve(truth = target,
+            estimate = logit_prob,
+            event_level = "second") %>%
+  autoplot()
+
+
+# ROC for naive-bayes
+stone_test %>% 
+  roc_curve(truth = target,
+            estimate = nb_prob,
+            event_level = "second") %>%
+  autoplot()
+
+# ROC for LDA
+stone_test %>% 
+  roc_curve(truth = target,
+            estimate = lda_prob,
+            event_level = "second") %>%
+  autoplot()
+
+# ROC for QDA
+stone_test %>% 
+  roc_curve(truth = target,
+            estimate = qda_prob,
+            event_level = "second") %>%
+  autoplot()
+```
+
+# compute area under curve
+```{r}
+#for logistic 
+stone_test %>% roc_auc(target,logit_prob, event_level = 'second')
+# for nai-bayes
+stone_test %>% roc_auc(target,nb_prob, event_level = 'second')
+# for lda
+stone_test %>% roc_auc(target,lda_prob, event_level = 'second')
+# for qda 
+stone_test %>% roc_auc(target,qda_prob, event_level = 'second')
+```
+
+
+I want to go with QDA because it has the highest accuracy but the second highest AUC of the ROC. 
+
+I did not pick logistic because while it had the largest AUC of the ROC, it had the lowest accuracy.

@@ -1,0 +1,53 @@
+---
+title: "Diabetes_indicator"
+author: "MAP"
+date: "2024-01-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Packages
+```{r}
+library(dplyr)
+library(caret)
+library(yardstick)
+library(ggplot2)
+library(GGally)
+
+```
+# load data
+```{r}
+diab <- read.csv('diabetes_012_health_indicators_BRFSS2021.csv')
+```
+
+#split data
+```{r}
+diab <- diab %>% mutate(train = FALSE)
+trainIndex <- createDataPartition(diab$Diabetes_012, p= 0.7, list = FALSE, times = 1)
+diab$train[trainIndex] <- TRUE
+```
+
+# render train set and test set
+```{r}
+diab_train <- diab %>% filter(train == TRUE)
+diab_test <- diab %>% filter(train == FALSE)
+```
+
+## run GGpairs
+```{r}
+#make sure to keep Diabetes indicator as character
+#diab_train$Diabetes_012 <- as.character(diab_train$Diabetes_012)
+#render ggpair
+#ggpairs(diab_train, aes(color = Diabetes_012))
+```
+
+# may need to run a step-wise selection process DO THIS LATER!
+
+```{r}
+
+```
+
+
