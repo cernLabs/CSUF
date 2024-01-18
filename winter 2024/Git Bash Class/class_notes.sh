@@ -81,3 +81,75 @@ reverts the file to the last commit made
 >> git clean -f ## THIS CANNOT BE UNDONE!!
 # deletes the files that are being tracked
 
+
+# / / / / CONFIGURING GIT / / / / 
+
+>> git config --list 
+# this gives a list of customizable settings
+
+>> git config --local
+# setting for one specific project
+
+>> git config --global 
+# settings for all of our projects
+
+>> git config --system 
+# settings for every users on this computer
+
+
++ LOCAL
+#takes precedences over
++ GLOBAL
+#takes precedences over 
++ SYSTEM
+
+>> git config --global [[setting]] [[value]]
+
+>> git config --global user.email johnsmith@datacamp.com
+# changes email address to johnsmith@datacamp.com
+
+>> git config --global user.name 'John Smith'
+# changes username to John Smith
+
+# / / / /  Using an Alias / / / /
+
+>> git config --global alias.ci 'commit -m'
+# creates and alias for commting files by executing >>> ci 
+
+>> git commit -m BECOMES >> git ci
+
+>> git config --global --list 
+# this will display all the aliases we have created
+
+>> git status 
+# checks the state of the files globally
+
+
+# / / / / BRANCHES / / / /
+
+branches are like the parrallel universes of the files
+
+SOURCE branch
+# this is the branch we merge from
+
+DESTINATION branch 
+# this is the branch we merge into
+
+>> git branch
+# this will display the branches available. An asterisk will indicate which branch we are currently in
+
+>> git checkout -b report
+# this will create a new branch called "report"
+
+>> git checkout report
+# this will switch us onto the branch named "report"
+
+>> git diff branch1 branch2
+# this compares the two branches in the repo
+
+>> git merge branch1 branch2
+# this will merge branch1 into branch2
+
+## When merging, note that if there are conflicts in the files, it will fail to merge. follow Git's advice to resolve the conflicts
+
+
