@@ -153,3 +153,70 @@ DESTINATION branch
 ## When merging, note that if there are conflicts in the files, it will fail to merge. follow Git's advice to resolve the conflicts
 
 
+"<<<<<<< HEAD" 
+# the file's contents in the latest commit of the current branch
+
+"========"
+# contains the center of the conclict
+
+">>>>>>> update"
+# additional content that would be in the update branch
+
+# / / / / CREATING REPOS / / / /
+
+>>> git init reponame
+# this creates a repository named 'reponame'
+# it will appear as a file in our directory
+
+>> git status
+# this lets us know hwat is beaing tracked
+
+"
+WARNING: NEVER CREATE A GIT REPO INSIDE ANOTHER GIT REPO! unless you are working on very complex repositories.
+"
+
+>> pwd
+# this will show the current working directory
+
+# / / / / REMOTES / / / /
+
+>>> git clone path/to/repo
+
+use online services like
+ + github
+ + bitbucket
+ + gitlab
+to store remote repos
+
+>>> git remote
+# this confirms if we have cloned a project remotely
+
+>>> git remote -v 
+# this will display more information regarding 
+
+>>> git remote add george https://github.com/george_datacamp/repo
+
+>>> git fetch origin main
+# fetches versions from the remote
+
+>>> git fetch origin report
+
+>>> git merge origin main
+# gathers contents from the remote origin repo into your local main branch.
+
+>>> git diff origin main
+# you can compare the contents of the content in the remote to the content in the main branch
+
+
+# / / / / PUSH AND PULL / / / /
+
+>>> git pull 
+# this is two commands in one: fetch and merge:
+# this command syncs any changes in the remote repo
+
+>>> git pull origin main
+# pulls from the remote origin branch to the main local repo branch
+
+>>> git push origin main
+# pushes from local main branch to remote origin branch
+
