@@ -1,0 +1,66 @@
+---
+title: "Example of Taylor approximation for a two-variable function"
+author: "Mori Jamshidian"
+date: "1/24/2022"
+output: pdf_document #html_document 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## An example of a function approximation
+
+Let 
+\[
+f(x_1, x_2) = x_1e^{x_2}+1.
+\]
+Then, its second order Taylor approximation is 
+\[
+Q(x_1,x_2) = 1 + x_1+x_1x_2+x_1^2/2.
+\]
+
+## Plot of the function and its tayloe approximation
+
+The follwoing shows the plot of the function, and its Taylor approximation.
+
+```{r plot_of_functions}
+# Second Taylor approximation of f(x1, x2) = x1 *exp(x2) + 1 around the point (1,0)
+# The approximation is 1 + x1 + x1*x2 + x2^2/2
+library(rgl)
+#options(rgl.useNULL = TRUE) # Only for windows
+f <- function(x1, x2){x1 *exp(x2) + 1}
+x1 <- seq(0, 2, 0.1)
+x2 <- seq(-1, 2, 0.1)
+f <- outer(x1, x2, FUN = f)
+persp3d(x1, x2, f, col = "blue",shade = 0.1, alpha = 0.5)
+#rglwidget(controllers = ) # This is to get it to print in pdf
+```
+
+Now we superimpose the approximation $Q(x_1,x_2)$.
+
+```{r Q_superimposed}
+# The approximation
+Q <- function(x1,x2){1 + x1 + x1*x2 + x2^2/2}
+Q <- outer(x1, x2, FUN = Q)
+persp3d(x1, x2, Q, col = "brown", add = TRUE, alpha = 0.5)
+rglwidget(controllers = ) # This is to get it to print in pdf
+```
+
+Compute absolute value of the error and plot it
+
+```{r error_function}
+# The error of the approximation
+error <- abs(f - Q)
+
+persp3d(x1, x2, error, col = "green", alpha = 0.5)
+rglwidget(controllers = ) # This is to get it to print in pdf
+```
+
+Draw the contour plot for the error
+
+```{r contour_plot}
+filled.contour(x1, x2, error)
+grid(nx = 20, ny = 20)
+```
+
