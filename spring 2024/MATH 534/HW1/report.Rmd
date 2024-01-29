@@ -112,65 +112,152 @@ There is also a low contour in the around the line $x_2 = 1.7$; this is because 
 
 # (a).
 
-\[
+$$
 [\textbf{x} - \boldsymbol{\mu}]^T\boldsymbol{\Sigma}^{-1}[\textbf{x} - \boldsymbol{\mu}] 
 = \sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{21})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2
-\\
+$$
+
+$$
 f(\textbf{x}_0) = f\begin{pmatrix}
     \mu_1 \\
     \mu_2 
 \end{pmatrix}
  = \frac{1}{2\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
-\\ 
+$$
+
+
+$$
 (\textbf{x} - \textbf{x}_0)^T 
 = \begin{pmatrix}
     x_1 - \mu_1  \\
     x_2 - \mu_2 
 \end{pmatrix}
-\\
-f_{x_1} = \frac{-e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{21})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
+$$
+
+$$
+f_{x_1} = \frac{-e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{21})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)/(\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21})}}{4\pi (\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21})^{3/2}}
 \cdot (2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{21})(x_2-\mu_2))
-\\
-f_{x_2} = \frac{-e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{21})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
+$$
+
+
+$$
+f_{x_2} = \frac{-e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{21})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)/(\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21})}}{4\pi (\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21})^{3/2}}
 \cdot (2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{22})(x_1-\mu_1))
-\\
+$$
+
+$$
 f_{x_1x_1} =\frac{e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{22})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
 \cdot \biggl( \frac{1}{2} (2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{21})(x_2-\mu_2))^2 - 2\sigma_{22}
 \biggl)
-\\
+$$
+
+$$
 f_{x_1x_2} = f_{x_2x_1} = \frac{e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{22})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
 \cdot \biggl( \frac{1}{2} (2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{21})(x_2-\mu_2))((2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{22})(x_1-\mu_1)) + \sigma_{12} + \sigma_{21}
 \biggl)
-\\
+$$
+
+$$
 f_{x_2x_2} = \frac{e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{22})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
 \cdot \biggl( \frac{1}{2} (2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{21})(x_1-\mu_1))^2 - 2\sigma_{11}
 \biggl)
-\\
+$$
+
+$$
 \nabla f\begin{pmatrix}
     \mu_1 \\
     \mu_2 
 \end{pmatrix}
 =
-\frac{-e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{22})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
+\frac{-e^0}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
 \begin{bmatrix}
-    2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{22})(x_2-\mu_2) \\
-    2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{22})(x_1-\mu_1)
-\end{bmatrix}
-\\
-H(\textbf{x}_0) =
-\frac{e^{\frac{-1}{2}(\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12}+\sigma_{22})(x_1-\mu_1)(x_2-\mu_2) + \sigma_{11}(x_2-\mu_2)^2)}}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
+    2\sigma_{22}(0)-(\sigma_{12}+\sigma_{22})(0) \\
+    2\sigma_{11}(0)-(\sigma_{12}+\sigma_{22})(0)
+\end{bmatrix}=
+\frac{-1}{4\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}}
 \begin{bmatrix}
-    \frac{1}{2} (2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{21})(x_2-\mu_2))^2 - 2\sigma_{22} &
-    \frac{1}{2} (2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{21})(x_2-\mu_2))((2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{22})(x_1-\mu_1)) + \sigma_{12} + \sigma_{21} \\
-    \frac{1}{2} (2\sigma_{22}(x_1-\mu_1)-(\sigma_{12}+\sigma_{21})(x_2-\mu_2))((2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{22})(x_1-\mu_1)) + \sigma_{12} + \sigma_{21} &
-     \frac{1}{2} (2\sigma_{11}(x_2-\mu_2)-(\sigma_{12}+\sigma_{21})(x_1-\mu_1))^2 - 2\sigma_{11}
+    0 \\
+   0
+\end{bmatrix}=
+\begin{bmatrix}
+    0 \\
+   0
 \end{bmatrix}
-\\
-\]
+$$
+if 
+$$
+H\begin{pmatrix}
+    \mu_1 \\
+    \mu_2 
+\end{pmatrix} =
+\frac{-1}{4\pi (\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21})^{3/2}}
+\begin{bmatrix}
+    2\sigma_{22}  &
+    -(\sigma_{12}+\sigma_{21})  \\
+    -(\sigma_{12}+\sigma_{21}) &
+    2\sigma_{11}
+\end{bmatrix}
+$$
+
+our second order Taylor approximation about point $\begin{bmatrix}\mu_1\\ \mu_2 \end{bmatrix}$
+$$
+f(\textbf{x}) \cong 
+\frac{1}{2\pi \sqrt{\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21}}} - 
+\frac{1}{8\pi (\sigma_{11}\sigma_{22}-\sigma_{12}\sigma_{21})^{3/2}}
+\biggl(2\sigma_{22}(x_1-\mu_1)^2 - (\sigma_{12} + \sigma_{21})(x_1-\mu_1)(x_2-\mu_2) + 2\sigma_{11}(x_2-\mu_2)^2 
+\biggl) + R
+$$
 
 # (b).
 
-\[
+```{r}
+# building the function
+f <- function(x1,x2,mu1,mu2,sig11,sig12,sig21,sig22){
+  ((2*pi*sqrt(sig11*sig22 - sig21*sig12))^(-1))*exp((-0.5)*(2*sig22*(x1-mu1)^2 - (sig11*sig22 + sig12*sig21)*(x1-mu1)*(x2-mu2)+2*sig11*(x2-mu2)^2))
+}
 
-\]$
+```
 
+```{r}
+#building the Taylor Series function
+h <- function(x1,x2,mu1,mu2,sig11,sig12,sig21,sig22){
+  ((2*pi*sqrt(sig11*sig22 - sig21*sig12))^(-1)) - ((8*pi*(sig11*sig22 - sig21*sig12)^(3/2))^(-1))*exp(2*sig22*(x1-mu1)^2 - (sig11*sig22 + sig12*sig21)*(x1-mu1)*(x2-mu2)+2*sig11*(x2-mu2)^2)
+}
+```
+
+```{r}
+# creating sequences
+x <- seq(-1.5,1.5,length = 30)
+y <- seq(-1.5,1.5,length = 30)
+```
+
+#### (i.)
+
+```{r}
+# render the surfaces
+f_surf <- outer(x, y, mu1 = 0, mu2 = 0 ,sig11 = 1, sig12 = -0.3, sig21 = -0.3, sig22 = 1,FUN = f)
+h_surf <- outer(x, y, mu1 = 0, mu2 = 0 ,sig11 = 1, sig12 = -0.3, sig21 = -0.3, sig22 = 1,FUN = h)
+persp3d(x, y, f_surf, col = "red",shade = 0.3, alpha = 0.5)
+#persp3d(x, y, h_surf, col = "lightblue",shade = 0.3, alpha = 0.5, add = T)
+rglwidget(controllers = ) 
+```
+
+```{r}
+# render the surfaces
+f_surf <- outer(x, y, mu1 = 0, mu2 = 0 ,sig11 = 1, sig12 = -0.3, sig21 = -0.3, sig22 = 1,FUN = f)
+h_surf <- outer(x, y, mu1 = 0, mu2 = 0 ,sig11 = 1, sig12 = -0.3, sig21 = -0.3, sig22 = 1,FUN = h)
+#persp3d(x, y, f_surf, col = "red",shade = 0.3, alpha = 0.5)
+persp3d(x, y, h_surf, col = "lightblue",shade = 0.3, alpha = 0.5)
+rglwidget(controllers = ) 
+```
+
+#### (ii.)
+
+```{r}
+# render the surfaces
+f_surf <- outer(x, y, mu1 = 0, mu2 = 0 ,sig11 = 1, sig12 = .8, sig21 = .8, sig22 = 1,FUN = f)
+h_surf <- outer(x, y, mu1 = 0, mu2 = 0 ,sig11 = 1, sig12 = .8, sig21 = .8, sig22 = 1,FUN = h)
+persp3d(x, y, f_surf, col = "red",shade = 0.3, alpha = 0.5)
+persp3d(x, y, h_surf, col = "lightblue", shade = 0.3, alpha = 0.5, add=T)
+rglwidget(controllers = ) 
+```

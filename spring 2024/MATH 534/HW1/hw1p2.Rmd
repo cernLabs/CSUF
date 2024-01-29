@@ -1,0 +1,195 @@
+---
+title: "Homework 1 pt. 2"
+author: "Michael Pena"
+date: "2024-01-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# pkgs + knitr loading
+knitr::opts_chunk$set(echo = TRUE)
+library(tinytex)
+library(rgl)
+```
+
+# Problem 1
+
+### (a).
+
+recall the observed information is: $-\nabla^2\ell(\mu, \sigma)$
+
+
+$\ell_{\mu} = \frac{\sum^{n}_{i=1}(x_i - \mu)}{\sigma^2}$
+
+$\ell_{\sigma} = \frac{-1}{n} + \frac{\sum^{n}_{i=1}(x_i - \mu)^2}{\sigma^3}$
+
+$\ell_{\mu\mu} = \frac{-n}{\sigma^2}$
+
+$\ell_{\mu\sigma} = \ell_{\sigma\mu} = \frac{-2\sum^{n}_{i=1}(x_i - \mu)}{\sigma^3}$
+
+$\ell_{\sigma\sigma} = \frac{n}{\sigma^2} - \frac{ 3 \sum^{n}_{i=1}(x_i - \mu)^2}{\sigma^4}$
+
+thus...
+
+\[
+-\nabla^2\ell(\mu, \sigma) =
+\begin{bmatrix}
+  \frac{n}{\sigma^2} & 
+  \frac{2\sum^{n}_{i=1}(x_i - \mu)}{\sigma^3}  \\
+  \frac{2\sum^{n}_{i=1}(x_i - \mu)}{\sigma^3} & 
+  \frac{-n}{\sigma^2} + \frac{ 3 \sum^{n}_{i=1}(x_i - \mu)^2}{\sigma^4}
+\end{bmatrix}
+\]
+
+### (b).
+
+let's express the Fisher Info. (Fisher Info: $E(-\nabla^2\ell(\mu, \sigma))$)
+
+
+$E(\frac{n}{\sigma^2}) = \frac{n}{\sigma^2}$
+
+$E[\frac{2\sum^{n}_{i=1}(x_i - \mu)}{\sigma^3}] = \frac{-2}{\sigma^3} \sum^{n}_{i=1}E[x_i] -\mu = \frac{-2}{\sigma^3} \sum^{n}_{i=1}\mu -\mu = 0$
+
+$E[\frac{-n}{\sigma^2} + \frac{ 3 \sum^{n}_{i=1}(x_i - \mu)^2}{\sigma^4}] = \frac{-n}{\sigma^2}+\frac{3}{\sigma^4} \sum^{n}_{i=1} E[x_i^2] -2\mu E[x_i] + \mu^2 = \frac{-n}{\sigma^2}+\frac{3}{\sigma^4} \sum^{n}_{i=1} \sigma^2 +\mu^2  -2\mu^2 + \mu^2 = \frac{-n}{\sigma^2}+\frac{3n\sigma^2}{\sigma^4} = \frac{2n}{\sigma^2}$
+
+\[
+E[-\nabla^2\ell(\mu,\sigma)]=
+\begin{bmatrix}
+    \frac{n}{\sigma^2} &
+    0 \\
+    0 &
+    \frac{2n}{\sigma^2}
+\end{bmatrix}\]
+
+### (c).
+
+let $\vec{\theta} = (\theta_1,\theta_2)$
+
+let \[g(\vec{\theta}) = 
+\begin{bmatrix}
+    \theta_1 \\
+    \theta_2^2
+\end{bmatrix}
+\]
+
+thus 
+
+\[ J(\theta) =
+\begin{bmatrix}
+    (\theta_1)_{\theta_1} &
+    (\theta_1)_{\theta_2} \\
+    (\theta_2^2)_{\theta_1} &
+    (\theta_2^2)_{\theta_2}
+\end{bmatrix}
+=
+\begin{bmatrix}
+    1 & 0 \\
+    0 & 2\theta_2
+\end{bmatrix}\]
+
+in our case 
+
+\[
+J(\mu,\sigma) = 
+\begin{bmatrix}
+    1 & 0 \\
+    0 & 2\sigma
+\end{bmatrix}
+\]
+
+\[
+I^{-1}(\vec{\theta}) = 
+\begin{bmatrix}
+    \frac{n}{\sigma^2} &
+    0 \\
+    0 &
+    \frac{2n}{\sigma^2}
+\end{bmatrix}^{-1} = 
+\frac{\sigma^4}{2n^2}
+\begin{bmatrix}
+    \frac{2n}{\sigma^2} &
+    0 \\
+    0 &
+    \frac{n}{\sigma^2}
+\end{bmatrix} = 
+\begin{bmatrix}
+    \frac{\sigma^2}{n} &
+    0 \\
+    0 &
+    \frac{\sigma^2}{2n}
+\end{bmatrix}
+\]
+
+thus the Fisher information for  $\ell(\mu,\sigma^2)$ is....
+
+\[
+[J(\vec{\theta})I^{-1}(\vec{\theta})J^T(\vec{\theta})]^{-1} =
+\biggl(
+\begin{bmatrix}
+    1 & 0 \\
+    0 & 2\sigma
+\end{bmatrix}
+\begin{bmatrix}
+    \frac{\sigma^2}{n} &
+    0 \\
+    0 &
+    \frac{\sigma^2}{2n}
+\end{bmatrix}
+\begin{bmatrix}
+    1 & 0 \\
+    0 & 2\sigma
+\end{bmatrix} 
+\biggl)^{-1} =
+\biggl(
+\begin{bmatrix}
+    \frac{\sigma^2}{n} & 0 \\
+    0 & \frac{\sigma^3}{n}
+\end{bmatrix}
+\begin{bmatrix}
+    1 & 0 \\
+    0 & 2\sigma
+\end{bmatrix}
+\biggl)^{-1}=
+\begin{bmatrix}
+    \frac{\sigma^2}{n} & 0 \\
+    0 & \frac{2\sigma^4}{n}
+\end{bmatrix}^{-1} =
+\begin{bmatrix}
+    \frac{n}{\sigma^2} & 0 \\
+    0 & \frac{n}{2\sigma^4} 
+\end{bmatrix}
+\]
+
+### (d).
+
+\[
+I^{-1}(\mu,\sigma) = 
+\begin{bmatrix}
+    \frac{\sigma^2}{n} &
+    0 \\
+    0 &
+    \frac{\sigma^2}{2n}
+\end{bmatrix}
+\]
+
+above shows us that \[SE(\hat{\theta}_1 = \mu) = \sigma/\sqrt{n}\]
+and that \[SE(\hat{\theta}_2 = \sigma) = \frac{\sigma}{\sqrt{2n}}\]
+
+\[
+I(\mu,\sigma^2) = 
+\begin{bmatrix}
+    \frac{\sigma^2}{n} & 0 \\
+    0 & \frac{2\sigma^4}{n} 
+\end{bmatrix}
+\]
+
+above shows us that $SE({\theta^*_2}=\sigma^2) = \sigma^2\sqrt{\frac{2}{n}}$
+
+# Problem 2
+
+### (a).
+
+```{r}
+
+```
+
