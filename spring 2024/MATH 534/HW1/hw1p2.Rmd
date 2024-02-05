@@ -3,11 +3,13 @@ title: "Homework 1 pt. 2"
 author: "Michael Pena"
 date: "2024-01-27"
 output: pdf_document
+    
 ---
 
 ```{r setup, include=FALSE}
 # pkgs + knitr loading
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=80), tidy=TRUE)
+
 library(tinytex)
 library(rgl)
 ```
@@ -31,7 +33,7 @@ $\ell_{\sigma\sigma} = \frac{n}{\sigma^2} - \frac{ 3 \sum^{n}_{i=1}(x_i - \mu)^2
 
 thus...
 
-\[
+$$
 -\nabla^2\ell(\mu, \sigma) =
 \begin{bmatrix}
   \frac{n}{\sigma^2} & 
@@ -39,7 +41,7 @@ thus...
   \frac{2\sum^{n}_{i=1}(x_i - \mu)}{\sigma^3} & 
   \frac{-n}{\sigma^2} + \frac{ 3 \sum^{n}_{i=1}(x_i - \mu)^2}{\sigma^4}
 \end{bmatrix}
-\]
+$$
 
 ### (b).
 
@@ -52,29 +54,29 @@ $E[\frac{2\sum^{n}_{i=1}(x_i - \mu)}{\sigma^3}] = \frac{-2}{\sigma^3} \sum^{n}_{
 
 $E[\frac{-n}{\sigma^2} + \frac{ 3 \sum^{n}_{i=1}(x_i - \mu)^2}{\sigma^4}] = \frac{-n}{\sigma^2}+\frac{3}{\sigma^4} \sum^{n}_{i=1} E[x_i^2] -2\mu E[x_i] + \mu^2 = \frac{-n}{\sigma^2}+\frac{3}{\sigma^4} \sum^{n}_{i=1} \sigma^2 +\mu^2  -2\mu^2 + \mu^2 = \frac{-n}{\sigma^2}+\frac{3n\sigma^2}{\sigma^4} = \frac{2n}{\sigma^2}$
 
-\[
+$$
 E[-\nabla^2\ell(\mu,\sigma)]=
 \begin{bmatrix}
     \frac{n}{\sigma^2} &
     0 \\
     0 &
     \frac{2n}{\sigma^2}
-\end{bmatrix}\]
+\end{bmatrix}$$
 
 ### (c).
 
 let $\vec{\theta} = (\theta_1,\theta_2)$
 
-let \[g(\vec{\theta}) = 
+let $$g(\vec{\theta}) = 
 \begin{bmatrix}
     \theta_1 \\
     \theta_2^2
 \end{bmatrix}
-\]
+$$
 
 thus 
 
-\[ J(\theta) =
+$$ J(\theta) =
 \begin{bmatrix}
     (\theta_1)_{\theta_1} &
     (\theta_1)_{\theta_2} \\
@@ -85,19 +87,19 @@ thus
 \begin{bmatrix}
     1 & 0 \\
     0 & 2\theta_2
-\end{bmatrix}\]
+\end{bmatrix}$$
 
 in our case 
 
-\[
+$$
 J(\mu,\sigma) = 
 \begin{bmatrix}
     1 & 0 \\
     0 & 2\sigma
 \end{bmatrix}
-\]
+$$
 
-\[
+$$
 I^{-1}(\vec{\theta}) = 
 \begin{bmatrix}
     \frac{n}{\sigma^2} &
@@ -118,11 +120,11 @@ I^{-1}(\vec{\theta}) =
     0 &
     \frac{\sigma^2}{2n}
 \end{bmatrix}
-\]
+$$
 
 thus the Fisher information for  $\ell(\mu,\sigma^2)$ is....
 
-\[
+$$
 [J(\vec{\theta})I^{-1}(\vec{\theta})J^T(\vec{\theta})]^{-1} =
 \biggl(
 \begin{bmatrix}
@@ -158,11 +160,11 @@ thus the Fisher information for  $\ell(\mu,\sigma^2)$ is....
     \frac{n}{\sigma^2} & 0 \\
     0 & \frac{n}{2\sigma^4} 
 \end{bmatrix}
-\]
+$$
 
 ### (d).
 
-\[
+$$
 I^{-1}(\mu,\sigma) = 
 \begin{bmatrix}
     \frac{\sigma^2}{n} &
@@ -170,18 +172,18 @@ I^{-1}(\mu,\sigma) =
     0 &
     \frac{\sigma^2}{2n}
 \end{bmatrix}
-\]
+$$
 
-above shows us that \[SE(\hat{\theta}_1 = \mu) = \sigma/\sqrt{n}\]
-and that \[SE(\hat{\theta}_2 = \sigma) = \frac{\sigma}{\sqrt{2n}}\]
+above shows us that $$SE(\hat{\theta}_1 = \mu) = \sigma/\sqrt{n}$$
+and that $$SE(\hat{\theta}_2 = \sigma) = \frac{\sigma}{\sqrt{2n}}$$
 
-\[
+$$
 I(\mu,\sigma^2) = 
 \begin{bmatrix}
     \frac{\sigma^2}{n} & 0 \\
     0 & \frac{2\sigma^4}{n} 
 \end{bmatrix}
-\]
+$$
 
 above shows us that $SE({\theta^*_2}=\sigma^2) = \sigma^2\sqrt{\frac{2}{n}}$
 
@@ -189,7 +191,125 @@ above shows us that $SE({\theta^*_2}=\sigma^2) = \sigma^2\sqrt{\frac{2}{n}}$
 
 ### (a).
 
-```{r}
+$$
+p_1 = \frac{1}{4},p_2=\frac{1}{4},p_3 = \frac{1}{2}
+$$
+$$
+I(\vec{\pi}) = n
+\begin{bmatrix}
+  \frac{1}{\pi_1} + \frac{1}{\pi_k} &
+  \frac{1}{\pi_k} \\
+  \frac{1}{\pi_k} &
+  \frac{1}{\pi_2} + \frac{1}{\pi_k}
+\end{bmatrix}
+\Rightarrow
+I(\vec{p}) = 200 \cdot
+\begin{bmatrix}
+  4 + 2 &
+  2 \\
+  2 &
+  4+ 2
+\end{bmatrix}
+= 
+\begin{bmatrix}
+  1200 &
+  400 \\
+  400 &
+  1200
+\end{bmatrix}
+$$
 
+```{r}
+# calculating inverse matrix
+fish <- matrix(c(1200,400,400,1200), ncol = 2, nrow = 2)
+solve(fish)
 ```
 
+$$
+Var(p_1) = 0.0009375,
+Var(p_2) = 0.0009375
+$$
+
+$$
+Var(p_3) = Var(1 - p_1 - p_2) = Var(p_1) + Var(p_2) + 2Cov(p_1,p_2) \\  =   0.0009375+0.0009375+2(-0.0003125)=0.00125
+$$
+
+thus $SE(p_1) = SE(p_2) = 0.03061862$ and $SE(p_3) = 0.03535534$
+
+### (b).
+
+```{r}
+set.seed(534)
+# building the matrix function
+f <- function(n_sim,n,p1,p2){
+  # set p3
+  p3 <- 1 - p2 - p1
+  # generate a n_sim x 3 zero-matrix
+  T <- matrix(0, nrow = n_sim, ncol = 3)
+  # run a for loop
+  for (i in 1:n_sim){
+    sample <- sample(c("t1","t2","t3"),size = n, replace = TRUE, prob = c(p1,p2,p3)) # this takes the sample
+    
+    T[i,] <- c(length(sample[sample=="t1"]),length(sample[sample=="t2"]),length(sample[sample=="t3"]))
+  }
+  T
+}
+
+# run function
+T <- f(1000,200,.25,.25)
+head(T, n=5)
+```
+
+```{r}
+# make the M matrix
+mle_func <- function(T){
+  M <- matrix(0,nrow = length(T[,1]),ncol = length(T[1,]))
+  for(i in 1:length(T[,1])){
+    denom <- sum(T[i,])
+    for (j in 1:length(T[1,])){
+      M[i,j] <- T[i,j]/denom
+    }
+  }
+  return(M)
+}
+M <- mle_func(T)
+head(M, n=5)
+```
+
+### (d).
+
+```{r}
+# obtaining covariance matrix
+covM <- cov(M)
+
+# making the greybill matrix
+GB <- 200^(-1) * matrix(c(.25*.75,-.25*.25,-.25*.5,
+                   -.25*.25,.25*.75,-.25*.5,
+                   -.25*.5,-.25*.5,.5*.5),
+                   ncol = 3, nrow = 3)
+# render
+covM
+GB
+```
+
+
+```{r}
+# make the table
+names <- c("var(p1)","var(p2)","var(p3)","cov(p2,p1)","cov(p3,p2)","cov(p3,p1)")
+theoretical <- c(0.0009375,0.0009375,0.001250,-0.0003125,-0.0006250,-0.0006250)
+simulated <- c(0.0009612857,0.0008951239,-0.0012601866,-0.0002981115,-0.0005970124,-0.0006631742)
+abs_diff <- abs(theoretical - simulated)
+
+table <- data.frame(names,theoretical,simulated,abs_diff)
+table
+```
+
+#### (e).
+
+```{r}
+# building the histogram
+hist(M[,1],breaks = 30, main = "Histogram of column 1 values of matrix M", xlab = "column 1 values") 
+hist(M[,2],breaks = 30, main = "Histogram of column 2 values of matrix M", xlab = "column 2 values")
+hist(M[,3],breaks = 30, main = "Histogram of column 3 values of matrix M", xlab = "column 3 values")
+```
+We observe that these histograms almost follows a normal distribution. This makes sense because cause in our theorem in class $\sqrt{n}(\hat{\theta_n} - \theta^*)$ converges in distribution to $N(\vec{0},I^{-1}(\theta^*))$.

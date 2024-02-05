@@ -1,0 +1,40 @@
+Math 536, HW 1:
+1. Download the HW1P1.csv file. In this file you will find two variables, females
+and males. Females contains the salary on a random sample of female
+employees from a tech company in Northern California. Males contains a
+random sample of males from the same tech company. Your goal is to
+investigate whether or not there is gender discrimination within that
+company with regards to pay (i.e. males are making more than females).
+
+Part a: First run a valid statistical test using a central limit theorem (i.e. the
+classical theoretical way). Please report and interpret your p-value.
+
+Part b: Now repeat the process of statistical inference but this time you may
+not assume anything about your sample summary. You must instead
+bootstrap a p-value.
+Please write a small report, no more than a paragraph or two relating your
+results to the company’s interests in discovery. Please only provide relevant
+statistical output.
+
+
+2. Does bootstrapping always work? In this problem we want to begin with a
+population, I don’t care what your population is but something robust
+(maybe like 50,000 data observations from a well defined numerical
+distribution).
+
+Part a. For a given sample size of 20, draw 10,000 samples, all of size 20.
+Compute the 90%tile of each sample. Plot the 90%tiles of each sample along
+with the true 90%tile of your population. Do you believe that the 90%tile of
+a sample of size 20 is an unbiased estimator of the population parameter
+90%tile?
+
+Part b. Take a single sample of size 20. Record the 90%tile. Now draw
+10,000 bootstrap samples of size 20 from your original sample. Plot the
+10,000 BS estimates of the 90%tile along with the true 90%tile of your
+original sample. Are your bootstrap estimates of the 90%tile biased? Can
+you quantify the amount of bias?
+
+Part c. Combining parts a. and b. Take a single sample of size 20 from your
+population and come up with a Bootstrapped Confidence interval for the
+90%tile of the population...Don’t forget to correct for bias!
+Please submit your plots with brief discussion for each part.

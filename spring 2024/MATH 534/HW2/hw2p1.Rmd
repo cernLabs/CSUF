@@ -1,0 +1,65 @@
+---
+title: "Homework 2 (Part 1)"
+author: "Michael Pena"
+date: "2024-02-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+## (a)
+
+```{r, warning=FALSE}
+# placing in the information
+
+
+# building the functions
+f <- function(theta){
+  x <- c(3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 
+              3.53, 2.28, 1.96, 2.53, 3.88, 2.22, 3.47, 
+              4.82, 2.46, 2.99, 2.54, 0.52, 2.50)
+  llh <- 0
+  for (i in x){
+    llh <- llh + log(
+      (1 - cos(i - theta))/(2*pi)
+      )
+  }
+  return(llh)
+}
+
+# setup sequences
+theta_vec <- seq(-pi,pi,length=100)
+
+# setup y-values
+y <-  f(theta_vec)
+
+```
+
+
+```{r}
+# render plot
+plot(theta_vec, y, type = 'l' ,main = "Log Likelihood Function", xlab = "\u03b8", ylab = "\u2113(\u03b8)")
+```
+
+## (b).
+
+$$
+\bar{x} = \frac{1}{2\pi} \int^{2\pi}_{0}x (1-cos(x - \tilde{\theta}))dx = sin(\tilde{\theta}) + \pi
+$$
+thus $\tilde{\theta} = \arcsin[\bar{x}- \pi]$
+
+## (c).
+
+$$\ell(\theta) = \sum^{n}_{i=1}\ln[\frac{1}{2\pi}(1-\cos(x_i-\theta))]$$
+$$\ell'(\theta)=\sum^{n}_{i=1}\frac{2\pi \sin(x_i-\theta)}{\cos(x_i-\theta) - 1}$$
+$$\ell''(\theta)=\sum^{n}_{i=1}\frac{2\pi}{\cos(x_i-\theta) - 1}$$
+
+```{r}
+# begin newtons method
+
+
+```
+
