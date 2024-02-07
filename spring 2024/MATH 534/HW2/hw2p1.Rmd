@@ -2,11 +2,15 @@
 title: "Homework 2 (Part 1)"
 author: "Michael Pena"
 date: "2024-02-04"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(include = TRUE)
+library(dplyr)
+library(tidyverse)
 
 ```
 
@@ -41,7 +45,7 @@ y <-  f(theta_vec)
 
 ```{r}
 # render plot
-plot(theta_vec, y, type = 'l' ,main = "Log Likelihood Function", xlab = "\u03b8", ylab = "\u2113(\u03b8)")
+plot(theta_vec, y, type = 'l' ,main = "Log Likelihood Function", xlab = "Theta", ylab = "Likelyhood(Theta)")
 ```
 
 ## (b).
@@ -57,9 +61,129 @@ $$\ell(\theta) = \sum^{n}_{i=1}\ln[\frac{1}{2\pi}(1-\cos(x_i-\theta))]$$
 $$\ell'(\theta)=\sum^{n}_{i=1}\frac{2\pi \sin(x_i-\theta)}{\cos(x_i-\theta) - 1}$$
 $$\ell''(\theta)=\sum^{n}_{i=1}\frac{2\pi}{\cos(x_i-\theta) - 1}$$
 
-```{r}
-# begin newtons method
 
+```{r}
+# setup newtons method
+ell <- function(theta){
+  S <- 0
+   x <- c(3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 
+              3.53, 2.28, 1.96, 2.53, 3.88, 2.22, 3.47, 
+              4.82, 2.46, 2.99, 2.54, 0.52, 2.50)
+  for (i in x){
+    S <- S + log((1/2*pi)*(1-cos(i-theta)))
+  }
+  return(S)
+}
+
+dell <- function(theta){
+  S <- 0
+   x <- c(3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 
+              3.53, 2.28, 1.96, 2.53, 3.88, 2.22, 3.47, 
+              4.82, 2.46, 2.99, 2.54, 0.52, 2.50)
+  for (i in x){
+    S <- S + (2*pi*sin(i-theta))/(cos(i-theta)-1)
+  }
+  return(S)
+}
+
+ddell <- function(theta){
+  S <- 0
+   x <- c(3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 
+              3.53, 2.28, 1.96, 2.53, 3.88, 2.22, 3.47, 
+              4.82, 2.46, 2.99, 2.54, 0.52, 2.50)
+    for (i in x){
+    S <- S + (2*pi)/(cos(i-theta)-1)
+  }
+  return(S)
+}
 
 ```
 
+```{r}
+x <- c(3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 
+              3.53, 2.28, 1.96, 2.53, 3.88, 2.22, 3.47, 
+              4.82, 2.46, 2.99, 2.54, 0.52, 2.50)
+
+# newton's method
+newtM <- function(theta0,ipo){
+# initialization 
+init_theta <- theta0
+it <- 0
+stop <- 0
+df <- data.frame()
+# begin the while loop
+while (it < 1000 & stop == 0){
+  theta1 <- theta0 - (dell(theta0))/(ddell(theta0))
+  it = it + 1
+  absg <- abs(dell(theta0))
+  mre <- abs(theta1 - theta0)/max(1,abs(theta1))
+  row <- c(it,theta1,mre,absg,init_theta)
+  df <- rbind(df, row)
+  if (mre < 1*exp(-6) &  absg <  1*exp(-9)){
+    stop <- 1
+    theta0 <- theta1
+  }
+  else {
+    stop  = 0
+    theta0 <- theta1
+  }
+}
+df <- data.frame(df) %>% set_names("Iteration","Theta","Relative Error","Gradient at Theta","Initial Theta") %>% mutate(
+  Theta = round(Theta, digits = 12),
+  `Relative Error` = sprintf("%.1e", `Relative Error`),
+  `Gradient at Theta` = sprintf("%.1e", `Gradient at Theta`)
+  )
+
+df$final <- theta1
+if(ipo == FALSE){
+  df <- select(df, c("Iteration","Theta","Relative Error","Gradient at Theta"))
+}
+
+return(df)
+}
+
+# starting at MME
+mme <- asin(mean(x) - pi)
+newtM(mme, F)
+```
+```{r}
+# starting at 2.7
+newtM(2.7,F)
+```
+
+```{r}
+#starting at -2.7
+newtM(-2.7,F)
+```
+
+
+## (d).
+
+```{r}
+# setting up theta
+init_thetas <- seq(-pi,pi,length = 200)
+
+#intialize dataframe
+df1 <- data.frame()
+
+# make dataset to graph later
+for (i in 1:200){
+  df1 <- bind_rows(df1,newtM(init_thetas[i],T))
+}
+
+# clean data
+df1 <- select(df1,c("Initial Theta",final))
+df1 <- distinct(df1)
+```
+
+```{r}
+# render graph
+plot(df1$`Initial Theta`,df1$final, xlab = "Intial Theta", ylab = "Final Theta")
+plot(theta_vec, y, type = 'l' ,main = "Log Likelihood Function", xlab = "", ylab = "",col = 'red')
+par(new = TRUE)
+plot(df1$`Initial Theta`,df1$final, xlab = "Intial Theta", ylab = "Final Theta")
+par(new = FALSE)
+
+```
+
+when we superimpose the Log-Likelyhood Function over the last graph we made, it appears that a single line segment of Initial Theta's will be as long as a concave down curve on the Log-Likelyhood function. 

@@ -391,10 +391,18 @@ plot(theta_vec, y, type = &#39;l&#39; ,main = &quot;Log Likelihood Function&quot
 \bar{x} = \frac{1}{2\pi} \int^{2\pi}_{0}x (1-cos(x - \tilde{\theta}))dx
 = sin(\tilde{\theta}) + \pi
 \]</span> thus <span class="math inline">\(\tilde{\theta} =
-arcsin[\bar{x}- \pi]\)</span></p>
+\arcsin[\bar{x}- \pi]\)</span></p>
 </div>
 <div id="c." class="section level2">
 <h2>(c).</h2>
+<p><span class="math display">\[\ell(\theta) =
+\sum^{n}_{i=1}\ln[\frac{1}{2\pi}(1-\cos(x_i-\theta))]\]</span> <span class="math display">\[\ell&#39;(\theta)=\sum^{n}_{i=1}\frac{2\pi
+\sin(x_i-\theta)}{\cos(x_i-\theta) - 1}\]</span> <span class="math display">\[\ell&#39;&#39;(\theta)=\sum^{n}_{i=1}\frac{2\pi}{\cos(x_i-\theta)
+- 1}\]</span></p>
+<pre class="r"><code># setup newtons method
+ell &lt;- function(theta){
+ for (i in x){}
+}</code></pre>
 </div>
 
 
