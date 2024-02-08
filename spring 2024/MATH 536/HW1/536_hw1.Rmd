@@ -7,24 +7,187 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tinytex)
+library(dplyr)
+library(ggplot2)
+library(GGally)
+library(tidyverse)
 ```
 
-## R Markdown
+## Question 1
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: Download the HW1P1.csv file. In this file you will find two variables, females
+and males. Females contains the salary on a random sample of female
+employees from a tech company in Northern California. Males contains a
+random sample of males from the same tech company. Your goal is to
+investigate whether or not there is gender discrimination within that
+company with regards to pay (i.e. males are making more than females).
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+# load data
+data <- read.csv("HW1P1.csv")
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+### Part a:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: First run a valid statistical test using a central limit theorem (i.e. the
+classical theoretical way). Please report and interpret your p-value.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+```{r}
+# make a new column that is the difference between the two
+male_vec <- data$Males
+fem_vec <- na.omit(data$Females)
+# check normality of the difference
+qqnorm(male_vec)
+qqnorm(fem_vec)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+# let H_alt be mu > 0 with 99% confidence 
+# run student t.test
+t.test(male_vec,fem_vec, alternative = "greater", paired = F, conf.level = .99)
+```
+
+The selected $\alpha = 0.01$ and here p-value is greater that 0.01. 
+Thus we fail to reject the null hypothesis. 
+
+conclusion: 
+There is not sufficient sample evidence to support the claim that "males are making more than females."
+
+### part b.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: Now repeat the process of statistical inference but this time you may
+not assume anything about your sample summary. You must instead
+bootstrap a p-value.
+Please write a small report, no more than a paragraph or two relating your
+results to the company’s interests in discovery. Please only provide relevant
+statistical output.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+```{r}
+# find population mean
+BS.male_vec <- male_vec - mean(male_vec)
+BS.fem_vec <- fem_vec - mean(fem_vec)
+BS.pop.mean <- mean(male_vec) - mean(fem_vec)
+
+
+# bootstrapping
+
+xbars.diff <- rep(0,10000)
+for (i in 1:10000){
+  sampleM <- sample(BS.male_vec,300, replace = T)
+  sampleF <- sample(BS.fem_vec,300, replace = T)
+  xbars.diff[i] <- mean(sampleM - sampleF)
+}
+
+# render histogram
+hist(xbars.diff, breaks = 80)
+```
+
+```{r}
+# finding a p-value
+pval <- length(xbars.diff[xbars.diff > BS.pop.mean])/10000
+pval
+```
+
+The histogram suggests we can follow a normally distributed data set with our bootstrapped data; this suggested we could create a p-value. It would be necessary <finish writing paragraph>
+
+## Question 2
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: Does bootstrapping always work? In this problem we want to begin with a
+population, I don’t care what your population is but something robust
+(maybe like 50,000 data observations from a well defined numerical
+distribution).
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+```{r}
+#generate observations
+obs <- rnorm(100000)
+```
+
+### part a.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: For a given sample size of 20, draw 10,000 samples, all of size 20.
+Compute the 90%tile of each sample. Plot the 90%tiles of each sample along
+with the true 90%tile of your population. Do you believe that the 90%tile of
+a sample of size 20 is an unbiased estimator of the population parameter
+90%tile?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+```{r}
+x_tiles <- rep(0,10000)
+true_90th <- quantile(obs, .9)
+
+for (i in 1:10000){
+  samp <- sample(obs,20,replace = T)
+  x_tiles[i] <- quantile(samp, .9)
+} 
+
+
+hist(x_tiles, breaks = 160)
+abline(v = true_90th,col = "red", lwd = 2)
+```
+
+```{r}
+# bootstrap now but with a larger sample size in each iteration
+
+for (i in 1:10000){
+  samp <- sample(obs,200,replace = T)
+  x_tiles[i] <- quantile(samp, .9)
+} 
+
+
+hist(x_tiles, breaks = 160)
+abline(v = true_90th,col = "red", lwd = 2)
+```
+
+Using only a sample size of 20 is biased as when I highered the sample size in the second graphic, the true 90%tile got closer to median.
+
+### part b.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: Take a single sample of size 20. Record the 90%tile. Now draw
+10,000 bootstrap samples of size 20 from your original sample. Plot the
+10,000 BS estimates of the 90%tile along with the true 90%tile of your
+original sample. Are your bootstrap estimates of the 90%tile biased? Can
+you quantify the amount of bias?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+```{r}
+single.samp.90 <- quantile(sample(obs,20,replace = T),.9)
+
+for (i in 1:10000){
+  samp <- sample(obs,20,replace = T)
+  x_tiles[i] <- quantile(samp, .9)
+} 
+
+hist(x_tiles, breaks = 160)
+abline(v = single.samp.90,col = "red", lwd = 2)
+```
+
+This doesn't seem as biased as our last example as the single sampled 90th quantile is about at the median/mean when we present our graphic. 
+
+I think to a degree we can possibly quantify the amount of bias <add more context>
+
+### part c.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+DIRECTIONS: Combining parts a. and b. Take a single sample of size 20 from your
+population and come up with a Bootstrapped Confidence interval for the
+90%tile of the population...Don’t forget to correct for bias!
+Please submit your plots with brief discussion for each part.
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+```{r}
+
+```
+
