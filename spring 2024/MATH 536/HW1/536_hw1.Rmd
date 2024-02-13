@@ -73,6 +73,7 @@ statistical output.
 
 ```{r}
 # find population mean
+set.seed(536)
 BS.male_vec <- male_vec - mean(male_vec)
 BS.fem_vec <- fem_vec - mean(fem_vec)
 BS.pop.mean <- mean(male_vec) - mean(fem_vec)
@@ -97,7 +98,7 @@ pval <- length(xbars.diff[xbars.diff > BS.pop.mean])/10000
 pval
 ```
 
-The histogram suggests we can follow a normally distributed data set with our bootstrapped data; this suggested we could create a p-value. It would be necessary <finish writing paragraph>
+The histogram suggests we can follow a normally distributed data set with our bootstrapped data. Because the original question was asking if the company paid men more than women; we ran a right tailed test with an alternative hypothesis $\mu_d > 0$ where $\mu_d$ represents the average male income minus the average female income. We took several samples samples of 300 with replacement from male and female incomes, recorded the average difference, and repeated this process ten thousand times. The P-value we return is very small number that is degrees smaller than our chosen $\alpha = 0.01$ (I chose 99% significance). This bootstrap method concludes that there is significant evidence that males incomes is by average higher than that of their female counterparts. It may be necessary for the company to address this pay disparity. 
 
 ## Question 2
 
@@ -163,20 +164,28 @@ you quantify the amount of bias?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 ```{r}
-single.samp.90 <- quantile(sample(obs,20,replace = T),.9)
+single.samp <- sample(obs,20,replace = T)
+single.samp.90 <- quantile(single.samp,.9)
 
 for (i in 1:10000){
-  samp <- sample(obs,20,replace = T)
+  samp <- sample(single.samp,20,replace = T)
   x_tiles[i] <- quantile(samp, .9)
 } 
 
-hist(x_tiles, breaks = 160)
-abline(v = single.samp.90,col = "red", lwd = 2)
+hist(x_tiles, breaks = 20)
+abline(v = true_90th,col = "red", lwd = 2)
+abline(v = single.samp.90,col = "forestgreen", lwd = 2)
+
 ```
 
-This doesn't seem as biased as our last example as the single sampled 90th quantile is about at the median/mean when we present our graphic. 
+There seems to be heavy bias in our current method but we also notice how unnormal the data is distributed. This would be difficult to argue as the graph looks really bad (lacking data to make an solid conclusion).
 
-I think to a degree we can possibly quantify the amount of bias <add more context>
+```{r}
+# quantifying bias
+bias <- mean(x_tiles) - single.samp.90
+```
+
+
 
 ### part c.
 
@@ -185,9 +194,10 @@ DIRECTIONS: Combining parts a. and b. Take a single sample of size 20 from your
 population and come up with a Bootstrapped Confidence interval for the
 90%tile of the population...Don’t forget to correct for bias!
 Please submit your plots with brief discussion for each part.
+(I really want you to argue how you're going to account for bias)
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-```{r}
+we will account for bias by taking the mean of our boostrapped 90th percentiles vector and and finding the difference between that and our randomly sampled 90th percentile from the sample of size 20.
 
-```
+
 

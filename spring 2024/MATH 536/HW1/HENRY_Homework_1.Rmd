@@ -1,0 +1,170 @@
+---
+title: "Homework 1"
+author: "Henry Surjono"
+date: "2024-02-09"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Math 536, HW 1:
+
+Problem 1: 
+
+# Part a: First run a valid statistical test using a central limit theorem (i.e. the classical theoretical way). Please report and interpret your p-value.
+
+```{r}
+library(tidyverse)
+thedata <- file.path("~/Documents/Math 536", "HW1P1.csv")
+data <- read.csv(thedata, header = TRUE)
+
+#Seperate the data into male and female
+female_data <- data %>%
+  select(Females) %>%
+  filter(!is.na(Females)) #filter all the na in the dataset
+
+male_data <- data %>%
+  select(Males)
+
+#Decided to run a T-test with two tails
+t.test(male_data, female_data, alternative = "two.sided")
+```
+
+We can set the level of significance of the two sided t-test to be 0.05. Our null hypothesis is that the salaries are equal between male and female and the alternative hypothesis is that the wages are not equal. Since the p-value from the t-test is less than 0.05, we reject the null hypothesis and say that there is evidence of a difference in pay between male and females in the company.
+
+
+# Part b: Now repeat the process of statistical inference but this time you may not assume anything about your sample summary. You must instead bootstrap a p-value.
+```{r}
+
+#step 1: for each value in pop, subtract x bar, then add mu
+
+mean_male <- mean(male_data[,1])
+mean_female <- mean(female_data[,1])
+
+population_mean <- c(mean_male,mean_female)
+pop_mean <- mean(population_mean)
+
+#bs from a sample where the null is true
+BS.pop_male <- male_data[,1] - mean_male + pop_mean
+BS.pop_female <- female_data[,1] - mean_female + pop_mean
+
+#we take a sample of size 1000 form our adjusted population, and record sample mean
+male_samp <- sample(BS.pop_male, 1000, replace = TRUE)
+mean_male_samp <- mean(male_samp)
+
+#now we do that for the female population
+female_samp <- sample(BS.pop_female, 1000, replace = TRUE)
+mean_female_samp <- mean(female_samp)
+
+#repeat previous step 10000 times, record all 10000 sample means
+BS_male_xbar <-rep(0,10000)
+BS_female_xbar <-rep(0,10000)
+BS_xbar_diff = rep(0,10000)
+for(i in 1:10000){
+  single_samp_male <- sample(BS.pop_male, 1000, replace = TRUE)
+  BS_male_xbar[i] <- mean(single_samp_male)
+  single_samp_female <- sample(BS.pop_female, 1000, replace = TRUE)
+  BS_female_xbar[i] <- mean(single_samp_female)
+  BS_xbar_diff <- single_samp_male - single_samp_female
+}
+
+#histogram to show that my bs sample follows a normal distribution
+hist(BS_xbar_diff, breaks = 20)
+
+pval = length(BS_xbar_diff[BS_xbar_diff>pop_mean])/10000
+
+
+```
+
+
+To run hypothesis testing, we use the same null hypthosis and alternative hypothesis from part a. With bootstrapping, we calculated the p-value to be 0.0157, which is still under our level of significance of alpha = .05. We reject the null hypothsis and say that there is evidence of pay discrimination.
+
+# Please write a small report, no more than a paragraph or two relating your results to the company’s interests in discovery. Please only provide relevant statistical output.
+
+To investigate whether there is gender discrimination within the company with regards to pay, we use a two-tailed t-test. The two-tailed t-test is to compare the means of two random samples (i.e. male salary and female salary). For the t-test, we assume the pay is equal between male and female, and see if there is any evidence to the contrary.
+
+```{r}
+t.test(male_data, female_data, alternative = "two.sided")
+```
+The results from the t-test shows that if there is equal pay than there is around a 3% chance of getting the observed results. There is evidence that there is a difference in pay between male and female in the company.
+
+
+# Problem 2
+
+# Does bootstrapping always work? In this problem we want to begin with a population, I don’t care what your population is but something robust (maybe like 50,000 data observations from a well defined numerical distribution).
+
+# Part a. For a given sample size of 20, draw 10,000 samples, all of size 20.Compute the 90%tile of each sample. Plot the 90%tiles of each sample along with the true 90%tile of your population. Do you believe that the 90%tile of a sample of size 20 is an unbiased estimator of the population parameter 90%tile?
+
+```{r}
+pop <- rnorm(50000)
+
+pop.90 = quantile(pop, .90)
+
+#create a new psedo pop, draw 10000 samples, recording the 90th percentile
+BS.90th <-rep(0,10000)
+
+for(i in 1:10000){
+  BS.90th[i] <- quantile(sample(pop, 20, replace = TRUE), .90)
+  
+}
+
+samp.90 = mean(BS.90th, .90)
+
+hist(BS.90th, breaks = 20)
+abline(v=samp.90, col = "red", lwd =2) #from sample
+abline(v= pop.90, col = "blue", lwd = 2) #from population
+
+bias_a <- pop.90 -samp.90
+```
+
+The 90th percentile of a sample size of 20 is not an unbaised estimator for the population perameter of the 90th percentile. If it was an unbaised estimator as the 90th percentile of my sample is always lower than my population 90th percentile when running this code mutliple times. 
+
+
+# Part b. Take a single sample of size 20. Record the 90%tile. Now draw 10,000 bootstrap samples of size 20 from your original sample. Plot the 10,000 BS estimates of the 90%tile along with the true 90%tile of your original sample. Are your bootstrap estimates of the 90%tile biased? Can you quantify the amount of bias?
+
+```{r}
+BS_samp.90th <-c()
+BS_samp.90 <- sample(pop, 20, replace =TRUE)
+for(i in 1:10000) {
+  samp_quant <- sample(BS_samp.90, 20, replace = TRUE)
+  BS_samp.90th[i] <- quantile(samp_quant, .9)
+}
+exp.BS_samp.90th <- mean(BS_samp.90th)
+
+hist(BS_samp.90th, breaks = 20)
+abline(v = pop.90, col = "blue", lwd = 2) # percntile from pop
+abline(v = exp.BS_samp.90th, col = "red", lwd = 2) # percentile from our sample
+
+bias_b <- (exp.BS_samp.90th - samp.90 )
+bias_b
+
+```
+
+The bootstrap 90th percentile is also baised, but we cannot quantify the amount of bias. When running this code multiple times, it seems that the bias can be really small or large. The amount of bias from my bootstrap estimates seems to vary a lot, so the bias cannot be quantified. It seems that when we take a small sample size or sample from a population that is too small, bootstrapping method to have some weird results. 
+
+
+# Part c. Combining parts a. and b. Take a single sample of size 20 from your population and come up with a Bootstrapped Confidence interval for the 90%tile of the population...Don’t forget to correct for bias!
+
+```{r}
+
+#create a sample of size 20 from the population
+New_BS_90 <- sample(pop, 20, replace =TRUE)
+
+#adjust for the bias in part a
+New_BS.90th_adj <- c()
+for(i in 1:20){
+  New_BS.90th_adj[i] = quantile(sample(New_BS_90,20, replace = TRUE), .9) + bias_a
+}
+
+#create a boostrapped confidence interval(2.5th percentil and the 97.5th percentile)
+a = quantile(New_BS.90th_adj, .025)
+b = quantile(New_BS.90th_adj, .975)
+c(a,b)
+
+```
+
+With adjusting for bias, I decided to use the bias from part a. It seems with even after adjust for the bias, the confidence interval does not seem accurate. I would think it is because of the sample size that we took to create the confidence interval because as sample size gets larger, the confidence interval may seems more accurate. 
