@@ -1,0 +1,178 @@
+---
+title: "homework 3 (part 2)"
+author: "Michael Pena"
+date: "2024-02-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(matrixcalc)
+library(dplyr)
+library(tidyverse)
+```
+
+## part (a).
+
+```{r}
+#function to square root a matrix "A"
+sqrtm <- function(A){
+  a <- eigen(A)
+  sqm <- a$vectors %*% diag(sqrt(a$values)) %*% t(a$vectors)
+  sqm <- (sqm+t(sqm))/2
+}
+
+#function for generating data
+gen <- function(n,p,mu,sigma,seed){
+  #generate data from a p-variate normal with mean mu and covaraince sigma
+  #set seed to 2024
+  set.seed(seed)
+  #generate data from normal
+  z <- matrix(rnorm(n*p),n,p)
+  datan <- z %*% sqrtm(sigma) + matrix(mu,n,p,byrow = TRUE)
+  return(data.frame(datan))
+}
+```
+
+```{r}
+# putting in the data
+sig <- matrix(c(1,0.7,0.7,0.7,1,0.7,0.7,0.7,1), nrow = 3, ncol = 3)
+mu <- matrix(c(-1,1,2), nrow =3)
+
+gen(200,3,mu,sig,2024)
+
+
+```
+
+
+
+
+## part (b).
+
+we need to list things that we will need for this simulation
+
+ + Gradient
+  ++ respect to mu component
+  ++ respect to sigma component
+ + mu
+ + sigma
+ + x_i
+ 
+ 
+ 
+```{r}
+likemvn <- function (x,mu,sig,siginv, gcomp) {
+  # computes the likelihood and the gradient for multivariate normal
+  # if gcomp=FALSE, then the gradient is not computed
+  # x is the n by p data matrix
+  # mu is the mean
+  # sig is the covariance
+  # gcomp if TRUE, the gradient with respect to mu will be output
+  if(is.null(sig) && is.null(siginv)) stop("At least on of sig or its inverse must be input")
+  a = dim(x)
+  n = a[1]
+  p = a[2]
+  if(is.null(siginv)){
+    siginv = solve(sig)
+  }
+  C= matrix(0,p,p); # initializing sum of (xi-mu)(xi-mu)^T
+  sxm = matrix(0,p,1) # initializing sum of xi-mu
+  gradm = sxm; # initializing this sum is used for the gradient w.r.t. mu
+  for (i in 1:n){
+    xm = x[i,] - mus
+    sxm = sxm + xm
+    C = C + xm %*% t(xm)
+  }
+  if(gcomp==TRUE){
+    gradm = siginv %*% sxm # dldm
+    grads = # dlds
+  }
+  # --- Note that trace(siginv %*% C) = sum(siginv*C)
+  if(is.null(siginv)){
+    log_det_sig <- log(det(sig))
+  } else {
+    #-- in this case siginv is input so we use the fact that det(sig)=1/det(siginv)
+    log_det_sig <-log(1/det(siginv))
+  }
+  l = -(n*p*log(2*pi)+n*log_det_sig + sum(siginv * C ))/2
+  list(l = l, gradm = if(gcomp) gradm)
+}
+
+
+
+
+
+# Steepest ascent and Newton iterations
+
+optmvn <- function (mu, datan, siginv , maxit, method = "SA") {
+  #mu is a vector of initial values for mu
+  #datan is the data matrix
+  #siginv, is assumed known and is inverse of sig
+  # method is one of "Newton" or "SA" (standing fro steepest ascent)
+  # # maxit is the maximum number of iterations
+  n <- nrow(datan)
+  path = t(mu)
+  for (it in 1:maxit){
+    a <- likemvn(x = datan, mu = mu, siginv = siginv, gcomp = TRUE) 
+    if(method == "SA") dir <-  a$grad  # Steepest Ascent
+    mu1 = mu + dir # Newton's Method
+    atmp = likemvn(x = datan, mu = mu1, siginv = siginv, gcomp = FALSE)
+    halve = 0;
+    print(c(it, halve,a$l))
+    print(c(it, halve,atmp$l))
+    while (atmp$l < a$l & halve <= 20){
+      halve = halve+1
+      mu1 = mu + dir/2^halve  # Steepest Ascent
+      atmp = likemvn(x = datan, mu = mu1, siginv = siginv, gcomp = FALSE)
+      print(c(it, halve,atmp$l))
+    }
+    if (halve >= 20) print('Step-halving failed after 20 halvings')
+    mu = mu1
+    path = rbind(path,t(mu1))
+    print(sprintf('it = %2.0f   mu1 = %12.12f    mu2 = %12.12f  l = %12.12f',
+                  it,mu1[1],mu1[2],atmp$l))
+    print ('-----------------------------------------')
+  }
+  path
+}
+ 
+
+
+  
+```
+
+
+```{r}
+# covar. matrix to vector
+mat.2.vec <- function(M){
+k = 1 
+vec <- c()
+for (i in 1:length(M[,1])){
+  for (j in 1:i){
+   vec[k] <- M[i,j]
+   k = k + 1
+  }
+}
+return(vec)
+}
+```
+
+
+```{r}
+# matrix to covar.
+vec.2.mat <- function(v){
+  M = matrix(0,ncol =3,nrow = 3)
+  k = 1
+  for (i in 1:3){
+    for(j in 1:i){
+      M[i,j] <- v[k]
+      if (j != i ){M[j,i] <- M[i,j]}
+      k = k + 1
+  }
+}
+  return(M)
+}
+```
+
+
+

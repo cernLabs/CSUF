@@ -1,1 +1,5 @@
-fprintf("this is stupid")
+v = [2 2 2 2 2 2 2 2];
+v
+
+
+2**V

@@ -1,0 +1,182 @@
+---
+title: "Homework 3 (Part 1)"
+author: "Michael Pena"
+date: "2024-02-17"
+output: pdf_document
+packages:
+  - bm
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part (a)
+
+$$
+\partial \ell (\partial \mathbf{\mu}) = Tr \Bigl(\mathbf{\Sigma^{-1}} \sum^{n}_{i=1}\partial \mathbf{\mu}(\mathbf{x}_i - \mathbf{\mu})^T\Bigl)
+$$
+
+the ith element will be $\Big[ \mathbf{\Sigma^{-1}} \sum^{n}_{i=1}(\mathbf{x}_i - \mathbf{\mu})\Big]_i$
+
+
+$$
+\partial \ell (\partial \mathbf{\Sigma}) = \frac{-n}{2}Tr\Bigl(
+\mathbf{\Sigma}^{-1} (\mathbf{\Sigma} - \frac{C(\mathbf{\mu})}{2})\mathbf{\Sigma}^{-1} \partial \mathbf{\Sigma}
+\Bigl)
+$$
+here let $A = \mathbf{\Sigma}^{-1}(\mathbf{\Sigma} - \frac{C(\mathbf{\mu})}{n})\mathbf{\Sigma}^{-1}$
+
+when $i = j$
+$$
+\frac{\partial \ell}{\partial \sigma_{ij}} = 
+\frac{-n}{2}A_{ii}
+$$
+
+when $i \ne j$
+$$
+\frac{\partial \ell}{\partial \sigma_{ij}} = 
+\frac{-n}{2}(A_{ij} + A_{ji}) 
+$$
+
+$$
+\partial^2 \ell (\partial \mathbf{\mu} \partial \mathbf{\mu}) = 
+-Tr \Bigl( -\mathbf{\Sigma}^{-1} n \partial \mathbf{\mu} \partial \mathbf{\mu}^T 
+\Bigl)
+$$
+
+nonzero when $i \ne j$
+$$
+\frac{\partial^2 \ell}{\partial \mu_i \partial \mu_j} = 
+-n\Sigma^{-1}_{ij}
+$$
+
+
+$$
+\partial^2 \ell (\partial \mathbf{\mu} \partial \mathbf{\Sigma}) = 
+Tr \Bigl(
+(-\mathbf{\Sigma}^{-1}(\partial \mathbf{\Sigma}) \mathbf{\Sigma}^{-1}) \sum^{n}_{i=1}\partial \mathbf{\mu}(\mathbf{x}_i - \mu)^T
+\Bigl)
+$$
+
+when $i=j$
+$$
+\frac{\partial^2\ell}{\partial \mu_k \partial \sigma_{ij}} = 
+-\sum^{p}_{n=1}\Bigl[
+\Sigma^{-1}_{in} \Sigma^{-1}_{ki}
+\Big(\sum^{m}_{z=1} (x_z - \mu)^T
+\Big) 
+\Bigl]
+$$
+
+when $i \ne  j$
+$$
+\frac{\partial^2\ell}{\partial \mu_k \partial \sigma_{ij}} = 
+-\sum^{p}_{n=1}\Bigl[
+\Big(
+\Sigma^{-1}_{in} \Sigma^{-1}_{kj} +
+\Sigma^{-1}_{jn} \Sigma^{-1}_{ki}
+\Big)
+\Big(\sum^{m}_{z=1} (x_z - \mu)^T
+\Big) 
+\Bigl]
+$$
+
+$$
+\partial^2 \ell (\partial \mathbf{\Sigma} \partial \mathbf{\Sigma})=
+n Tr \Bigl(
+\mathbf{\Sigma}^{-1}(\mathbf{\Sigma} - \frac{C(\mu)}{n} + \frac{1}{2}I) \mathbf{\Sigma}^{-1} \partial \mathbf{\Sigma} \mathbf{\Sigma}^{-1} \partial \mathbf{\Sigma} 
+\Bigl)
+$$
+
+let $A = \mathbf{\Sigma}^{-1}(\mathbf{\Sigma} - \frac{C(\mu)}{n} + \frac{1}{2}I) \mathbf{\Sigma}^{-1}$
+
+when $i=j,k=l$
+$$
+\frac{\partial^2\ell}{\partial \sigma_{ij} \partial \sigma_{kl}} =
+\frac{n}{2}A_{ki}\Sigma^{-1}_{ik}
+$$
+
+when $i \neq j, k = l$
+$$
+\frac{\partial^2\ell}{\partial \sigma_{ij} \partial \sigma_{kl}} =
+\frac{n}{2} \Bigr[
+A_{kj}[\Sigma^{-1}]_{il} +
+A_{ki}[\Sigma^{-1}]_{jl} 
+\Bigr]
+$$ 
+
+when $i = j, k \neq l$
+$$
+\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \sigma_{kl}} = 
+\frac{n}{2} \Bigr[
+A_{kj}[\Sigma^{-1}]_{il} +
+A_{li}[\Sigma^{-1}]_{ik}
+\Bigr]
+$$
+
+when $i\ne j, k\ne l$
+$$
+\frac{\partial^2\ell}{\partial \sigma_{ij} \partial \sigma_{kl}} =
+\frac{n}{2} \Bigr[
+A_{kj}[\Sigma^{-1}]_{il} +
+A_{ki}[\Sigma^{-1}]_{jl} +
+A_{lj}[\Sigma^{-1}]_{ik} +
+A_{li}[\Sigma^{-1}]_{jk}
+\Bigr]
+$$
+
+
+
+## Part (b)
+
+we know that $E[\Sigma^{-1}]= \Sigma^{-1}$ and $E[x_i - \mu] = 0$
+when considering $E[\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \mu_{k}}]$ both cases have $\sum^{n}_{i=1}(x_i - \mu)$ being multiplied thus both cases are zero.
+
+
+when considering $E[\frac{\partial^2 \ell}{\partial \mu_{ij} \partial \mu_{ij}}]$
+
+$i \neq j$ case
+$$
+E[\frac{\partial^2 \ell}{\partial \mu_{i} \partial \mu_{i}}] = 
+n[\Sigma^{-1}]_{ij} 
+$$
+
+
+when considering $E[\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \sigma_{kl}}]$
+we know that 
+
+when $i=j,k=l$
+$$
+E[\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \sigma_{kl}}] = 
+\frac{n}{2}\Sigma^{-1}_{ki}\Sigma^{-1}_{ik}
+$$
+
+when $i \neq j, k = l$
+$$
+E[\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \sigma_{kl}}] = 
+\frac{n}{2} \Bigr[
+\Sigma^{-1}_{kj}[\Sigma^{-1}]_{il} +
+\Sigma^{-1}_{ki}[\Sigma^{-1}]_{jl} 
+\Bigr]
+$$
+
+when $i = j, k \neq l$
+$$
+E[\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \sigma_{kl}}] = 
+\frac{n}{2} \Bigr[
+\Sigma^{-1}_{kj}[\Sigma^{-1}]_{il} +
+\Sigma^{-1}_{li}[\Sigma^{-1}]_{ik}
+\Bigr]
+$$
+
+when $i \neq j, k \neq l$
+$$
+E[\frac{\partial^2 \ell}{\partial \sigma_{ij} \partial \sigma_{kl}}] = 
+\frac{n}{2} \Bigr[
+\Sigma^{-1}_{kj}[\Sigma^{-1}]_{il} +
+\Sigma^{-1}_{ki}[\Sigma^{-1}]_{jl} +
+\Sigma^{-1}_{lj}[\Sigma^{-1}]_{ik} +
+\Sigma^{-1}_{li}[\Sigma^{-1}]_{jk}
+\Bigr]
+$$
