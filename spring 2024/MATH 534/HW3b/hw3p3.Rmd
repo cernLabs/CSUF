@@ -1,0 +1,270 @@
+---
+title: "MP HW3.3 Test"
+author: "Michael Pena"
+date: "2024-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#function to square root a matrix "A"
+sqrtm <- function(A){
+a <- eigen(A)
+sqm <- a$vectors %*% diag(sqrt(a$values)) %*% t(a$vectors)
+sqm <- (sqm+t(sqm))/2
+}
+#function for generating data
+gen <- function(n,p,mu,sigma,seed){
+#generate data from a p-variate normal with mean mu and covaraince sigma
+#set seed to 2024
+set.seed(seed)
+#generate data from normal
+z <- matrix(rnorm(n*p),n,p)
+datan <- z %*% sqrtm(sigma) + matrix(mu,n,p,byrow = TRUE)
+datan
+}
+
+# putting in the data
+sig <- matrix(c(1,0.7,0.7,0.7,1,0.7,0.7,0.7,1), nrow = 3, ncol = 3)
+mu <- matrix(c(-1,1,2), nrow =3)
+x <- gen(200,3,mu,sig,2025)
+```
+
+
+```{r}
+# make gradient
+gradient <- function(x,mu,sig){
+  p <- nrow(sig)
+  n <- nrow(x)
+  inv.sig <- solve(sig)
+  # set initials
+  xi.sum <- matrix(0, p, 1) 
+  C.mu <- matrix(0, p, p) 
+  # compute sum of Xi and sum C(mu)
+  for(i in 1:n){
+    xi <- x[i,] - mu
+    xi.sum <- xi.sum + xi
+    C.mu <- C.mu + xi %*% t(xi)
+  }
+  # place elements into gradient mu and gradient sig
+  grad.mu <- inv.sig %*% xi.sum
+  A <- (n * inv.sig) - inv.sig %*% C.mu %*% inv.sig
+  grad.sig <- matrix(0, nrow = nrow(A), ncol = ncol(A))
+  #gradient sig 
+  for(i in 1:nrow(sig)){
+    grad.sig[i,i] <- -(1/2) * A[i,i]
+  }
+  for(i in 1:nrow(sig)-1){
+    for (j in (i+1):ncol(sig)){
+      grad.sig[i,j] <- -1 * A[i,j]
+      grad.sig[j,i] <- grad.sig[i,j]
+    }
+  }
+  grad.norm <- norm(to.theta(grad.mu,grad.sig), type = '2')
+  list(grad.mu = grad.mu, grad.sig = grad.sig, grad.norm = grad.norm)
+ }
+
+# Hessian Matrix
+
+hessian <- function(x, mu, sigma) {
+  n <- nrow(x)
+  p <- ncol(x)
+  siginv <- solve(sigma)
+  mu_hess <- -n * siginv # second derivative of dmu,dmu
+  
+  # initialize matrix for hessian of dsig,dsig
+  sig_hess <- matrix(0, nrow = p * (p + 1) / 2, ncol = p * (p + 1) / 2) 
+  
+  # initialize C matrix, calculate C(mu)
+  C <- matrix(0, nrow = p, ncol = p)
+  sxm <- matrix(0, p, 1)  # initialize sxm
+  for(i in 1:n) {
+    xm <- x[i,] - mu  # compute each xi - mu
+    sxm <- sxm + xm  # sum of xi - mu
+    # now to find C = sum(xi-mu)(xi-mu)^(T)
+    C <- C + xm %*% t(xm)
+  }
+  Z <- (-1/2)*((-n*diag(p)+2* siginv %*% C) %*% siginv)
+  
+  # calculating the hessian matrix
+  c_count <- 0
+  r_count <- 0
+  for(i in 1:p) {
+    for(j in 1:i) {
+      r_count <- r_count + 1
+      c_count <- 0
+      for(k in 1:p) {
+        for(l in 1:k) {
+          c_count <- c_count + 1
+          if(i == j && k == l) {
+            sig_hess[r_count, c_count] <- Z[k,i] * siginv[i,k]
+          } else if(i != j && k != l) {
+            sig_hess[r_count, c_count] <- Z[k,i] * siginv[j,l] + Z[l,j] * siginv[i,k] + Z[k,j] * siginv[i,l] + Z[l,i] * siginv[j,k]
+          } else if(i != j && k == l) {
+            sig_hess[r_count, c_count] <- Z[k,i] * siginv[j,k] + Z[k,j] * siginv[i,k]
+          } else if(i == j && k != l) {
+            sig_hess[r_count, c_count] <- Z[l,i] * siginv[i,k] + Z[k,i] * siginv[i,l]
+          }
+        }
+      }
+    }
+  }
+  
+  # dmu,dsigma
+  mu_sig_hess <- matrix(0, nrow = p, ncol = p * (p + 1) / 2)
+  sxm2 <- matrix(0,p,1)
+  for(i in 1:n){
+    xm = x[i,] - mu
+    sxm2 = sxm2 + xm
+  }
+  D <- -siginv %*% sxm2
+  r_count <- 0
+  c_count <- 0
+  for(i in 1:p){
+    r_count = r_count +1
+    c_count = 0
+  for(k in 1:p) {
+    for(l in 1:k) {
+      c_count <- c_count + 1
+      if(k == l) {
+        mu_sig_hess[r_count, c_count] <- D[l,] * siginv[i,k]
+      } else if(k != l) {
+        mu_sig_hess[r_count, c_count] <- D[l,] * siginv[k,i] + D[k,] * siginv[l,i]
+      }
+    }
+  }
+  }
+  hessian <- cbind(rbind(mu_hess, t(mu_sig_hess)), rbind(mu_sig_hess, sig_hess))
+  hessian <- 0.5 * (hessian + t(hessian))
+  return(hessian)
+}
+ # turn theta into a mu and sigma
+ from.theta <- function(p,theta){
+   mu <- theta[1:p]
+   sig <- matrix(0, nrow = p, ncol = p)
+   
+   k = p + 1
+   
+   for (i in 1:p){
+     for (j in 1:i){
+       sig[i,j] <- theta[k]
+       sig[j,i] <- sig[i,j]
+       k = k + 1
+     }
+   }
+  list(mu = mu, sig = sig) 
+ }
+
+# # compile Sigma and Mu into a single theta vector
+ to.theta <- function(mu,sig){
+   p <- nrow(sig)
+   theta <- matrix(0,nrow = p + p*(1+p)/2,ncol = 1)
+   theta[1:p] <- mu
+ 
+   k = p + 1
+   for(i in 1:p){
+     for(j in 1:i){
+       theta[k] <- sig[i,j]
+       k = k + 1
+     }
+   }
+   return(theta)
+ }
+
+#likelihood function
+likemvn <- function (x,mu,sig) {
+  # computes the likelihood and the gradient for multivariate normal
+  n = nrow(x)
+  p = ncol(x)
+  
+  sig.inv <- solve(sig)
+  C.mu = matrix(0,p,p) # initializing sum of (xi-mu)(xi-mu)^T
+  xi.sum = matrix(0,p,1) # initializing sum of xi-mu
+  for (i in 1:n){
+    xi = x[i,] - mu
+    C.mu = C.mu + xi %*% t(xi)
+  }
+
+  ell = -(n*p*log(2*pi)+n*log(det(sig)) + sum(sig.inv * C.mu ))/2
+  return(ell)
+}
+
+#Newton Method Function
+newton <- function(x, mu, sig, maxit, tolerr, tolgrad){
+  header = paste0("Iteration", "      halving", "     log-likelihood","      ||Gradient||")
+  print(header)
+  
+  for (it in 1:maxit) {
+    # first steps
+    theta0 <- to.theta(mu, sig) 
+    L0 <- likemvn(x, mu, sig) 
+    # gradient elements
+    grad.on.mu <- gradient(x, mu, sig)$grad.mu
+    grad.on.sig <- gradient(x,mu, sig)$grad.sig
+    grad.on.norm <- gradient(x,mu,sig)$grad.norm
+    
+    #calculate direction vector
+    hess <- hessian(x,mu,sig)
+    inv.hess <- solve(hess)
+    direc <- (-1)*(inv.hess %*% to.theta(grad.on.mu, grad.on.sig))  
+    # print
+
+    print(sprintf('%2.0f                 --          %3.4f               %.1e', 
+                    it,  L0, grad.on.norm))
+      
+
+    
+    # get new parameters
+    theta1 <- theta0 + direc
+    mu1 <- from.theta(3, theta1)$mu
+    sig1 <- from.theta(3, theta1)$sig
+    norm_grad_new <- gradient(x, mu1, sig1)$grad.norm
+    
+    # print NA if e-vals are not positive
+    if(all(eigen(sig1)$values >0)){L1 <- likemvn(x,mu1,sig1)}
+    else{L1 <- NaN}
+    
+    halve <- 0
+    print(sprintf('%2.0f                 %2.0f          %3.4f               %.1e', 
+                    it,  halve, L1, norm_grad_new))
+    
+    # step-halving T_T
+    while((all(eigen(sig1)$values >0) == FALSE & halve < 20) || L1 < L0){
+      halve = halve + 1
+      theta1 <- theta0 + direc/(2^halve) 
+      mu1 <- from.theta(3, theta1)$mu
+      sig1 <- from.theta(3, theta1)$sig
+      if(all(eigen(sig1)$values >0)){L1 <- likemvn(x,mu1,sig1)}
+      else{L1 <- NaN}
+      
+      # get the new norm grad
+      grad.on.norm1 <- gradient(x, mu1, sig1)$grad.norm
+    
+      print(sprintf('%2.0f                 %2.0f          %3.4f               %.1e', 
+                      it,  halve, L1, grad.on.norm1))
+    }
+      print("-----------------------------------------------------------------")
+      print(header) 
+
+    theta0 <- theta1
+    
+    # stopping conditions
+    r.e = max(abs(theta0 - theta1)/abs(pmax(1,abs(theta0))))
+    if (r.e < tolerr & grad.on.norm1 < tolgrad){break}
+    mu <- mu1
+    sig <- sig1
+  }
+  return(list("estimator of mu"=mu, "estimator of sigma" = sig, "iteration" = it))
+    
+}
+
+mu.0 <- matrix(c(-1.5,1.5,2.3),ncol = 1)
+sig.0 <- matrix(c(1,0.5,0.5,
+                  0.5,1,0.5,
+                  0.5,0.5,1), nrow=3, ncol=3)
+newton(x,mu.0,sig.0,10,1e-07,1e-07)
+```
+

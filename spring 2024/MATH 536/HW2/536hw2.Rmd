@@ -1,0 +1,100 @@
+---
+title: "536 Homework 2"
+author: "Michael Pena"
+date: "2024-02-22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+setwd("~/Desktop/githubbahubba/CSUF/spring 2024/MATH 536/HW2")
+```
+
+## Question
+
+Download the dataset hw2.csv from Titanium. In this dataset you will find financial
+marketing data on 268 start-up companies working in the tech sector.
+The variables within this dataset are spend and revenue. Spend contains the
+amount of capital resources that were spent initially on over the first year of each
+company. Revenue quantifies the amount of revenue generated during the first year
+of the company.
+
+You have been hired by a new tech start-up who is interested in advertising.
+Specifically they have the following asks:
+
+1. What is the relationship between advertising spend and revenue within the
+first year of a start-up.
+2. Currently the company is debating between spending $500,000 and
+$700,000 on advertising, please provide guidance.
+Please analyze the data and provide relevant output that addresses each of your
+employers asks.
+
+If you need any clarity on the data feel free to ask Dr. Nichols.
+
+```{r}
+# import the data 
+data <-  read.csv("data.csv")
+```
+
+```{r}
+# build model
+
+model1 = lm(Revenue ~ Spend, data=data )
+model1
+```
+
+```{r}
+# summary
+summary(model1)
+```
+```{r}
+# visualization
+plot(Revenue ~ Spend,data = data, main = "Revenue vs. Spend")
+abline(model1)
+```
+
+```{r}
+#remove the outlier in the corner
+data <- data %>% filter(Revenue != 0)
+#retrain model
+model1 = lm(Revenue ~ Spend, data=data)
+#revisualise
+plot(Revenue ~ Spend,data = data, main = "Revenue vs. Spend")
+abline(model1)
+```
+
+```{r}
+summary(model1)
+```
+
+
+## Analysis
+
+```{r}
+# predictions
+newdata.5 = data.frame(Spend = 500000)
+predict(model1,newdata.5,interval="predict")
+
+newdata.7 = data.frame(Spend = 700000)
+predict(model1,newdata.7,interval="predict")
+
+```
+```{r}
+# let's look at cost effectiveness
+# if we spend 500k$
+490347.1 - 500000
+869659.6 - 500000
+# if we spend 700k$
+708591.9 - 700000
+1087770 - 700000
+
+```
+
+$\textbf{note:}$ I have removed the a single outlying point as it is not representative of the entire data set at hand; standard error is lower in when the outlier is removed making the model more useful for these particular asks. 
+
+## Conclusion
+
+According to my model, if the company spends \$500k on advertising, the lowest predicted revenue is \$490347.1 and the highest predicted revenue is \$869659.6
+If the company rather chooses to spend \$700k on advertising, the lowest predicted revenue is \$708591.9 and the highest predicted revenue is \$1087770
+I would argue that because there is more to gain (\$18110.4 more) and less to lose (\$18244.8 less), the company should pick the $700k spend option. My model implies that there is simply less risk if the company limits their spend to this number. 

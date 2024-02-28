@@ -1,0 +1,210 @@
+---
+title: "Homework 3 - Part 2 - Math 534"
+author: "Elijah Amirianfar"
+date: "2024-02-18"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Part a) Generate 200 data points from a trivariate normal with 
+$$
+\boldsymbol\mu = (-1,1,2)^T,~~~\boldsymbol\Sigma = 
+\begin{bmatrix}
+1 & 0.7 & 0.7\\
+0.7 & 1 & 0.7\\
+0.7 & 0.7 & 1
+\end{bmatrix}$$
+
+## using the gen() function given during the lecture and setting the seed to 2024. Print the first three rows of your data.
+
+```{r,warning=FALSE}
+sqrtm <- function (A) {
+  # Obtain matrix square root of a matrix A
+  a = eigen(A)
+  sqm = a$vectors %*% diag(sqrt(a$values)) %*% t(a$vectors)
+  sqm = (sqm+t(sqm))/2
+}
+
+gen <- function(n,p,mu,sig,seed){
+  #---- Generate data from a p-variate normal with mean mu and covariance sigma
+  # mu should be a p by 1 vector
+  # sigma should be a positive definite p by p matrix
+  # Seed can be optionally set for the random number generator
+  set.seed(seed)
+  # generate data from normal mu sigma
+  z = matrix(rnorm(n*p),n,p)
+  datan = z %*% sqrtm(sig) + matrix(mu,n,p, byrow = TRUE)
+  datan
+}
+
+mu = c(-1,1,2)
+sig = matrix(c(1,.7,.7,.7,1,.7,.7,.7,1),3,3)
+
+data_values = gen(200,3,mu,sig,seed=2024)
+data_values[1:3,]
+```
+\newpage
+
+## Part b) Use the data you generated in part (a) and your steepest ascent function to estimate the parameters in $\boldsymbol\mu$ and $\boldsymbol\Sigma$. Start your iterative process with the following:
+
+$$
+\boldsymbol\mu^{(0)} = (0,0,0)^T,~~ \boldsymbol\Sigma^{(0)} = I,~~ maxit = 500,~~ tolerr = 1e\text{-}6,~~ tolgrad = 1e\text{-}5
+$$
+
+## where I is the identity matrix. Print the first two iterations and last two iterations.
+
+Below we have five functions that are needed to compute the steepest ascent algorithm that estimates the parameters in $\boldsymbol\mu$ and $\boldsymbol\Sigma$.
+
+```{r,warning=FALSE}
+mu_sig2teta_vec = function(mu, sig){ # takes a mu and sigma and puts it into a theta vector
+  p = length(mu)
+  teta = matrix(0, nrow = (p + p*(p+1)/2), ncol = 1)
+  teta[1:p] = mu
+  for (i in 1:p){
+    for (j in 1:i){
+      p = p+1
+      teta[p] = sig[i,j]
+    }
+  }
+  teta
+}
+
+teta_vec2mu_sig = function(p,teta){ # takes a theta vector and outputs a mu vector and sigma matrix
+  mu = teta[1:p]
+  sig = matrix(0, nrow = p, ncol = p) 
+  for (i in 1:p){
+    for (j in 1:i){
+      p = p+1
+      sig[i,j] = teta[p]
+      sig[j,i] = sig[i,j]
+    }
+  }
+  list(mu = mu, sig = sig)
+}
+
+gradient_mu_sig = function(x,mu,sig){ # function of all our gradients
+  p = dim(sig)[1]
+  n = dim(x)[1]
+  siginv = solve(sig)
+  C = matrix(0,p,p); # initializing sum of c_mu = (xi-mu)(xi-mu)^T
+  sxm = matrix(0,p,1) # initializing sum of xi-mu
+  gradm = sxm; # initializing this sum is used for the gradient w.r.t. mu
+  
+  for (i in 1:n){
+    xm = x[i,] - mu # gives us (xi - mu)
+    sxm = sxm + xm # does the sum of (xi - mu)
+    C = C + xm %*% t(xm) # this does (xi-mu)(xi-mu)^T
+  } # this calculates c_mu
+  gradm = siginv %*% sxm # gives us gradient of mu
+  
+  A = n*siginv - siginv%*%C%*%siginv
+  grad_s = matrix(0,dim(A)[1],dim(A)[2]) # sigma matrix
+
+  for (i in 1:dim(sig)[1]){
+    grad_s[i,i] = -.5*A[i,i] # edits the diagonals for sigma_ii
+  }
+  
+  for (i in 1:dim(sig)[1]-1){
+    for (j in (i+1):dim(sig)[2]){
+      grad_s[i,j] = -A[i,j] # computes sigma_ij
+      grad_s[j,i] = grad_s[i,j]
+    }
+  }
+  
+  grad_norm = norm(mu_sig2teta_vec(gradm, grad_s), type='2')
+  
+  list(gradm = gradm, grads = grad_s, grad_norm = grad_norm)
+}
+
+
+likemvn <- function (x, mu, sig) { 
+  a = dim(x)
+  n = a[1] # number of rows of x
+  p = a[2] # number of columns of x
+  
+  siginv = solve(sig)
+  C = matrix(0,p,p); # initializing sum of c_mu = (xi-mu)(xi-mu)^T
+  sxm = matrix(0,p,1) # initializing sum of xi-mu
+
+  for (i in 1:n){
+    xm = x[i,] - mu # gives us (xi - mu)
+    sxm = sxm + xm # does the sum of (xi - mu)
+    C = C + xm %*% t(xm) # this does (xi-mu)(xi-mu)^T
+  } # this calculates c_mu
+  
+  l = -(n*p*log(2*pi)+n*log(det(sig)) + sum(solve(sig)*C))/2 # log likelihood function
+  l
+}
+
+steep_asc = function(x, mu, sig, maxit, tolerr=1e-6, tolgrad=1e-5){
+  header = paste0("Iteration", "      Halving", "       log-likelihood", "       ||gradient||")
+  print(header)
+  
+  for (it in 1:maxit){
+    theta = mu_sig2teta_vec(mu,sig) # theta^(0)
+    a = likemvn(x,mu,sig) # calculates likelihood 
+    
+    grad_mu = gradient_mu_sig(x,mu,sig)$gradm # gradient of mu
+    grad_sig = gradient_mu_sig(x,mu,sig)$grads # gradient of sigma
+    norm_grad = gradient_mu_sig(x,mu,sig)$grad_norm # calculates norm of the gradient
+    if(it == 1 | it ==2 | it == 477 | it == 478){
+    print(sprintf('%2.0f                 --          %3.4f               %.1e', 
+                  it,  a, norm_grad))
+    }
+    direction = mu_sig2teta_vec(grad_mu,grad_sig) # calculates direction
+    
+    theta_new = theta + direction # new theta
+    
+    mu_new = teta_vec2mu_sig(length(mu), theta_new)$mu # this gives us the new mu
+    sig_new = teta_vec2mu_sig(length(mu), theta_new)$sig # this gives us the new sigma
+    pos_def = all(eigen(sig_new)$values > 0)
+    norm_grad_new = gradient_mu_sig(x, mu_new, sig_new)$grad_norm
+    
+    if (pos_def) {atmp = likemvn(x,mu_new,sig_new)}
+    else {atmp = -Inf}
+    
+    halve = 0
+    if(it == 1 | it ==2 | it == 477 | it == 478){
+    print(sprintf('%2.0f                 %2.0f          %3.4f               %.1e', 
+                  it,  halve, atmp, norm_grad_new))}
+    while ((pos_def == FALSE & halve < 20) || atmp < a){
+      halve = halve + 1
+      theta_new = theta + direction/(2^halve)  # Steepest Ascent
+      mu_new = teta_vec2mu_sig(length(mu), theta_new)$mu # this gives us the new mu
+      sig_new = teta_vec2mu_sig(length(mu), theta_new)$sig # this gives us the new sigma
+      pos_def = all(eigen(sig_new)$values > 0)
+      if (pos_def) {atmp = likemvn(x,mu_new,sig_new)}
+      else {atmp = -Inf}
+      norm_grad_new = gradient_mu_sig(x, mu_new, sig_new)$grad_norm
+      if(it == 1 | it ==2 | it == 477 | it == 478){
+      print(sprintf('%2.0f                 %2.0f          %3.4f               %.1e', 
+                    it,  halve, atmp, norm_grad_new))}
+    }
+    if(it == 1 | it ==2 | it == 477){
+    print("-----------------------------------------------------------------")
+    print(header) 
+      }
+    theta = theta_new
+    mod_rel_error = max(abs(theta - theta_new)/abs(pmax(1,abs(theta))))
+    if (mod_rel_error < tolerr & norm_grad_new < tolgrad) {
+      break}
+    mu = mu_new
+    sig = sig_new
+  }
+  return(list("estimator of mu"=mu, "estimator of sigma" = sig, "iteration" = it))
+}
+```
+\newpage
+
+Here, let $\boldsymbol\mu^{(0)} = (0,0,0)^T,~~ \boldsymbol\Sigma^{(0)} = I~\text{(a 3x3 identity matrix)},~~ maxit = 500,~~ tolerr = 1e\text{-}6,~~ tolgrad = 1e\text{-}5$
+
+```{r, warning=FALSE}
+mu = c(0,0,0)
+sig = diag(3)
+steep_asc(data_values,mu,sig,500)
+```
+
+
