@@ -1,0 +1,410 @@
+---
+title: "Math 534 Homework 3.4"
+subtitle: |
+  | Mike Palmer
+  | due 2024/02/28
+header-includes:
+  \usepackage{titling}
+  \setlength{\droptitle}{-3cm}
+output:
+  pdf_document:
+---
+\vspace{-.5cm}
+
+\textbf{Data Generation} To get a dataset, use gen() function with seed 2025 to generate 200 data points from a trivariate normal with the following parameters.
+
+$$\boldsymbol{\mu} = [-1,1,2]^T \text{ and } \boldsymbol{\Sigma}= \begin{pmatrix} 1 & 0.7 & 0.7 \\ 0.7 & 1 & 0.7 \\ 0.7 & 0.7 & 1  \end{pmatrix}$$
+
+```{r}
+# Generate data
+sqrtm <- function (A) {
+  # Obtain matrix square root of a matrix A
+  a = eigen(A)
+  sqm = a$vectors %*% diag(sqrt(a$values)) %*% t(a$vectors)
+  sqm = (sqm+t(sqm))/2
+}
+
+gen <- function(n,p,mu,sig,seed = 534){
+  #---- Generate data from a p-variate normal with mean mu and covariance sigma
+  # mu should be a p by 1 vector
+  # sigma should be a positive definite p by p matrix
+  # Seed can be optionally set for the random number generator
+  set.seed(seed)
+  # generate data from normal mu sigma
+  z = matrix(rnorm(n*p),n,p)
+  datan = z %*% sqrtm(sig) + matrix(mu,n,p, byrow = TRUE)
+  datan
+}
+
+mu = matrix(c(-1,1,2),nrow = 3,ncol = 1)
+sigma = matrix(c(1,.7,.7,.7,1,.7,.7,.7,1),nrow = 3,ncol = 3)
+data = gen(200,3,mu,sigma,seed = 2025)
+data[1:3,]
+
+```
+
+\newpage
+
+\textbf{Exercise J-2.2 (continued)} [20 Points] In this exercise, we assume we have a set of data $\boldsymbol{x}_1,\boldsymbol{x}_2,\dots,\boldsymbol{x}_n$ from a $p$-variate normal distribution with mean $\boldsymbol{\mu} = [\mu_1,\mu_2,\dots,\mu_p]^T$ and a $p \times p$ covariance matrix $\boldsymbol{\Sigma}=(\sigma_{ij})$.  Use the BFGS quasi-Newton method in the R \texttt{optim} function to maximize the following log-likelihood function with respect to parameters $\boldsymbol{\mu}$ and $\boldsymbol{\Sigma}$:
+$$ \ell(\boldsymbol{\mu},\boldsymbol{\Sigma} | \boldsymbol{x}_1,\boldsymbol{x}_2,\dots,\boldsymbol{x}_n) = -\frac{1}{2}\Bigg\{nplog(2\pi) + nlog(|\boldsymbol{\Sigma}|) + trace\left[\boldsymbol{\Sigma}^{-1}c(\boldsymbol{\mu})\right] \Bigg\},$$
+$$\text{ where } c(\boldsymbol{\mu}) = \sum_{z=1}^n(\boldsymbol{x}_z -\boldsymbol{\mu})(\boldsymbol{x}_z -\boldsymbol{\mu})^T.$$
+There are $p$ parameters in $\boldsymbol{\mu}$ and $p(p+1)/2$ parameters in $\boldsymbol{\Sigma}$ (since $\sigma_{ij}=\sigma_{ji}$). Define $$\boldsymbol{\theta} = [\mu_1,\mu_2,\dots,\mu_p,\sigma_{11},\sigma_{21},\sigma_{22},\sigma_{31},\sigma_{32},\sigma_{33},\dots,\sigma_{p1},\sigma_{p2},\dots,\sigma_{pp}]^T.$$ 
+
+```{r library, echo=FALSE, message=FALSE}
+library(knitr) #style output
+library(kableExtra) #style output
+library(dplyr) #style output
+```
+
+```{r}
+loglike_f <- function(data,mu,sigma){
+  n = nrow(data)
+  p = ncol(data)
+  c_mu = matrix(0,nrow = p, ncol = p) #pxp #c_mu like c(\mu) from previous hw
+  for(i in 1:n){ c_mu = c_mu + (data[i,] - mu) %*% t(data[i,] - mu) }
+  l = -1/2*(n*p*log(2*pi)+n*log(det(sigma))+sum(diag(solve(sigma) %*% c_mu))) #how this note? Note that trace(siginv %*% C) = sum(siginv*C)
+  list(l=l)
+}
+
+grad_mu_loglike_f <- function(data,mu,sigma){
+  n = nrow(data)
+  p = ncol(data)
+  d_c_mu = matrix(0,nrow = p, ncol = 1) #px1 #d_c_mu as in differential of c_mu #same as sxm
+  for(i in 1:n){ d_c_mu = d_c_mu + (data[i,] - mu) }
+  grad_mu = solve(sigma) %*% d_c_mu
+  grad_mu
+}
+
+grad_sigma_loglike_f <- function(data,mu,sigma){
+  n = nrow(data)
+  p = ncol(data)
+  c_mu = matrix(0,nrow = p, ncol = p) #pxp 
+  for(i in 1:n){ c_mu = c_mu + (data[i,] - mu) %*% t(data[i,] - mu) }
+  grad_sigma = -n/2 *( solve(sigma) %*% (sigma - (c_mu/n)) %*% solve(sigma))
+  grad_sigma
+}
+
+mu_sigma_to_teta_vec <- function(mu,sigma, is.gradient = FALSE){
+  
+  p = nrow(mu)
+  teta = matrix(0,nrow =p+p*(p+1)/2, ncol = 1)
+  teta[1:p,] = mu
+  for (i in 1:p){    #teta[(p+1) to p(p+1)/2,] = sigma
+    for (j in 1:i){
+      p = p+1
+      if(is.gradient == FALSE){ 
+        teta[p,] = sigma[i,j]
+      }
+      else{
+        if(i == j){ 
+          teta[p,] = sigma[i,j]
+        }
+        else {
+          teta[p,] = 2*sigma[i,j]
+        }
+      }
+    }
+  }
+  
+  if(is.gradient == FALSE) return(list(teta = teta, mu =  mu, sigma = sigma))
+  if(is.gradient == TRUE)  return(list(grad_teta = teta, grad_mu =  mu, grad_sigma = sigma))
+}
+
+#input teta vector, output mu and sigma
+teta_vec_to_mu_sigma <- function(teta_vec,p){
+  
+  mu =  matrix(teta_vec[1:p],nrow = p, ncol = 1)
+  sigma =  matrix(0,nrow = p, ncol = p) #sigma = teta_vec[(p+1) to p(p+1)/2,]
+  for (i in 1:p) {
+    for (j in 1:i) {
+      p = p+1
+      sigma[i,j] = teta_vec[p]
+      if(i != j) sigma[j,i] = teta_vec[p]
+    }
+  }
+  
+  list(mu = mu, sigma = sigma)
+}
+
+##########################################new code to run optim()
+
+f_optim <- function(teta,data){
+  p = ncol(data)
+  mu = teta_vec_to_mu_sigma(teta,p)$mu
+  sigma = teta_vec_to_mu_sigma(teta,p)$sigma
+  pos_definite = all(eigen(sigma)$values>0)
+  if (pos_definite){l = loglike_f(data,mu,sigma)$l} #crucial point here
+  else {l= NaN}
+  l
+}
+
+gr_optim <- function(teta,data){
+  p = ncol(data)
+  mu = teta_vec_to_mu_sigma(teta,p)$mu
+  sigma = teta_vec_to_mu_sigma(teta,p)$sigma
+  grad_mu = grad_mu_loglike_f(data,mu,sigma)
+  grad_sigma = grad_sigma_loglike_f(data,mu,sigma)
+  grad = mu_sigma_to_teta_vec(grad_mu,grad_sigma, is.gradient = TRUE)$grad_teta
+  grad
+}
+
+mu_start = matrix(c(0,0,0),nrow = 3,ncol = 1)
+sigma_start = diag(3)
+teta_start = mu_sigma_to_teta_vec(mu_start,sigma_start, is.gradient = FALSE)$teta
+
+optim(teta_start, f_optim, gr_optim, data = data, method = "BFGS", 
+      control = list(fnscale = -1, trace = 1, abstol = 10e-6)) #hessian = TRUE
+
+```
+
+```{r, echo=FALSE}
+#not used#answer_list = optim(teta_start, f_optim, gr_optim, data = data, method = "BFGS", control = list(fnscale = -1, trace = 1, abstol = 10e-6), hessian = TRUE)
+#MissMech Check
+#round(optim(teta_start, f_optim, gr_optim, data = data, method = "BFGS", control = list(fnscale = -1, trace = 1, abstol = 10e-6), hessian = TRUE)$hessian-Ddf(data,mu_ans,sigma_ans)$dd,2)
+#round(optim(teta_start, f_optim, gr_optim, data = data, method = "BFGS", control = list(fnscale = -1, trace = 1, abstol = 10e-6), hessian = TRUE)$hessian-H(data,mu_ans,sigma_ans),2)
+
+#teta_ans <- optim(teta_start, f_optim, gr_optim, data = data, method = "BFGS", control = list(fnscale = -1, trace = 1, abstol = 10e-6), hessian = TRUE)$par
+#mu_ans <- teta_vec_to_mu_sigma(teta_ans,3)$mu
+#sigma_ans <-teta_vec_to_mu_sigma(teta_ans,3)$sigma
+#H is my hessian function
+#H(data,mu_ans,sigma_ans)
+
+```
+
+\newpage
+
+\textbf{Exercise GH-2.3} (a) [5 Points] Prove the log-likelihood. Let $\boldsymbol{\theta} = (\alpha,\beta_0,\beta_1)$. 
+\begin{align*}
+L(\boldsymbol{\theta}) &= \prod_{i=1}^{n} f(t_i) \\ 
+&= \prod_{i=1}^{n} h(t_i)^{w_i} \cdot S(t_i) \\
+l(\boldsymbol{\theta}) &= \sum_{i=1}^{n} \Bigg[ w_i \cdot log\{h(t_i)\} + log\{S(t_i)\} \Bigg] \\ 
+&= \sum_{i=1}^{n} \Bigg[ w_i \cdot \left(log\{\lambda(t_i)\} + \boldsymbol{x}_i^T\boldsymbol{\beta} \right) -\Lambda(t_i)exp\{\boldsymbol{x}_i^T\boldsymbol{\beta}\} \Bigg] \\
+&= \sum_{i=1}^{n} \Bigg[ w_i \cdot log\{\lambda(t_i)\} + w_i \cdot \boldsymbol{x}_i^T\boldsymbol{\beta} -\mu_i \Bigg] \\ 
+&= \sum_{i=1}^{n} \Bigg[ w_i \cdot log\{\lambda(t_i)\} + w_i \cdot \Bigg(log\{\mu_i\}-log\{\Lambda(t_i)\} \Bigg) -\mu_i \Bigg] \\ 
+&= \sum_{i=1}^{n} \left( w_i \cdot log\{\mu_i\} -\mu_i \right) + \sum_{i=1}^{n} w_i \cdot log\left\{\frac{\lambda(t_i)}{\Lambda(t_i)} \right\} \end{align*}
+
+\newpage
+
+\textbf{Exercise GH-2.3} (b) [20 Points] Code a Newton-Raphson algorithm and find the MLEs of $\alpha$, $\beta_0$, and $\beta_1$.
+
+
+\textbf{Exercise GH-2.3} (b) Solution: Code
+
+```{r}
+#######################################################data
+#censored #treatment #w_i = 0 #d_i = 1
+t_i = c(6,9,10,11,17,19,20,25,32,32,34,35)
+w_i = c(rep(0,12))
+d_i = c(rep(1,12))
+
+#uncensored #treatment  #w_i = 1 #d_i = 1
+t_i = c(t_i,6,6,6,7,10,13,16,22,23)
+w_i = c(w_i,rep(1,9))
+d_i = c(d_i,rep(1,9))
+
+#uncensored #control #w_i = 1 #d_i = 0
+t_i = c(t_i,1,1,2,2,3,4,4,5,5,8,8,8,8,11,11,12,12,15,17,22,23)
+w_i = c(w_i,rep(1,21))
+d_i = c(d_i,rep(0,21))
+
+data<-cbind(d_i,w_i,t_i)
+
+#######################################################functions
+loglike <- function(data,alpha,beta0,beta1){
+  l = 0
+  for(i in 1:nrow(data)){
+  d_i = data[[i,1]]
+  w_i = data[[i,2]]
+  t_i = data[[i,3]]
+  l = l + w_i*log(alpha)+w_i*(alpha-1)*log(t_i)+w_i*(beta0+d_i*beta1)-w_i*(t_i^(alpha))*exp(beta0+d_i*beta1)-(1-w_i)*(t_i^(alpha))*exp(beta0+d_i*beta1)
+  }
+  l
+}
+
+grad_loglike <- function(data,alpha,beta0,beta1){
+  d_alpha = 0
+  d_beta0 = 0 
+  d_beta1 = 0
+  for(i in 1:nrow(data)){
+    d_i = data[[i,1]]
+    w_i = data[[i,2]]
+    t_i = data[[i,3]]
+    d_alpha = d_alpha + w_i/alpha+w_i*log(t_i)-w_i*(t_i^(alpha))*log(t_i)*exp(beta0+d_i*beta1)-(1-w_i)*(t_i^(alpha))*(log(t_i))*exp(beta0+d_i*beta1)
+    d_beta0 = d_beta0 + w_i-w_i*(t_i^(alpha))*exp(beta0+d_i*beta1)-(1-w_i)*(t_i^(alpha))*exp(beta0+d_i*beta1)
+    d_beta1 = d_beta1 + w_i*d_i-w_i*(t_i^(alpha))*exp(beta0+d_i*beta1)*d_i-(1-w_i)*(t_i^(alpha))*exp(beta0+d_i*beta1)*d_i
+  }
+  return(matrix(c(d_alpha,d_beta0,d_beta1),nrow=3,ncol=1))
+}
+
+hess_loglike <- function(data,alpha,beta0,beta1){
+  dd_alphaalpha =  0
+  dd_beta0beta0 =  0
+  dd_beta1beta1 =  0
+  dd_alphabeta0 =  0
+  dd_alphabeta1 =  0
+  dd_beta0beta1 =  0
+  
+  for(i in 1:nrow(data)){
+    d_i = data[[i,1]]
+    w_i = data[[i,2]]
+    t_i = data[[i,3]]
+    dd_alphaalpha = dd_alphaalpha - w_i/(alpha^2)-w_i*(t_i^(alpha))*((log(t_i))^2)*exp(beta0+d_i*beta1) - (1-w_i)*(t_i^(alpha))*((log(t_i))^2)*exp(beta0+d_i*beta1)
+    dd_beta0beta0 = dd_beta0beta0 - w_i*(t_i^(alpha))*exp(beta0+d_i*beta1) - (1-w_i)*(t_i^(alpha))*exp(beta0+d_i*beta1)
+    dd_beta1beta1 = dd_beta1beta1 - w_i*(t_i^(alpha))*exp(beta0+d_i*beta1)*(d_i^2) - (1-w_i)*(t_i^(alpha))*exp(beta0+d_i*beta1)*(d_i^2)
+    dd_alphabeta0 = dd_alphabeta0 - w_i*(t_i^(alpha))*log(t_i)*exp(beta0+d_i*beta1) - (1-w_i)*(t_i^(alpha))*(log(t_i))*exp(beta0+d_i*beta1)
+    dd_alphabeta1 = dd_alphabeta1 - w_i*(t_i^(alpha))*log(t_i)*exp(beta0+d_i*beta1)*d_i - (1-w_i)*(t_i^(alpha))*(log(t_i))*exp(beta0+d_i*beta1)*d_i
+    dd_beta0beta1 = dd_beta0beta1 - w_i*(t_i^(alpha))*exp(beta0+d_i*beta1)*d_i - (1-w_i)*(t_i^(alpha))*exp(beta0+d_i*beta1)*d_i
+  }
+  H = matrix(c(dd_alphaalpha,dd_alphabeta0,dd_alphabeta1,
+               dd_alphabeta0,dd_beta0beta0,dd_beta0beta1,
+               dd_alphabeta1,dd_beta0beta1,dd_beta1beta1),nrow =3, ncol =3)
+  return(H)
+}
+
+#######################################################Algo
+newton <- function(data, alpha_start=1, beta0_start=1, beta1_start=1,
+                   maxit = 500, tolerr = 1e-2, tolgrad = 1e-2, show = NULL){
+  
+  it = 1;p = 3; stop = FALSE; for_show = matrix(0,nrow = 0,ncol = 4)
+  teta_n = matrix(c(alpha_start,beta0_start,beta1_start),nrow=p,ncol=1) #starting point
+  
+  
+  while(it <= maxit & stop == FALSE){   #core calculation
+    
+    alpha = teta_n[1,]
+    beta0 = teta_n[2,]
+    beta1 = teta_n[3,]
+    f_teta_n = loglike(data,alpha,beta0,beta1)
+    grad_teta_n = grad_loglike(data,alpha,beta0,beta1)
+    hess_inv = solve(hess_loglike(data,alpha,beta0,beta1))
+
+    teta_n_new = teta_n + (-hess_inv %*% grad_teta_n)
+    
+    if(teta_n_new[1,]>0){
+      alpha = teta_n_new[1,]
+      beta0 = teta_n_new[2,]
+      beta1 = teta_n_new[3,]
+      f_teta_n_new = loglike(data,alpha,beta0,beta1)
+      grad_teta_n_new = grad_loglike(data,alpha,beta0,beta1)
+    }
+    
+    for_show = rbind(for_show,c(it, NaN, f_teta_n, norm(grad_teta_n, type = "2")))
+    halve = 0
+    while( halve <= 20 & (teta_n_new[1,]<=0 || f_teta_n_new < f_teta_n) ){
+      
+      teta_n_new = teta_n + (-hess_inv %*% grad_teta_n)/2^halve
+      
+      if(teta_n_new[1,]>0){
+        alpha = teta_n_new[1,]
+        beta0 = teta_n_new[2,]
+        beta1 = teta_n_new[3,]
+        f_teta_n_new = loglike(data,alpha,beta0,beta1)
+        grad_teta_n_new = grad_loglike(data,alpha,beta0,beta1)
+        
+        L2_norm = norm(grad_teta_n_new, type = "2")
+        for_show = rbind(for_show,c(it, halve, f_teta_n_new, L2_norm)) 
+      
+      } #else{for_show = rbind(for_show,c(it, halve, NaN, NaN))}
+      
+      halve = halve + 1
+    }
+    
+    mod_rel_err = max(abs(teta_n_new-teta_n)/pmax(1,abs(teta_n_new))) #stop calculation #aka convergence? #create as function for future
+    L2_norm = norm(grad_teta_n_new, type = "2") #needed if not halving
+    if (mod_rel_err<tolerr & L2_norm < tolgrad) stop = TRUE
+    
+    teta_n <- teta_n_new #next iteration
+    it = it + 1
+  }
+
+  #print estimates
+  parameter_print = data.frame(`alpha`=teta_n_new[1,],
+                               `beta0`=teta_n_new[2,],
+                               `beta1`=teta_n_new[3,])
+
+  print(kable(list(parameter_print),
+              align = 'c',
+              booktabs = TRUE, 
+              caption = "Parameter Estimates") %>% kable_styling(latex_options = "HOLD_position")
+  )
+  
+  #print iterations
+  if(show == "show_2"){
+    for_show = for_show[for_show[,1]==1 | for_show[,1]==2 | for_show[,1]== (it-2) | for_show[,1]== (it-1),]}
+  desc = data.frame(`it`=for_show[,1],`halve`=for_show[,2],`loglikelihood`=for_show[,3],`L2_norm`=for_show[,4]) %>% mutate(it,halve,loglikelihood,L2_norm = sprintf('%4.1e',L2_norm))
+  return(kable(desc, col.names = names(desc), align = "cccc", booktabs = TRUE, caption = 'Iterations') %>% kable_styling(latex_options = "striped"))
+  
+}
+
+
+```
+
+\newpage
+
+\textbf{Exercise GH-2.3} (b) Solution: Output
+
+```{r, results = 'asis'}
+
+newton(data, 1,1,1,maxit = 100, show = "show")
+
+```
+
+\newpage
+
+\textbf{Exercise GH-2.3} (d) [5 Points] Estimate the standard errors for your MLEs. Are any of your MLEs highly correlated? Report pairwise correlations.
+
+As shown below in the output of the \texttt{cov2cor()} function, $\alpha$ and $\beta_0$ are highly inversely correlated.
+
+```{r}
+
+hess_inv=solve(hess_loglike(data,1.365757,-3.070704,-1.730871))
+-hess_inv
+
+se = sqrt(diag(-hess_inv))
+se
+
+cov2cor(-hess_inv)
+
+```
+
+\newpage 
+
+\textbf{Exercise GH-2.3} (d) (using optim)
+
+```{r}
+
+teta = c(1, 1, 1)
+
+fn <- function(teta,data){
+  alpha = teta[1]
+  beta0 = teta[2]
+  beta1 = teta[3]
+  if (alpha>0){ l = loglike(data,alpha,beta0,beta1)}
+  else {l = NaN}
+  l
+}
+
+gn <- function(teta,data){
+  alpha = teta[1]
+  beta0 = teta[2]
+  beta1 = teta[3]
+  grad = grad_loglike(data,alpha,beta0,beta1)
+  grad
+}
+
+#answer
+optim(teta,fn,gn, data = data, method = "BFGS", 
+      control = list(fnscale = -1, trace = 1, abstol = 10e-6),hessian=TRUE)
+
+ans<-optim(teta,fn,gn, data = data, method = "BFGS", 
+           control = list(fnscale = -1, trace = 0, abstol = 10e-6),hessian=TRUE)
+hess<- ans$hessian
+ans<- ans$par
+
+
+#sqrt(-diag(solve(hess)))?
+-solve(hess)                                            #optim() hessian
+-solve(hess_loglike(data,ans[[1]],ans[[2]],ans[[3]]))   #my hessian
+```
+
+
