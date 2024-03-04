@@ -1,0 +1,50 @@
+---
+title: "Homework 4 (Part 1)"
+author: "Michael Pena"
+date: "2024-03-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Part (a).
+
+```{r}
+### using the R functino nls() to apply GAUSSNEWTON algorithm solution. Make trace=T to show the iterative process
+
+# data importation
+df <- read.table("serum_conc.txt", head = T)
+attach(df)
+
+# build model
+model <- function(t,a1,a2,l1,l2){
+  E_1 = exp(-l1*t)
+  E_2 = exp(-l2*t)
+  f = a1*E_1 + a2*E_2
+  grad = cbind(E_1,E_2,-a1*t*E_1, -a2*t*E_2)
+  attr(f,'gradient') <- grad
+  f
+}
+
+# nls fit 
+plot(Concentration,Time)
+nls_fit <-  nls(Concentration ~ model(Time,a1,a2,l1,l2),
+                start = list(a1=100,a2=100,l1=0.05,l2=0.1),
+                trace = T,
+                nls.control(maxiter = 50, tol = 1e-5, minFactor = 1/1024,
+                            printEval=TRUE))
+summary(nls_fit)
+```
+
+# Part (b).
+
+```{r}
+plot(Time, Concentration)
+t = seq(0,50,.1)
+lines(t,162.5980*exp(-0.1618*t)+81.2413*exp(-1.3061*t), col = 'blue')
+# Mori's line
+lines(t,211.9203*exp(-0.2357*t),col='red')
+```
+

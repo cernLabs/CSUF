@@ -1,0 +1,49 @@
+---
+title: "Homework4part1"
+author: "Henry Surjono"
+date: "2024-03-02"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Part a)
+
+```{r}
+library(readr)
+# Read the data from the file
+data <- read.table(file = "Downloads/serum_conc.txt", header = TRUE)
+
+# Display the first few rows of the data
+head(data)
+
+
+#model used in class
+#added second point
+model <- function(alpha_1,alpha_2,lam_1,lam_2,t){
+  E_1 = exp(-lam_1*t)
+  E_2 = exp(-lam_2*t)
+  f = alpha_1*E_1 + alpha_2*E_2
+  grad = cbind(E_1,E_2,-alpha_1*t*E_1, -alpha_2*t*E_2)
+  attr(f,'gradient') <- grad
+  f
+}
+
+attach(data)
+
+Result = nls(Concentration ~ model(alpha_1,alpha_2,lam_1, lam_2 ,Time),
+             start=list(alpha_1=100,alpha_2 = 100,lam_1=0.05,lam_2 = .1),trace = TRUE,
+             nls.control(maxiter = 50, tol = 1e-5, minFactor = 1/1024,
+                         printEval=TRUE))
+summary(Result)
+```
+# Part b)
+```{r}
+plot(Time, Concentration)
+t = seq(0,50,.1)
+lines(t,162.59804*exp(-.16179*t)+81.24128*exp(-1.30607*t), col = 'blue')
+lines(t,211.9203*exp(-0.2357*t),col='red')
+```
+
+It seems that the fitted fucntion for the two-component model (blue) is more accurate than the one-component model(red), as the blue line hits more data points.
