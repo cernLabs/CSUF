@@ -1,0 +1,18 @@
+bootstrap in regression
+
+-> fit original model (kernel regression code). store original residuals
+
+-> get BS_x from X
++ sample with replacement 'n' observations from X
+
+-> get BS-yhat from pluggin in BS_x to original model
+-> BS_y =  BS_yhat + (original residuals) <- how do I get these?
+
+-> new model (kern regression) using BS_x, BS_y
+
+-> plug x_1 = 10 into new model; store result
+-> repeat 10000 times
+-> find alpha/2, -alpha/2 cutoff
+
+Probably should make some residual diagnostic plots...
+Always check assumptions on the exam . . .

@@ -1,0 +1,115 @@
+---
+title: "536 Exam 1"
+author: "Michael Pena"
+date: "2024-03-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/githubbahubba/CSUF/spring 2024/MATH 536/Exam1")
+```
+
+### Executive Summary
+ <Put exec summary here>
+
+```{r}
+# import data
+data <- read.csv("exam1.csv",head = T)
+attach(data)
+Distance..km. -> x
+Error..m. -> y
+plot(Distance..km.,Error..m.)
+```
+```{r, eval = F}
+#Cross validation, leave one out.
+n = length(x)
+CV = function(h){
+	SSR = 0
+	for(i in 1:n){
+		y1 = sum(exp(-.5*((x[i]-x[-i])/h)^2)*y[-i])/sum(exp(-.5*((x[i]-x[-i])/h)^2))
+		resid = y[i] - y1
+		SSR = SSR + resid^2
+	}
+	SSR
+}
+#CV(h)
+h=optim(1,CV)$par
+# do kernel regression to get original residuals
+x1 = x
+y1 = rep(0,1400)
+for(i in 1:1400){
+	y1[i] = sum(exp(-.5*((x1[i]-x)/h)^2)*y)/sum(exp(-.5*((x1[i]-x)/h)^2))
+}
+resid = y - y1
+
+# check residuls for normality
+hist(resid,breaks = 50)
+plot(x, resid)
+qqnorm(resid)
+```
+```{r}
+# begin bootstrapping
+# set initials
+Y <- matrix(0,ncol = 3, nrow = 10001)
+set.seed(315429687)
+#begin loop
+for (it in 1:10001){
+# bootstrap x values
+BS.x <- sample(x,n,replace = T)
+n.BS <- length(BS.x)
+
+# compute the BS.yhat to find BS.y
+BSyhat = rep(0,n.BS)
+for (i in 1:n.BS){
+  BSyhat[i] <- sum(exp(-.5 * ((BS.x[i] - x) / h)^2) * y) / sum(exp(-.5 * ((BS.x[i] - x) / h)^2))
+}
+BS.y <- BSyhat + sample(resid,n,replace=T)
+
+# Plug x1 = 10 into the new model and store result
+# we cannot plug in x = 10 as it is out of range but we can get the max(x)
+x1 = max(x)
+Y[it,1] = sum(exp(-.5 * ((x1 - BS.x) / h)^2) * BS.y) / sum(exp(-.5 * ((x1 - BS.x) / h)^2))
+ 
+# Plug x1 = 1 into the new model and store result
+x1 = 1
+Y[it,2] = sum(exp(-.5 * ((x1 - BS.x) / h)^2) * BS.y) / sum(exp(-.5 * ((x1 - BS.x) / h)^2))
+
+# Plug x1 = 1 into the new model and store result
+x1 = 0.1
+Y[it,3] = sum(exp(-.5 * ((x1 - BS.x) / h)^2) * BS.y) / sum(exp(-.5 * ((x1 - BS.x) / h)^2))
+}
+# name columns in Y
+# names(Y) = c("x=max(x)","x=1","x=0.1")
+
+# histograms of new data
+hist(Y[,1],breaks = 50)
+hist(Y[,2],breaks = 50)
+hist(Y[,3],breaks = 50)
+```
+
+
+```{r}
+# form the cutoffs 
+#cutoff function
+cut <- function(v,i){
+ if(i == "up"){
+ return(quantile(v,.975))
+ } else {
+ return(quantile(v,.025))
+ }
+}
+
+# conf.interval for x=max(x)
+CImax = c(cut(Y[,1],"lo"),cut(Y[,1],"up"))
+CImax
+# conf.interval for x=1
+CI_1 = c(cut(Y[,2],"lo"),cut(Y[,2],"up"))
+CI_1
+# conf.interval for x=0.1
+CI_0.1 = c(cut(Y[,3],"lo"),cut(Y[,3],"up"))
+CI_0.1
+
+```
+
+

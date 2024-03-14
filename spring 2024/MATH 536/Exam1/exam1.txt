@@ -1,0 +1,20 @@
+Math 536 Exam 1, Spring 2024
+Due Sunday March 17th at 11:59 PM
+The Defense Advanced Research Projects Agency (DARPA) is interested in contracting you to analyze
+some data from their air to air missile defense program.
+When a hostile flying object enters protected airspace, DARPA launches a missile to intercept and
+destroy that hostile object. Objectively, the missile needs to be able to track the distance between itself
+and the hostile object accurately.
+For testing the interceptors, drones were used to simulate hostile flying objects. Drone gps provide very
+accurate information on the location of the drones.
+The data provided to you includes two variables. First is the actual distance (km) between the missile
+and the test drone. This is the predictor or explanatory variable. Second is the error (m) in the
+estimated position of the drone by the missile and the true position of the drone. It should make sense
+that the farther apart the drone and the missile are, the larger the error will be on average.
+Your contacts at DARPA have asked that you build a model that can estimate the average error in drone
+position given a fixed distance between the drone and missile. Your model will then be used to adjust
+the perceived position of the drone.
+Specifically, they want to know what you think the average error will be at 0.1, 1 and 10 km respectively.
+Please provide a short (but thorough) report with your findings.
+(This is a way over-simplified version of a dataset I actually worked on for DARPA way back in the
+day...Bonus points if anyone can guess why we see the oscillating behavior in the response variable)
