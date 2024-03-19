@@ -1,0 +1,27 @@
+---
+title: "Homework 5.2"
+author: "Michael Pena"
+date: "2024-03-17"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#import data
+Y <- as.matrix(read.table('ExJ42.txt',header = T))
+head(Y)
+```
+## part (a).
+
+```{r}
+# histogram
+hist(Y[,1],breaks = round(sqrt(300)),prob = T)
+# kernel smoother superimposition
+density_estimate <- density(Y)
+# Overlay the density curve on the histogram (adjust line color as needed)
+lines(density_estimate$x, density_estimate$y, col="forestgreen", lwd=4)
+```
+

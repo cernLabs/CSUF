@@ -1,0 +1,80 @@
+---
+title: "Homework 5.1"
+author: "Michael Pena"
+date: "2024-03-17"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# make EM function
+EM <- function(th0,maxit,tolerr){
+  # print header
+  header = paste0("Iteration", "             Theta", "             Modified Relative Err")
+  print(header)
+  # set initials
+  it = 1
+  mre = 1
+  
+  #run loop
+  while(it <= maxit && mre >= tolerr){
+    # E part
+    EX2 = 1997*th0/(th0 + 2)
+    # M part
+    th1 = (EX2 + 32)/(EX2 + 1843)
+    # reset mre 
+    mre = abs(th1 - th0)/pmax(1,abs(th1))
+    # print
+    print(sprintf('%2.0f                 %12.12f          %.1e',it, th0, mre))
+    it = 1 + it
+    th0 <- th1
+  }
+  th1
+}
+```
+
+## part (a).
+
+```{r}
+EM(0.02,200,1e-06)
+```
+## part (b).
+
+```{r}
+# make EM function
+EM_conv <- function(th0,maxit,tolerr){
+  # print header
+  header = paste0("Iteration", "      Linear Convergence", "        Quad. Convergence")
+  print(header)
+  # set initials
+  it = 1
+  mre = 1
+  
+  #run loop
+  while(it <= maxit && mre >= tolerr){
+    # E part
+    EX2 = 1997*th0/(th0 + 2)
+    # M part
+    th1 = (EX2 + 32)/(EX2 + 1843)
+    # reset mre 
+    mre = abs(th1 - th0)/pmax(1,abs(th1))
+    #convergence formulaes
+      th_star = (sqrt(3728689) - 1657)/7680
+      # check linear convergence
+      l_conv = abs(th1 - th_star)/abs(th0 - th_star)
+      # check quadratic convergence
+      q_conv = abs(th1 - th_star)/(abs(th0 - th_star)^2)
+    # print
+    print(sprintf('%2.0f                 %12.12f          %12.12f',it, l_conv, q_conv))
+    it = 1 + it
+    th0 <- th1
+  }
+  th1
+}
+
+EM_conv(0.02,200,1e-06)
+```
+Algorithm seems to be linearly convergent at given the conditions where tolerr = $10^{-6}$, $\theta^{(0)}=0.02$, and maximum iterations is 200.
