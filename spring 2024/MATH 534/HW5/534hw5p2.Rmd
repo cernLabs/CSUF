@@ -1,0 +1,193 @@
+---
+title: "534 Homework 5 p.II"
+author: "Michael Pena"
+date: "2024-03-25"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tinytex)
+```
+
+## Part (a).
+
+```{r}
+Y = as.matrix(read.table('ExJ42.txt',header = T))
+hist(Y,breaks = 40, prob = T)
+# superimpose the density on it
+den = density(Y[,1])
+lines(den$x,den$y,col = 'forestgreen', lwd = 4)
+```
+
+## part (b).
+
+1. initialize iteration number at 1
+
+1.1 begin while loop the closes when iteration is higher than max iteration or MRE is less that tolerr 
+
+2. define alpha,beta,$\mu_1$,$\mu_2$,$\mu_3$,$\sigma^2$ using theta
+
+3. define 3 density functions with the $\mu_i$'s that where just defined
+
+4. (E-step) define posterior distributions for each density mixture
+
+```Post_j = f1*PI[j]/sum(f1*PI[1]+f2*PI[2]+f3*PI[3])```
+where ```PI``` = ($\alpha$, $\beta$, 1 - $\alpha$ - $\beta$) and ```j = {1,2,3}``` and f1,f2,f3 are the 3 densities defines in (3)
+$E[Z_{ij}]$ = Post_j
+
+5. (M-step) find the new parameters of the maximized Q functions using...
+$$\alpha = \frac{\sum^{N}_{i=0}E[Z_{i1}]}{N}$$
+$$\beta = \frac{\sum^{N}_{i=0}E[Z_{i2}]}{N}$$
+$$\mu_j = \frac{\sum^{N}_{i=0}E[Z_{ij}]x_i}{\sum^{N}_{i=0}E[Z_{ij}]}$$
+$$\sigma^2 =
+\frac{\sum^{3}_{j=0}\sum^{N}_{i=0}E[Z_{ij}](x_i-\mu_j)^T(x_i-\mu_j)}
+{\sum^{3}_{j=0}\sum^{N}_{i=0}E[Z_{ij}]}$$
+
+6. calculate log-likehood
+
+6.1 calculate MRE
+
+6.2 print iteration,loglikelihood,mre
+
+7. add 1 to iteration number; set new theta back into old theta
+
+7.1 close loop
+
+7.2 return theta
+
+7.3 print final parameters
+
+## part (c).
+
+```{r}
+# lets build the algorirh in this chunk
+EM_alg <- function(y,theta,maxit,tolerr){
+  # initials
+  N = length(y)
+  it = 1
+  theta1 <- theta
+  mre = 1
+  
+  #print header
+  header = paste0("iteration","        log-likelihood", "    MRE")
+  print(header)
+
+  # loop part
+  while(it <= maxit && mre > tolerr){
+    # initialize things again
+    PI = c(theta[1],theta[2], 1-theta[2]-theta[1])
+    mu1 = theta[3]
+    mu2 = theta[4]
+    mu3 = theta[5]
+    var = theta[6]
+    sig = sqrt(var)
+    f1 = dnorm(y,mean = mu1, sd = sig)
+    f2 = dnorm(y,mean = mu2, sd = sig)
+    f3 = dnorm(y,mean = mu3, sd = sig)
+    N1 = PI[1] * f1
+    N2 = PI[2] * f2
+    N3 = PI[3] * f3
+    D = N1+ N2 + N3
+    Post1 = N1/D
+    Post2 = N2/D
+    Post3 = N3/D
+    # find the alpha and beta
+    theta1[1] = sum(Post1)/N
+    theta1[2] = sum(Post2)/N
+    # find the new mus
+    theta1[3] = sum(Post1*y)/sum(Post1)
+    theta1[4] = sum(Post2*y)/sum(Post2)
+    theta1[5] = sum(Post3*y)/sum(Post3)
+    # get the new variance
+    nom  = 0
+
+#    for(j in 1:3){
+#      nom =  nom + sum(POST[,j] * (t(y - theta[j+2])%*%(y - theta[j+2]))[1])
+#    }
+    var = sum(Post1*(y-mu1)^2 + Post2*(y-mu2)^2 + Post3*(y - mu3)^2)/sum(Post1 + Post2 + Post3)
+    theta1[6] = var
+    # calculate likelihood
+    ell = sum(Post1 * (log(f1) + log(PI[1])) + Post2*(log(f2) + log(PI[2])) + Post3*(log(f3)+ log(PI[3])))
+    
+    # calculate MRE 
+    mre = max(abs(theta1 - theta) / abs(max(1,abs(theta1))))
+    # print line
+    print(sprintf('%2.0f           %12.5f       %.2e', it, ell, mre))
+
+
+    # loop factors
+    it = it + 1
+    theta <- theta1 
+  }
+  header2 = paste0("Alpha","       Beta", "        Mu_1", "       Mu_2", "       Mu_3", "    Variance")
+  print(header2)
+  print(theta)
+  return(theta)
+}
+
+# run the function
+data <-  Y[,1]
+theta_i <- c(.3,.3,0,2,5,1)
+EM_alg(data,theta_i,200,1e-06) -> theta_f
+```
+
+## part (d).
+
+```{r}
+# sort data
+data_sort <- sort(data)
+# make variables
+a <- theta_f[1]
+b <- theta_f[2]
+g <- 1 - a - b
+mu1 <- theta_f[3]
+mu2 <- theta_f[4]
+mu3 <- theta_f[5]
+sig <- theta_f[6]
+f1 <- dnorm(data,mu1,sig)
+f2 <- dnorm(data,mu2,sig)
+f3 <- dnorm(data,mu3,sig)
+# make mixture density
+mix_den <- a*f1 + b*f2 + g*f3
+# plot
+hist(data,breaks = 30,prob = T)
+lines(data_sort,mix_den,col = "forestgreen",lwd = 2)
+```
+
+## part (e).
+
+```{r}
+N = length(data)
+cases = seq(1:N)
+group = rep(0,length(cases))
+
+for(i in 1:N){
+  row <- data[i]
+  f1 <- dnorm(row,mu1,sig)
+  f2 <- dnorm(row,mu2,sig)
+  f3 <- dnorm(row,mu3,sig)
+  Post1 <- a*f1
+  Post2 <- b*f2
+  Post3 <- g*f3
+  PostSum <- Post1 + Post2 + Post3 
+  POST <- c(Post1,Post2,Post3) / PostSum
+  N_group <- which.max(POST)
+  group[i] <- N_group
+}
+color <- rep('charmander', N)
+for(i in 1:N){
+  N_group = group[i]
+  if(N_group == 1){
+    color[i] = "forestgreen"
+  } else if(N_group == 2){
+    color[i] = "magenta"
+  } else {
+    color[i] = 'blue'
+  }
+}
+plot(cases, group, col = color, xlab = "Case", ylab = "Group Number")
+```
+
+
+As cases ascend, the group it belongs to will also. There are some outliers with group 2, but it's negligible.group 3 seems to be dominating more of the cases from points 150 to the end; group one seems to have the least amount of cases belonging to it ranging from 0 to around 60. 
