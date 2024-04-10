@@ -1,3 +1,6 @@
+#!/bin/bash
+
+
 # the purpose of this program is to regulary push my CSUF to a personal repository on GH
 
 # go to correct dir
