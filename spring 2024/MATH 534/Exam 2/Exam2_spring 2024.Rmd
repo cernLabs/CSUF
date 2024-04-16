@@ -214,7 +214,7 @@ EM_alg <- function(alpha,beta,mu,lam,X,maxit){
    gradnorm <- norm(LLgrad(theta1,X),"2")
    
    # print
-   print(sprintf("%i    ","%8.8f      ","%8.8f      ","%8.8f      ","%8.8f      ","%8.8f      ","%8.8f      ",
+   print(sprintf("%s    ","%f      ","%f      ","%f      ","%f      ","%f      ","%f      ",
                 q,
                 alpha1,
                 beta1,
@@ -233,14 +233,14 @@ EM_alg <- function(alpha,beta,mu,lam,X,maxit){
                 beta,
                 1-beta-alpha,
                 mu,
-                lambda))
+                lam))
 }
 ```
 
 ```{r}
 #run problem 
-data <- read.csv("Problem1_Data.csv", head =T)
-
+data <- as.matrix(read.csv("Problem1_Data.csv", head =T))
+EM_alg(1/3,1/3,1,30,data,30)
 ```
 
 
