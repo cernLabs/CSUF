@@ -1,47 +1,19 @@
 ---
 title: "Exam 2"
-author: "Mori Jamshidian"
+author: "Michael Pena"
 date: "Spring 2024"
 output: 
   pdf_document:
     toc: true
     toc_depth: 3
 ---
-\newcommand{\code}[1]{\textcolor{blue}{\texttt #1}}
-\newcommand{\file}[1]{\textcolor{violet}{\texttt #1}}
-\newcommand{\solution}[1]{\textcolor{orange}{#1}}
-\newcommand{\pts}[1]{\textcolor{brown}{[#1 Points] }}
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 setwd("~/Desktop/githubbahubba/CSUF/spring 2024/MATH 534/Exam 2")
 ```
-\newcommand{\bx}{\large\boldsymbol{x}}
-\newcommand{\by}{\boldsymbol{y}}
-\newcommand{\bbeta}{\boldsymbol{\beta}}
 
-\newpage
-
-# Exam Rules and Instructions
-
-(1)	You must work on this exam individually. Any communication with others about this exam in any form is considered cheating. Should you have any questions, please send an email to mori@fullerton.edu.
-
-(2)	 Copying solutions from an Internet source or any other source would be considered plagiarism and will be dealt with according to university policy. 
-
-(3)	You are not allowed to distribute the questions on this exam in any form or share the questions with anyone during the exam or anytime after the due-date.
-
-(4)	 Your solutions must be typewritten. You must submit a single pdf file that would include your solutions, R codes, and R outputs. Additionally submit your Rmarkdown file.
-
-(5)	Your solutions must appear in the order of the problem numbers. If you don’t know the answer to a problem, write the problem number, and leave a blank space.
-
-
-(8)	I reserve the right to interview you about the exam after I grade your exam.
-
-(9) Submit your solution to Canvas. 
-
-(10) A total of 55 points is possible.
-
-\newpage
 
 # Problem 1
 
@@ -71,7 +43,7 @@ n\Big(
 log(\beta(1 - \alpha - \beta))-\mu -\lambda 
 \Big) + \sum^{n}_{i=1} 
 \Big(
-x_i log\big[\frac{\mu\lambda}{(x_i!)^2}
+x_i log\big[\frac{\mu\lambda\cdot 1_{\{x_i=0\}}}{(x_i!)^2}
 \big]
 \Big)$$
 
@@ -96,7 +68,7 @@ E[Z_{ij}] \Big[
 log[f(x_i|\theta')] + log\pi_j
 \Big] \\
 = \sum^{N}_{i=1}\Bigl[
-E[z_{i1}]log\alpha  + E[z_{i2}][log\beta - \mu +x_ilog\mu - log|x_i!|] + E[z_{i3}][log(1 - \alpha - \beta) - \lambda +x_ilog(\lambda) - log|x_i!|]
+E[z_{i1}][log\alpha'+log(1_{\{x_i=0\}})]  + E[z_{i2}][log\beta' - \mu' +x_ilog\mu' - log|x_i!|] + E[z_{i3}][log(1 - \alpha' - \beta') - \lambda' +x_ilog(\lambda') - log|x_i!|]
 $$
 
 where 
@@ -114,8 +86,8 @@ $$
 Write formulas that maximize $Q(\theta',\theta)$ with respect to $\theta'$. That is, write the update formulas for $\alpha$, $\beta$, $\mu$, and $\lambda.$
 
 $$
-\alpha^* = \frac{(1-\beta)\sum^{N}_{i=1}E[z_{i1}]}{\sum^{N}_{i=1}E[z_{i1}] + E[z_{i3}]}
-\\ \beta^* = \frac{(1-\alpha)\sum^{N}_{i=1}E[z_{i2}]}{\sum^{N}_{i=1}E[z_{i2}] + E[z_{i3}]}
+\alpha^* = \frac{\sum^{N}_{i=1}E[z_{i1}]}{N}
+\\ \beta^* = \frac{\sum^{N}_{i=1}E[z_{i2}]}{N}
 \\ \mu^* = \frac{\sum^{N}_{i=1}E[z_{i2}]x_i}{\sum^{N}_{i=1}E[z_{i2}]}
 \\ \lambda^* = \frac{\sum^{N}_{i=1}E[z_{i3}]x_i}{\sum^{N}_{i=1}E[z_{i3}]}
 $$
@@ -124,17 +96,20 @@ $$
 
 Give the formulas for the elements of the gradient of the log-likelihood function.
 
-$$
-\frac{\partial\ell}{\partial\alpha} =
-\frac{n}{\alpha + \beta -1} \\
-\frac{\partial\ell}{\partial\beta} =
-\frac{n(1-\alpha-2\beta)}{\beta(1 -\alpha - \beta)}\\
-\frac{\partial\ell}{\partial\mu} =
--n + \frac{1}{\mu} \sum^{n}_{i=1}x_i\\
-\frac{\partial\ell}{\partial\lambda} =
--n + \frac{1}{\lambda} \sum^{n}_{i=1}x_i
-$$
 
+$$
+\frac{\partial \ell_c}{\partial\alpha'} = 
+\sum_{i=1}^{n}\Big[\frac{E[z_{i1}]}{\alpha'} - \frac{E[z_{i3}]}{1-\alpha' -\beta'} \Big]
+\\
+\frac{\partial \ell_c}{\partial\beta'} = 
+\sum_{i=1}^{n}\Big[\frac{E[z_{i2}]}{\beta'} - \frac{E[z_{i3}]}{1-\alpha' -\beta'} \Big]
+\\
+\frac{\partial \ell_c}{\partial\mu'} = 
+\sum_{i=1}^{n}\Big[ \frac{x_i}{\mu'} +{E[z_{i2}]} -1\Big]
+\\
+\frac{\partial \ell_c}{\partial\lambda'} = 
+\sum_{i=1}^{n}\Big[ \frac{x_i}{\lambda'} +{E[z_{i3}]} -1\Big]
+$$
 
 ## **(f)** [9 points] 
 
@@ -154,18 +129,17 @@ Write an R function to implement the EM algorithm, and a function to compute the
 
 ```{r}
 # making gradient of the llh function
-LLgrad <- function(theta,X){
+LLgrad <- function(theta,X,EZ){
  # take elements
- n = length(X)
  a = theta[1]
  b = theta[2]
  mu = theta[3]
  lam = theta[4]
  # input the calculations
- dda = n/(a+b-1)
- ddb = n*(1-a-2*b)/(b*(1-a-b))
- ddmu = -n + (1/mu)*sum(X)
- ddlam = -n + (1/lam)*sum(X)
+dda <- sum(EZ[,1]/a - EZ[,3]/(1-a-b))
+ddb <- sum(EZ[,2]/b - EZ[,3]/(1-a-b))
+ddmu <- sum(X/mu + EZ[,2] - 1)
+ddlam <- sum(X/lam + EZ[,3] - 1)
  # output
  return(c(dda,ddb,ddmu,ddlam))
 }
@@ -188,8 +162,9 @@ EM_alg <- function(alpha,beta,mu,lam,X,maxit){
  # define N
  N <- length(X)
  # make prints
- header = paste0("iteration ","alpha     ","beta      ","1-beta-alpha","mu       ","lambda    ","gradnorm")
- 
+ header = paste0("iteration "," alpha     ","    beta      ","    1-beta-alpha","     mu       ","   lambda    ","   gradnorm")
+ print(header)
+
  # loop part
  for(q in 1:maxit){
    PI = c(alpha,beta,1-alpha-beta)
@@ -199,35 +174,39 @@ EM_alg <- function(alpha,beta,mu,lam,X,maxit){
     if(X[i]==0){f1[i]=1}
    }
    # get f2 and f3
-   f2 = dpois(X,lambda = PI[2])
-   f3 = dpois(X,lambda = PI[3])
+   f2 = dpois(X,lambda = mu)
+   f3 = dpois(X,lambda = lam)
    
    # run expectation update
    expec(f1,f2,f3,PI[1],PI[2],PI[3]) -> EZ
    
    #updates
-   alpha1 <- (1-beta)*sum(EZ[1])/sum(EZ[1]+EZ[3])
-   beta1 <- (1-alpha)*sum(EZ[2])/sum(EZ[2]+EZ[3])
-   mu1 <- sum(EZ[2]*X)/sum(EZ[2])
-   lam1 <- sum(EZ[3]*X)/sum(EZ[3])
+   alpha1 <- sum(EZ[,1])/N
+   beta1 <- sum(EZ[,2])/N
+   mu1 <- sum(EZ[,2]*X)/sum(EZ[,2])
+   lam1 <- sum(EZ[,3]*X)/sum(EZ[,3])
    theta1 <- c(alpha1,beta1,mu1,lam1)
-   gradnorm <- norm(LLgrad(theta1,X),"2")
+   gradnorm <- norm(LLgrad(theta1,X,EZ),"2")
    
    # print
-   print(sprintf("%s    ","%f      ","%f      ","%f      ","%f      ","%f      ","%f      ",
-                q,
-                alpha1,
-                beta1,
-                1-alpha1-beta1,
-                mu1,
-                lam1,
-                gradnorm))
+   print(sprintf("%2.0f         | %8.8f | %8.8f | %8.8f | %8.8f | %8.8f | %8.8f",
+                 q,
+                 alpha1,
+                 beta1,
+                 1-alpha1-beta1,
+                 mu1,
+                 lam1,
+                 gradnorm))
+
    # resets
    alpha1 -> alpha
    beta1 -> beta
    mu1 -> mu
    lam1 -> lam
+ 
  }
+ 
+ #print(ITER)
  print(sprintf("The MLE's are alpha = %f, beta = %f, 1 - beta - alphha = %f, mu = %f, lambda = %f",
                 alpha,
                 beta,
@@ -248,13 +227,92 @@ EM_alg(1/3,1/3,1,30,data,30)
 
 Using your parameter estimates, explain your findings. Your explanation should involve interpretation of all of the parameters in the context of the problem.
 
+$$
+f(\theta|x_i) = 0.58337\cdot 1_{\{x_i=0\}} + 0.305566 \frac{e^{4.965980}4.965980^{x_i}}{x_i!}+0.111064\frac{e^{15.063997}15.063997^{x_i}}{x_i!}
+$$
+0.583370 is the proportion of people in group 1 who mislead about their non-use.
+0.305566 is the proportion of people in group 2 or have moderate use.
+0.111064 is the proportion of people in group 3 or have frequent use.
+
+4.965980 is the average of the amount of joints per month for people in group 2
+15.063997 is the average of amount of joints per month for the people in group 3
+
 ## **(h)** [2 points]
 
-We met a student who said that she smoked 9 joints in the past 30 days. What is the probability that this student belons to each of the three groups, 1, 2, or 3? Which group would you classify this student to?  Heuristic explanations don't get any points!
+We met a student who said that she smoked 9 joints in the past 30 days. What is the probability that this student belongs to each of the three groups, 1, 2, or 3? Which group would you classify this student to?  Heuristic explanations don't get any points!
+
+```{r}
+f1 <- 0
+f2 <- dpois(9,lambda = 4.965980)
+f3 <- dpois(9,lambda = 15.063997)
+b <- 0.305566
+g <- 0.111064
+
+EZ2 <- f2*b/(f2*b + f3*g)
+EZ3 <- f3*g/(f2*b + f3*g)
+
+EZ2;EZ3
+```
+Probability that she will be in group 1 is 0 because she admitted to actually smoking
+
+Probability that she will be in group is 2 very likely at about 0.7545084 while the prob. that she will be in the last group is 0.2454916 which is less likely.
+
+I want to classify her in group 2 as the expected value for that group is 4.965980 and 9 is very closer to this number than it is 15.1.
 
 ## **(i)** [5 points] 
 
 Write an R function to numerically approximate the observed information matrix, and use it to obtain the standard errors of the parameter estimates. 
+
+```{r}
+
+INFOMAT <- function(a,b,M,L,EZ,X){
+h <- 10^(-7)
+
+# form matrix 
+
+H <- matrix(0,4,4)
+
+#element wise
+H[1,1] = sum(EZ[,1]/(a*h) - EZ[,3]/(1 - a*h - b)) - sum(EZ[,1]/(a) - EZ[,3]/(1 - a - b)) 
+H[2,2] = sum(EZ[,2]/(b*h) - EZ[,3]/(1 - a - b*h)) - sum(EZ[,2]/(a) - EZ[,3]/(1 - a - b)) 
+H[3,3] = sum(X/(M*h)+EZ[,2]-1) - sum(X/(M)+EZ[,2]-1)
+H[4,4] = sum(X/(L*h)+EZ[,3]-1) - sum(X/(L)+EZ[,3]-1) 
+
+H[1,2] = sum(EZ[,1]/(a) - EZ[,3]/(1 - a - b*h)) - sum(EZ[,1]/(a) - EZ[,3]/(1 - a - b)) 
+H[2,1] <- H[1,2]
+
+(1/h)*H -> I
+
+return(I)
+}
+
+
+   PI = c(0.583370,0.305566,0.111064)
+   # get f1
+   f1 <- as.numeric(data == 0)
+   # get f2 and f3
+   f2 = dpois(data,lambda = 4.965980)
+   f3 = dpois(data,lambda = 15.063997)
+   
+   # run expectation update
+   expec(f1,f2,f3,PI[1],PI[2],PI[3]) -> EZ
+
+# get Infomat
+I <- INFOMAT(0.583370,0.305566,4.965980,15.063997,EZ,data)
+
+# get diagnaols
+1/diag(I) -> Vs
+length(data) -> N
+# these are the standard errors
+TSE <- sqrt(Vs/N)
+
+sprintf("standard error for alpha is %1.6e, for beta is %1.6e, for mu is %1.6e, for lambda is %1.6e",
+        TSE[1],
+        TSE[2],
+        TSE[3],
+        TSE[4])
+```
+
 
 
 # Problem 2
@@ -313,17 +371,16 @@ MC(.2,.6,10000,338)
 
 Repeat part (a), but instead of generating values from uniform(a,b), suppose that you generate values from the Beta distribution with parameters $\alpha = 2$ and $\beta = 2$. Explain how you can use the beta distribution to estimate the integral. In your explanation specify what expectation you will be estimating and how you will estimate it. No R code is needed here.
 
-for a Beta Distribution where $X \thicksim Beta(3,3)$ the pdf will match the match the curve $g(x) = 30x^2(1-x)^2$. Thus we really just need to find $P_{Beta}[0.2 \leq X \leq 0.6]$. Let's say I have generated 10000 values from a Beta distribution; I want the expectation of amount of the numbers between $a$ and $b$. This is simply a matter of generating an N-length random sample from a beta distribution and and counting the values between $a$ and $b$. We can take this expected value and then divide it by N to get the estimated integral value.
+
 
 ##  **(c)** [2 points] 
 
 Write a formula for the variance of the estimate of $\theta$  in part (b), as a function of $Y\sim Beta(\alpha = 2, \beta=2)$ and explain how you would estimate this variance in you R program. Do not write R code here. Only give an explanation of what R function you would use and how.
 
 $$
-Var(\hat\theta) = \frac{1}{N}\sum^{N}_{i=1}I_{\{a<y_i<b\}} - \Biggl[\frac{1}{N}\sum^{N}_{i=1}I_{\{a<y_i<b\}}\Biggl]^2
+Var(\hat\theta) = \hat{\theta} - \hat{\theta}^2 = \frac{1}{N}\sum^{N}_{i=1}\frac{g(a+(b-a)y_i)(b-a)}{f(y_i)}- \Biggl[\frac{1}{N}\sum^{N}_{i=1}\frac{g(a+(b-a)y_i)(b-a)}{f(y_i)}\Biggl]^2
 $$
-
-I would count the numbers in our samples that sampled from the Beta(3,3) distribution that are between 0.2 and 0.6 and divide that count by the N number of samples; this would be my $\theta$. I would then take this value and subtract it from $\theta^2$ to get my variance.
+This would be easy to impliment into the code because after we find theta-hat, we could calculate variance as above; this is useful for calculating Standard Error with is simply $\sqrt{var(\hat\theta)/N}$.
 
 ## **(d)** [4 points]
 
@@ -331,9 +388,39 @@ Write an R code to implement the methods that you described in parts (b) and (c)
 
 
 ```{r}
-Y <- rbeta(10000,2,2)
-fY <- Y*1.25
-mean(fY)
+MC2 <- function(a,b,N,see.d,CL=.95){
+ y <- rbeta(N,2,2)
+  set.seed(see.d)
+  # case one
+    if( 0 <= a && a < b && b <= 1 && CL >= 0 && CL <= 1){
+	# pass y through beta(2,2) 
+	fy = 6*y*(1-y)
+	# pass through g(x)
+	v = a+(b-a)*y
+	gy = 30*v^2*(1-v)^2
+  # theta 
+	theta = mean(gy*(b-a)/fy)
+	thetaVAR = theta - theta^2
+	thetaSE = sqrt((thetaVAR)/N)
+	
+
+	zSE = qnorm(CL)*thetaSE
+	CI.vals = c(theta - zSE, theta + zSE)
+	CI = c(min(CI.vals),max(CI.vals))
+ #outputs
+	return(list(theta = theta, "Stand Err" = thetaSE, "Conf Interval" = CI))
+}
+  # case two: invalid parameters
+    else{
+      print("Error!: Invalid parameters")
+    }
+}
+
+```
+
+```{r}
+# run problem
+MC2(.2,.6,10000,338)
 ```
 
 
@@ -408,7 +495,10 @@ thetaAnti;thetaAntiSE
 ## **(d)** [3 points] 
 
 Explain the relationship between the standard error of the estimate of $E(h(X))$ obtained using the method of Antithetic Sampling as compared to the standard error of the estimate of $E(h(X))$ obtained using the basic Monte Carlo method. Show this relationship by computing relevant quantities using your R code.
-  
+
+
+The antithetical method deals with two functions that are negatively correlated; this method should render a lower S.E. 
+
 ```{r}
 real = 0.113762652609
 abs(real-0.1141116)
