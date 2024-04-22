@@ -1,0 +1,94 @@
+---
+title: "HW6.2"
+author: "Michael Pena"
+date: "2024-04-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# problem 3
+
+# part (a)
+
+
+set pdfs equal to eachother 
+case I: $y < 0$
+
+$$
+\frac{e^{y}}{2} = \frac{e^{-y^2/2}}{\sqrt{2\pi}}\\
+e^y = \frac{2e^{-y^2/2}}{\sqrt{2\pi}}\\
+e^y\cdot e^{y^2/2} = \frac{2}{\sqrt{2\pi}}\\
+e^{y+\frac{y^2}{2}} = \sqrt{\frac{2}{\pi}}\\
+y + \frac{y^2}{2} = ln[\sqrt{\frac{2}{\pi}}]\\
+\frac{1}{2}y^2+y-\frac{1}{2}ln[2/\pi]=0
+$$
+
+```{r}
+a = .5
+b = 1
+c = -0.5*log(2/pi)
+y1 = (-b-sqrt(b^2 - 4*a*c))/2*a
+y2 = (-b+sqrt(b^2 - 4*a*c))/2*a
+y1;y2
+```
+
+likewise 
+ case II: $y >0 $
+
+$$
+\frac{1}{2}y^2-y-\frac{1}{2}ln[2/\pi]=0
+$$
+
+```{r}
+a = .5
+b = -1
+c = -0.5*log(2/pi)
+y1 = (-b-sqrt(b^2 - 4*a*c))/2*a
+y2 = (-b+sqrt(b^2 - 4*a*c))/2*a
+y1;y2
+```
+
+# part (b).
+
+```{r}
+# function to find optimal alphas
+opt_alpha <- function(N,Gu,Fx,U){
+ # initialize 
+ incr = 1/N
+ alpha = 0
+ STO <- data.frame()
+
+ 
+ #begin loop
+ for(i in 1:N){
+   alpha = alpha + incr
+   e_x = Gu/alpha
+   R = sum(as.numeric(U <= Fx/e_x))
+   row <- c(R,alpha)
+   STO <- rbind(STO,row)
+ }
+Rmin = min(STO[,1])
+result = STO[STO[,1] == Rmin,]
+return(result[1,])
+}
+
+# render discrete functions
+a=0.06486199
+b=0.435138
+N = 20000
+U <- runif(N,a,b)
+Gu <- exp(-U)/2
+Fx <- dnorm(U)
+opt_alpha(N,Gu,Fx,U)
+
+U <- runif(N,-b,-a)
+Gu <- exp(-U)/2
+Fx <- dnorm(U)
+opt_alpha(N,Gu,Fx,U)
+
+```
+
