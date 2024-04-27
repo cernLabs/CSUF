@@ -1,0 +1,87 @@
+---
+title: "536 Homework 3"
+author: "Michael Pena"
+date: "2024-04-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/githubbahubba/CSUF/spring 2024/MATH 536/HW3")
+
+```
+
+
+Summary: 
+
+The main strategy for finding an optimal cp and Minsplit parameter would be to obtain RSS value from cross the validation method. We do this several times with several different cp and minsplit values and look for the parameters that give us the best RSS score.
+
+Results indicated the optimal RSS score yielded as minsplit of 2 and cp of 0. These parameters would be the smallest given that our data is of a contour of a volcano; mapping to what would seem to be an overfit would be ideal for this type of data. 
+
+```{r}
+# read the data into format
+volc = reshape2::melt(volcano)
+
+# load pkgs
+library(akima)
+library(rgl)
+library(plot3D)
+library(reshape2)
+#library(plot3Drgl)
+library(rpart)
+head(volcano)
+
+set.seed(536)
+# partition data into training and testing data sets
+# get CV 10-fold computer CV RSS for one set of cp, ms
+index.matrix = matrix(sample(1:5307,5300,replace = F), nrow = 10)
+data.train = volc[-index.matrix[1,],]
+data.test = volc[index.matrix[1,],]
+
+# fit a model with our tuning parameters
+model = rpart(value~Var1+Var2,method = "anova",control=rpart.control(minsplit=37,cp=.02),data=data.train)
+
+# plug into test.data to our model to get fitted values
+# compute test residuals store them in some vector
+cv.res = c()
+cv.fitted.values = predict(model,data.test,type = "matrix")
+cv.res = c(cv.res,data.test$value - cv.fitted.values)
+
+# turn 2nd step into a function
+
+CVRSS.tree <- function(vec){
+  
+  set.seed(536)
+  index.matrix = matrix(sample(1:5307,5300,replace = F), nrow = 10)
+  
+  for(i in 1:10){
+    data.train = volc[-index.matrix[1,],]
+    data.test = volc[index.matrix[1,],]
+    
+    # fit a model with our tuning parameters
+    model = rpart(value~Var1+Var2,method = "anova",control=rpart.control(minsplit=vec[1],cp=vec[2]),data=data.train)
+    
+    # plug into test.data to our model to get fitted values
+    # compute test residuals store them in some vector
+    cv.res = c()
+    cv.fitted.values = predict(model,data.test,type = "matrix")
+    cv.res = c(cv.res,data.test$value - cv.fitted.values)
+  
+  }
+  CVRSS = sum(cv.res^2)
+  CVRSS
+}
+
+
+# search for minimizing arguments for minsplit and cp
+
+test.mat = data.frame(minsplit = rep(1:50,50),cp = rep((0:49)/2000,rep(50,50)),CVRSS = rep(0,2500))
+for(k in 1:2500){
+  test.mat$CVRSS[k] <- CVRSS.tree(test.mat[k,1:2])
+}
+test.mat[test.mat$CVRSS == min(test.mat$CVRSS),]
+
+# this returns minsplit of 2 and cp of 0
+
+```
+

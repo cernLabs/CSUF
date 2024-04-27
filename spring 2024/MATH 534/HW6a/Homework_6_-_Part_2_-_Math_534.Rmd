@@ -1,0 +1,240 @@
+---
+title: "Homework 6 - Part 2 - Math 534"
+author: "Elijah Amirianfar"
+date: "2024-04-19"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+### Let X be distributed as a truncated exponential distribution with density 
+$$f(x) = \dfrac{e^{-x}}{1-e^{-1}}, 0\leq x \leq 1$$
+
+### In this problem, we use the importance functions shown below to obtain an approximation for the integral 
+
+$$
+E(h(X)) = \int_0^1 f(X)\cdot h(X)~dx =  \int_0^1 \dfrac{e^{-X}}{1 - e^{-1}} \cdot \dfrac{1}{1 + X^2}~dx
+$$
+
+### using 20,000 random variates. Obtain an approximation for the standard error in each case.
+
+### a) $g(X) = \dfrac{1}{\pi(1+x^2)}, -\infty\leq x \leq \infty$, Cauchy
+
+```{r}
+set.seed(534)
+n = 20000
+x = rcauchy(n) # generate 20000 random cauchy variables
+
+f = rep(0,n)
+for (i in 1:n){
+  if(x[i]<=1 & x[i]>=0){
+    f[i] = exp(-x[i])/(1-exp(-1))} # our density of f
+  # we generate 20,000 random cauchy variables and then only use values between
+  # 0 and 1 in our f density
+}
+
+g = 1/(pi*(1+x^2))
+h = 1/(1+x^2)
+
+est = 1/n * sum(h*f/g)
+est_se = sd(h*f/g)/sqrt(n)
+cat("    Estimate: ",est,"\n",
+    "Estimate SE: ",est_se)
+```
+
+### b) $g(X) = \dfrac{4}{\pi(1+x^2)}, 0\leq x \leq 1$, Truncated Cauchy
+
+```{r}
+set.seed(534)
+
+rtrunc_cauchy = function(n,mu,s,A,B){
+  mu + s*tan(runif(n) * ((atan((B-mu)/s) - atan((A-mu)/s))) + atan((A-mu)/s))
+}
+
+n = 20000
+x = rtrunc_cauchy(n,0,1,0,1)
+f = rep(0,n)
+for (i in 1:n){
+  if(x[i]<=1 & x[i]>=0){
+    f[i] = exp(-x[i])/(1-exp(-1))} # our density of f
+}
+
+g = 4/(pi*(1+x^2))
+h = 1/(1+x^2)
+
+est_2 = 1/n * sum(h*f/g)
+est_se_2 = sd(h*f/g)/sqrt(n)
+cat("    Estimate: ",est_2,"\n",
+    "Estimate SE: ",est_se_2)
+```
+
+
+### c) $g(X) = e^{-x}, x>0$, Exponential
+
+```{r}
+set.seed(534)
+n = 20000
+x = rexp(n,1)
+f = rep(0,n)
+for (i in 1:n){
+  if(x[i]<=1 & x[i]>=0){
+    f[i] = exp(-x[i])/(1-exp(-1))} # our density of f
+}
+g = exp(-x)
+h = 1/(1+x^2)
+
+est = 1/n * sum(h*f/g)
+est_se = sd(h*f/g)/sqrt(n)
+cat("    Estimate: ",est,"\n",
+    "Estimate SE: ",est_se)
+```
+
+\newpage
+
+## Question 2
+
+### The tri-variate t distribution with parameters $\mu = 0, \Sigma$, and 5 degrees of freedom has a density proportional to:
+
+$$
+f(\mathbf{x};\Sigma) \propto (5 + \mathbf{x}^T \Sigma^{-1}\mathbf{x})^{-4}
+$$
+
+### By generating 20,000 random variates from an appropriate tri-variate normal and using the importance sampling method (using standardized sampling weights), approximate the probability
+
+$$
+P(-\infty\leq X_1 \leq 1, -\infty\leq X_2 \leq 4,-\infty\leq X_3 \leq 2)
+$$
+
+### where $(X_1, X_2, X_3)$ comes from the above trivariate t with 5 degrees of freedom and covariance matrix 
+
+$$
+\Sigma = \begin{pmatrix}
+1 & 3/5 & 1/3\\
+3/5 & 1 & 11/15\\
+1/3 & 11/15 & 1
+\end{pmatrix}
+$$
+
+### The true value of the probability to a good approximation is 0.79145379
+
+```{r}
+set.seed(534)
+library(MASS)
+library(mvtnorm)
+n = 20000
+mu = c(0,0,0)
+sigma = matrix(c(1,3/5,1/3,3/5,1,11/15,1/3,11/15,1),3)
+
+# the function below generates 20000 random values from a trivariate normal distribution
+x = as.matrix(mvrnorm(n, mu, sigma))
+
+# we obtain our trivariate t-distribution below
+# evaluate the density at each row of our data to obtain our f(x) vector
+f = rep(0,n)
+for(i in 1:n){f[i] = (5 + (t(x[i,])%*%solve(sigma)%*%(x[i,])))^(-4)}
+
+# below is the g function (our trivariate normal density)
+g = dmvnorm(x, mean = mu, sigma = sigma)
+
+# here is our h function 
+h = rep(0,n) # zeros vector of f1
+# application of the indicator variable into our code
+for(i in 1:n){if(x[i,1] <=1 & x[i,2] <=4 & x[i,3] <=2){h[i] = 1}}
+
+# this is the final approximation 
+tetah = sum(h*f/g)/sum(f/g) # f/g is w(x_i) and sum(f/g) is w(x) = T
+paste("Theta:", round(tetah,7))
+```
+
+\newpage
+
+## Question 3
+
+### For generating $X\sim N(0,1)$ using an Accept/Reject algorithm, we could generate $U\sim U(0,1)$ and Y ~ double-exponential($\lambda = 1$). To generate values from Y, we generate an exponential ($\lambda=1$) and attach a positive or negative sign to Y with equal probability. The density of Y is $g(y) = e^{-|y|}/2, -\infty<x<\infty$
+
+### a) Show that the density    of the double exponential density with parameter $\lambda=1$ intersects the density of the standard normal density at a value of y>0 and at a value of y<0. Answer the question analytically
+
+What we need to do here is set the PDFs of our double exponential and standard normal equal to each other and solve for y.
+
+\begin{align*}
+f(y) &= g(y)\\
+\dfrac{1}{\sqrt{2\pi}}e^{-y^2/2} &= \dfrac{1}{2}e^{-|y|}\\
+\ln\left(\dfrac{1}{\sqrt{2\pi}}e^{-y^2/2}\right) &= \ln\left(\dfrac{1}{2}e^{-|y|}\right)\\
+\ln\left(\dfrac{1}{\sqrt{2\pi}}\right) - \dfrac{y^2}{2} &= \ln\left(\dfrac{1}{2}\right) - |y|\\
+\ln\left(\sqrt{\dfrac{2}{\pi}}\right) - \dfrac{y^2}{2} &= -|y|
+\end{align*}
+
+This yields us with two separate equations:
+
+$$
+\ln\left(\sqrt{\dfrac{2}{\pi}}\right) - \dfrac{y^2}{2} = -y, ~~\ln\left(\sqrt{\dfrac{2}{\pi}}\right) - \dfrac{y^2}{2} = y
+$$
+
+$$
+\dfrac{y^2}{2} - y - \ln\left(\sqrt{\dfrac{2}{\pi}}\right) = 0, 
+~~\dfrac{y^2}{2} + y - \ln\left(\sqrt{\dfrac{2}{\pi}}\right) = 0
+$$
+
+After solving these quadratic equations in a calculator, we obtain with 4 different possible solutions:
+
+$$
+y = 0.259, 1.741, ~~~ y = -1.741, -0.259
+$$
+
+Thus, we can see that we obtain solutions less than 0 and greater than 0
+
+### b) In light of part (a), to construct an envelope for the standard normal, using the double exponential with parameter $\lambda = 1$, we need to set $e(x) = \frac{g(x)}{\alpha}$ for some $0<\alpha<1$. Find an optimal $\alpha$ that minimizes the number of rejections if we are to use the accept-reject algorithm to generate values from the standard normal, by using random values generated from the double-exponential.
+
+\begin{align*}
+\dfrac{g(y)}{\alpha} &= f(y)\\
+\alpha &= \dfrac{g(y)}{f(y)}\\
+&=\dfrac{\dfrac{1}{2}e^{-y}}{\dfrac{1}{\sqrt{2\pi}}e^{-y^2/2}}\\
+\alpha &= \sqrt{\dfrac{\pi}{2}}\exp\left(\dfrac{y^2}{2} - y\right)
+\end{align*}
+
+Now, we find $\dfrac{\partial\alpha}{\partial y}$, set it equal to 0 and solve for y:
+
+\begin{align*}
+\dfrac{\partial\alpha}{\partial y} &= \sqrt{\dfrac{\pi}{2}}\exp\left(\dfrac{y^2}{2} - y\right)(y-1)\\
+\sqrt{\dfrac{\pi}{2}}\exp\left(\dfrac{y^2}{2} - y\right)(y-1) &= 0 \implies y = 1
+\end{align*}
+
+Since we have a critical value at y=1, we take our value and plug it into $\alpha$ which yields us with our optimal $\alpha$
+
+$$
+\alpha = \sqrt{\dfrac{\pi}{2}}\exp\left(\dfrac{1^2}{2} - 1\right) = \sqrt{\dfrac{\pi}{2}}\exp\left(-\dfrac{1}{2}\right)
+$$
+
+### c) Apply the Accept/Reject algorithm to generate values from the standard normal distribution by generating 10,000 $U\sim U(0,1)$ and 10,000 double exponential random variables.
+
+```{r}
+library(nimble)
+set.seed(534)
+alpha = sqrt(pi/2)*exp(-1/2)
+n = 10000 
+u = runif(n) # generate 10,000 random uniform variables
+
+x = rdexp(n) # generate 10,000 random double-expo variables
+
+# take our 10,000 random double-expo variables and plug it into our normal density f(x)
+f_x = dnorm(x) 
+
+# take 10,000 random double-expo variables and plug it into e(x) which is g(x)/alpha
+e_x = ddexp(x)/alpha
+
+# we make a new vector that only grabs the observations of our random double 
+# exponential variables only if U <= f(x)/e(x). Else, we reject the observation
+xx = x[u <= (f_x/e_x)]
+
+# plot a histogram of them
+hist(xx, main = "Histogram of Accepts", breaks = 30,prob=T)
+```
+
+
+
+
+
