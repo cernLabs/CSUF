@@ -1,0 +1,110 @@
+---
+title: "536 Exam 2"
+author: "Michael Pena"
+date: "2024-05-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(GGally)
+```
+
+```{r}
+#import data
+data0 <- read.csv("colon2017.csv")
+data <- data0[,-c(1,2,3,4,6,7,16,17,20)]
+# feature eng
+data$Gender <- ifelse(data$Gender == "Male",1,0)
+data$Race <- ifelse(data$Race == "white" | data$Race == "White" | data$Race == "W",1,0)
+```
+
+
+## Exploratory Analysis
+
+```{r}
+ggcorr(data,label = TRUE)
+```
+
+```{r}
+# backward selection
+logit.model= glm(Anastamotic.Leak ~ Gender+BMI+Age+Race+Tobacco+DM+CAD.PAD+Cancer+Albumin..g.dL.+Operative.Length,
+                 data = data,
+                 family = "binomial")
+var_selection <- step(logit.model)
+```
+
+Going to remove Race and CAD.PAD as both backward selection method and correlation heat map seem to indicate they will make little difference in our final model.
+
+## bootstrapping
+
+```{r}
+#Step six starts here.
+
+BS.b1 = rep(0,10000)
+BS.pstar = rep(0,10000)
+
+#Step 1, create orig model
+
+final.model = glm(Anastamotic.Leak ~ Gender+
+                    BMI+
+                    Age+
+                    Tobacco+
+                    DM+
+                    Cancer+
+                    Albumin..g.dL.+
+                    Operative.Length,
+                  family="binomial",data=data)
+
+for(j in 1:10000){
+
+
+	#Step 2, resample the x's with replacement
+
+	n = length(data[,1])
+	ind = sample(1:n,n,replace=T)
+	BS.x = data.frame(Gender = data$Gender[ind],
+	                  BMI = data$BMI[ind],
+	                  Age = data$Age[ind],
+	                  Tobacco = data$Tobacco[ind],
+	                  DM = data$DM[ind],
+	                  Cancer = data$Cancer[ind],
+	                  Albumin..g.dL. = data$Albumin..g.dL.[ind],
+	                  Operative.Length = data$Operative.Length[ind])
+
+	#Step 3, Plug BS.x into orig model to get BS.phat
+
+	BS.phat = predict(final.model,newdata=BS.x,type="response")
+
+	#Step 4, Sample from (1,0) to get BS.y
+
+	BS.y = rep(0,n)
+	for(i in 1:n){
+		BS.y[i] = sample(c(1,0),1,prob=c(BS.phat[i],1-BS.phat[i]))
+	}
+	BS.data = data.frame(cbind(anastamotic.leak = BS.y,BS.x))
+
+	#Step 5, New model using BS.x and BS.y.  Compute BS.par
+
+	newmodel = glm(anastamotic.leak~Gender+BMI+Age+Tobacco+DM+Cancer+Albumin..g.dL.+Operative.Length,
+	               data=BS.data,
+	               family='binomial')
+	BS.b1[j] = coef(newmodel)[2]
+	BS.pstar[j] = predict(newmodel,newdata=data.frame(x1=2,x2=2),type="response")
+
+	#Step 6, repeat.
+}
+
+mu = mean(BS.b1)
+s = sd(BS.b1)
+hist(BS.b1,breaks=50)
+x1 = seq(min(BS.b1),max(BS.b1),by=.0001)
+y1 = dnorm(x1,mu,s)
+lines(x1,y1,col=3,lwd=2,lty=2)
+qqnorm(BS.b1)
+lowbound = sort(BS.pstar)[25]
+highbound = sort(BS.pstar)[975]
+
+```
+

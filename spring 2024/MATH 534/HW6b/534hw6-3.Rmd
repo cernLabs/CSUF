@@ -1,0 +1,120 @@
+---
+title: "534HW6.3"
+author: "Michael Pena"
+date: "2024-04-30"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/githubbahubba/CSUF/spring 2024/MATH 534/HW6b")
+library(dplyr)
+```
+
+```{r}
+# get samples
+data <- read.table("coal.dat",head=T)
+N <- 100000
+set.seed(534)
+theta <- sample(1:111,N,replace = T)
+attach(data)
+
+# get the lambdas
+lamb1 <- rgamma(N,3,rgamma(N,10,10))
+lamb2 <- rgamma(N,3,rgamma(N,10,10))  
+
+# generate from poisson
+ell <- rep(0,N)
+for (i in 1:N){
+first <- prod(dpois(disasters[1:theta[i]],lamb1[i]))
+secnd <- prod(dpois(disasters[(theta[i]+1):112],lamb2[i]))
+
+ell[i] = first * secnd
+}
+
+# render weights
+W <- ell/sum(ell)
+
+# get parameter vector
+params <- cbind(theta,lamb1,lamb2)
+# select theta but weighted
+weight.index <- sample(1:N,N,prob = W,replace = T)
+theta.w <- params[weight.index,1]
+
+# graph theta with weights
+hist(x = theta.w,
+     main = "Theta Frequency",
+     xlab = "Theta")
+
+```
+
+```{r}
+# find expected values
+E.theta <- mean(theta.w);E.theta
+```
+
+```{r}
+# confidence interval 
+quantile(theta.w, probs = c(0.01,0.99))
+
+```
+
+```{r}
+# plotting lambdas
+plot(params[,2],params[,3],xlab = "lamba1" ,ylab = "lambda2")
+# plotting lambdas sampled with weight
+plot(params[weight.index,2],params[weight.index,3],xlab = "lamba1" ,ylab = "lambda2")
+```
+
+
+```{r}
+# mean of lambda1 
+mean(params[,2])
+# confidence interval
+quantile(params[,2], probs = c(0.01,0.99))
+```
+
+```{r}
+# mean of lambda 2
+mean(params[,3])
+# confidence interval
+quantile(params[,3], probs = c(.01,.99))
+```
+```{r}
+# mean of lambda 1 resampled
+mean(params[weight.index,2])
+# confidence interval
+quantile(params[weight.index,2], probs = c(.01,.99))
+```
+
+```{r}
+# mean of lambda 2 resampled
+mean(params[weight.index,3])
+# confidence interval
+quantile(params[weight.index,3], probs = c(.01,.99))
+```
+```{r}
+# rendering histograms
+hist(params[,2],main = "Theta1 frequency", xlab = "Theta1")
+hist(params[,3],main = "Theta2 frequency", xlab = "Theta2")
+hist(params[weight.index,2],main = "Theta1 resamp frequency", xlab = "Theta1")
+hist(params[weight.index,3],main = "Theta2 resamp frequency", xlab = "Theta2")
+```
+
+```{r}
+
+```
+
+```{r}
+# count distinct parameters
+sprintf("Unique number of points is %d",n_distinct(params[weight.index,]))
+# get the highest frequency by taking the mode of weighted frequencies
+table(weight.index) -> freq
+mode <- freq[freq == max(freq)]
+# get the parameters with corresponding index
+params[as.numeric(names(mode)),]
+sprintf("The above are the paramter values with the heighest frequency at %d",as.numeric(mode))
+
+```
+
+
