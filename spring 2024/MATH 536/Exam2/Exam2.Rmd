@@ -2,32 +2,43 @@
 title: "536 Exam 2"
 author: "Michael Pena"
 date: "2024-05-04"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(GGally)
+library(car)
 ```
 
-```{r}
+## Summary
+
+It was asked to find the risks of anastomatic leaking following a colectomy associated with BMI. This is mainly due to patients having the ability to control their BMI before surgery, thus it is important to research this metrics relationship to such a risk. Because many of these variables are including the dependent variable (anastomatic leak) are boolean or categorical, it was necessary to train a generalized linear model or rather logistic regression.  In regards to the first ask, it was found that holding all other metrics constant, for every unit of BMI increase, with 95% confidence there is a 2.7- 15.7% increase in chances for a surgery patient having an anastomatic Leak. By implementing the backward step variable selection technique, we found that the metrics that also mattered aside from BMI were gender, age, tobacco use, diabetes, cancer history, albumin levels, and operation length. 
+
+In regards to the case studies, I implemented a bootstrapping technique that allowed me to render graphs showing the top 97.5% and lower 2.5% probabilities of a risk over BMI levels from 20 – 50. This was done for both cases. For an extreme BMI in the higher range, the first Case 1 (Arizona) has, at worst, less than 10% risk for anastomatic leak. It may not be necessary for this case to lose weight before this surgical procedure.
+
+
+```{r include=FALSE}
 #import data
 data0 <- read.csv("colon2017.csv")
 data <- data0[,-c(1,2,3,4,6,7,16,17,20)]
 # feature eng
 data$Gender <- ifelse(data$Gender == "Male",1,0)
 data$Race <- ifelse(data$Race == "white" | data$Race == "White" | data$Race == "W",1,0)
+data$Operative.Length <- (data$Operative.Length)*24*60
 ```
 
 
 ## Exploratory Analysis
 
-```{r}
+```{r include=FALSE}
 ggcorr(data,label = TRUE)
 ```
 
-```{r}
+```{r include=FALSE}
 # backward selection
 logit.model= glm(Anastamotic.Leak ~ Gender+BMI+Age+Race+Tobacco+DM+CAD.PAD+Cancer+Albumin..g.dL.+Operative.Length,
                  data = data,
@@ -37,13 +48,44 @@ var_selection <- step(logit.model)
 
 Going to remove Race and CAD.PAD as both backward selection method and correlation heat map seem to indicate they will make little difference in our final model.
 
-## bootstrapping
 
-```{r}
+
+```{r include=FALSE}
+# render our final model
+final.model = glm(Anastamotic.Leak ~ Gender+
+                    BMI+
+                    Age+
+                    Tobacco+
+                    DM+
+                    Cancer+
+                    Albumin..g.dL.+
+                    Operative.Length,
+                  family="binomial",data=data)
+summary(final.model)
+```
+
+```{r include=FALSE}
+c(exp(0.086276 - 0.030349*1.96),exp(0.086276 + 0.030349*1.96))
+```
+
+
+
+
+
+```{r include=FALSE}
+# case studys
+Case1 <-  data.frame(Gender = 0,Age = 35, BMI =20:50, Tobacco = 0, DM = 0, Cancer = 0, Albumin..g.dL. = 4.2, Operative.Length = 90)
+Case2 <-  data.frame(Gender = 1,Age = 62, BMI =20:50, Tobacco = 1, DM = 1, Cancer = 0, Albumin..g.dL. = 2.8, Operative.Length = 210)
+```
+
+
+
+```{r include=FALSE}
 #Step six starts here.
 
-BS.b1 = rep(0,10000)
-BS.pstar = rep(0,10000)
+
+BS.pstar1 = matrix(0,31,1000)
+BS.pstar2 = matrix(0,31,1000)
 
 #Step 1, create orig model
 
@@ -57,7 +99,7 @@ final.model = glm(Anastamotic.Leak ~ Gender+
                     Operative.Length,
                   family="binomial",data=data)
 
-for(j in 1:10000){
+for(j in 1:1000){
 
 
 	#Step 2, resample the x's with replacement
@@ -90,21 +132,76 @@ for(j in 1:10000){
 	newmodel = glm(anastamotic.leak~Gender+BMI+Age+Tobacco+DM+Cancer+Albumin..g.dL.+Operative.Length,
 	               data=BS.data,
 	               family='binomial')
-	BS.b1[j] = coef(newmodel)[2]
-	BS.pstar[j] = predict(newmodel,newdata=data.frame(x1=2,x2=2),type="response")
+	BS.pstar1[,j] = predict(newmodel,newdata=Case1,type="response")
+	BS.pstar2[,j] = predict(newmodel,newdata=Case2,type="response")
 
 	#Step 6, repeat.
 }
 
-mu = mean(BS.b1)
-s = sd(BS.b1)
-hist(BS.b1,breaks=50)
-x1 = seq(min(BS.b1),max(BS.b1),by=.0001)
-y1 = dnorm(x1,mu,s)
-lines(x1,y1,col=3,lwd=2,lty=2)
-qqnorm(BS.b1)
-lowbound = sort(BS.pstar)[25]
-highbound = sort(BS.pstar)[975]
+BS.Pstar1.freq <- data.frame(NULL)
+for(i in 1:31){
+  dfq <- cbind(BS.pstar1[,i],rep(i+19,31))
+  BS.Pstar1.freq <- rbind(BS.Pstar1.freq,dfq)
+}
+plot(BS.Pstar1.freq[,2],BS.Pstar1.freq[,1])
+  
+
+BS.Pstar2.freq <- data.frame(NULL)
+for(i in 1:31){
+  dfq <- cbind(BS.pstar2[,i],rep(i+19,31))
+  BS.Pstar2.freq <- rbind(BS.Pstar2.freq,dfq)
+}
+plot(BS.Pstar2.freq[,2],BS.Pstar2.freq[,1])
+  
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+# take the quantile from every iteration from  and that will be your bound vector 
+lower.quant1 <- 1:31
+upper.quant1 <- 1:31
+lower.quant2 <- 1:31
+upper.quant2 <- 1:31
+for(i in 1:31){
+  # quantiles for Arizona
+  lower.quant1[i] <- quantile(BS.pstar1[i,],0.025) 
+  upper.quant1[i] <- quantile(BS.pstar1[i,],0.975)
+  
+  # quantiles for Richard
+  lower.quant2[i] <- quantile(BS.pstar2[i,],0.025) 
+  upper.quant2[i] <- quantile(BS.pstar2[i,],0.975)
+}
 
 ```
+
+```{r, echo = FALSE}
+#this is gonna show up
+# map out these quantiles
+plot(20:50,lower.quant1,ylim = c(0,1), type ='l', col = "red",
+    xlab = "BMI",
+    ylab = "Probability of Anastomotic Leak (Arizona)")
+lines(20:50,upper.quant1,type = 'l', col = 'red')
+```
+
+This is juxtaposed to Case 2 (Richard) which showed more range of risk over the entire 20 – 50 of BMI. This case should highly consider lowering their BMI before this surgical procedure.
+
+```{r, echo = FALSE}
+# this is gonna show up
+# map out these quantiles
+plot(20:50,lower.quant2,ylim = c(0,1),type ='l', col = "red",
+         xlab = "BMI",
+    ylab = "Probability of Anastomotic Leak (Richard)")
+lines(20:50,upper.quant2,type = 'l', col = "red")
+```
+
+Our model does exhibit a drawback of over estimation. This graphic shows that our model our model begins to overestimate when our model’s residuals reach about -2.5. 
+
+```{r, echo = FALSE}
+# this is gonna show up
+# let's see how well the models predicts
+residualPlot(final.model)
+
+```
+
+
 

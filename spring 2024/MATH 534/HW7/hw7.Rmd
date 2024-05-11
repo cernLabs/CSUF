@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 setwd("~/Desktop/githubbahubba/CSUF/spring 2024/MATH 534/HW7")
 library(coda)
+library(MASS)
 ```
 
 # Problem 1
@@ -65,25 +66,203 @@ plot(1:5000,OUT$Y)
 ### part (c)
 
 ```{r}
-plot(Xburned,Yburned)
+plot(OUT$Xburned,OUT$Yburned)
 ```
 
-dunno
-
-
+You could say this resembles an ellipses that is centered at (1,2); the shadow of a bivariate Normal Distribution. The variance of the X variables are more spread than that of the Y variables as var(Y) < var(X). 
 
 # Problem 2
 ```{r}
 # load data
 data <- read.table("breastcancer.dat", head =T)
-attach(data)
 ```
+
+## part (a)
 
 ```{r}
 # make boxplots
-plot(treatment,recurtime)
-plot(censored,recurtime)
+treatment = data$recurtime[data$treatment == 1]
+control = data$recurtime[data$treatment == 0]
+hist(treatment,breaks=20)
+hist(control,breaks = 20)
 ```
+
+## part (b)
+
+we know that 
+
+$$
+L(\theta,\tau|y) * f(\theta,\tau) \propto 
+\theta^{(\sum \delta_i^C + \sum \delta_i^H)} \tau^{(\sum \delta_i^H)}
+exp(-\theta\sum x_i^C-\tau\theta\sum x_i^H) \cdot
+\theta^a\tau^b exp(-\theta (c + d\tau))
+$$
+which simplifies to
+
+$$
+\theta^{(a+\sum \delta_i^C + \sum \delta_i^H)}
+\tau^{(b + \sum \delta_i^H)}exp(-\theta (c + d\tau +\tau\sum x_i^H+\sum x_i^C))
+$$
+
+so when we look for everything depending on $\theta$ we get
+
+$$
+f(\theta | \tau,y) = 
+\theta^{(a+\sum \delta_i^C + \sum \delta_i^H)}
+exp(-\theta (c + d\tau +\tau\sum x_i^H+\sum x_i^C))
+$$
+
+which is a gamma distribution $X \sim \Gamma(a+\sum \delta_i^C + \sum \delta_i^H+1,c + d\tau +\sum x_i^H+\sum x_i^C)$
+
+Likewise, doing to the same for $\tau$ we get 
+
+$$
+f(\tau|\theta,y) = 
+\tau^{(b + \sum \delta_i^H)}
+exp(-\theta(d\tau +\tau\sum x_i^H))
+$$
+
+which is also gamma distribution $X \sim \Gamma(b + \sum \delta_i^H+1,\theta(d +\sum x_i^H))$
+
+## part (c)
+
+
+```{r}
+GS <- function(N,data,theta,see.d){
+
+ # set seed
+ set.seed(see.d)
+ 
+ # intialize sample vec
+ gsvec = matrix(0,N,2)
+ # hyperparams
+ a = 3
+ b = 1
+ c = 60
+ d = 120
+ # get delts
+ delta.c = sum(data$treatment == 0 & data$censored == 0)
+ delta.h = sum(data$treatment == 1 & data$censored == 0)
+
+ # control group
+ x.c = sum(data$recurtime[data$treatment==0])
+ x.h = sum(data$recurtime[data$treatment==1])
+ 
+ # run loop
+ for(i in 1:N){
+ # tau | theta
+ tau.theta = rgamma(1,shape = delta.h+b+1,rate = theta * (x.h + d)) 
+ # theta | tau
+ theta.tau = rgamma(1,shape = delta.c+delta.h+a+1,rate = (tau.theta *( x.h + d) + c + x.c))
+ gsvec[i,] = c(tau.theta,theta.tau)
+ theta = theta.tau
+ }
+ return(gsvec)
+}
+
+vec = GS(10000,data,1,534)
+summary(mcmc(vec))
+```
+
+## problem (d)
+
+```{r}
+# render letters
+tau <- vec[,1]
+theta <- vec[,2]
+
+# summary
+sprintf("theta mean is %f while tau mean is %f",mean(theta),mean(tau))
+sprintf("theta CI is ( %f , %f )",quantile(theta, 0.025),quantile(theta, 0.975))
+sprintf("tau CI is ( %f , %f )",quantile(tau, 0.025),quantile(tau, 0.975))
+sprintf("Standard Dev. of theta : %f",sd(theta))
+sprintf("Standard Dev. of tau : %f",sd(tau))
+```
+## problem (e)
+
+```{r}
+# render graphics
+plot(density(tau))
+lines(density(theta))
+```
+ From our findings we can conclude that there is a 1.206764 factor difference in recurrence time between the hormone treated group and control group.
+
+## problem (g)
+
+```{r}
+GS.2 <- function(f,N,data,theta,see.d){
+
+ # set seed
+ set.seed(see.d)
+ 
+ # intialize sample vec
+ gsvec = matrix(0,N,2)
+ # hyperparams
+ a = 3*f
+ b = 1*f
+ c = 60*f
+ d = 120*f
+ # get delts
+ delta.c = sum(data$treatment == 0 & data$censored == 0)
+ delta.h = sum(data$treatment == 1 & data$censored == 0)
+
+ # control group
+ x.c = sum(data$recurtime[data$treatment==0])
+ x.h = sum(data$recurtime[data$treatment==1])
+ 
+ # run loop
+ for(i in 1:N){
+ # tau | theta
+ tau.theta = rgamma(1,shape = delta.h+b+1,rate = theta * (x.h + d)) 
+ # theta | tau
+ theta.tau = rgamma(1,shape = delta.c+delta.h+a+1,rate = (tau.theta *( x.h + d) + c + x.c))
+ gsvec[i,] = c(tau.theta,theta.tau)
+ theta = theta.tau
+ }
+ return(gsvec)
+}
+
+vec.half = GS.2(1/2,10000,data,1,534)
+summary(mcmc(vec.half))
+```
+
+```{r}
+GS.2 <- function(f,N,data,theta,see.d){
+
+ # set seed
+ set.seed(see.d)
+ 
+ # intialize sample vec
+ gsvec = matrix(0,N,2)
+ # hyperparams
+ a = 3*f
+ b = 1*f
+ c = 60*f
+ d = 120*f
+ # get delts
+ delta.c = sum(data$treatment == 0 & data$censored == 0)
+ delta.h = sum(data$treatment == 1 & data$censored == 0)
+
+ # control group
+ x.c = sum(data$recurtime[data$treatment==0])
+ x.h = sum(data$recurtime[data$treatment==1])
+ 
+ # run loop
+ for(i in 1:N){
+ # tau | theta
+ tau.theta = rgamma(1,shape = delta.h+b+1,rate = theta * (x.h + d)) 
+ # theta | tau
+ theta.tau = rgamma(1,shape = delta.c+delta.h+a+1,rate = (tau.theta *( x.h + d) + c + x.c))
+ gsvec[i,] = c(tau.theta,theta.tau)
+ theta = theta.tau
+ }
+ return(gsvec)
+}
+
+vec.double = GS.2(2,10000,data,1,534)
+summary(mcmc(vec.double))
+```
+The Tau mean value seemed to not change as much as when the hyperparameters to doubled. 
 
 # Problem 3
 
@@ -178,48 +357,224 @@ MHexp <- function(N,var){
 I decided to burn 3000.
 
 ```{r}
-qqnorm(chain$vec[3001:10000])
-vexp <- rexp(6999,1)
-qqnorm(vexp)
+vexp <- rexp(7000,1)
+qqplot(chain$vec[3001:10000],vexp)
 ```
 
 # Problem (5).
 
+## system 1
+
 ```{r}
 # render bivariate normal function
-P <- function(X,Y){
+P <- function(v){
+  v[1] -> X
+  v[2] -> Y
   x = matrix(c(X,Y),nrow=2)
   mu = matrix(c(1,2),nrow=2)
   S = matrix(c(1,.9,.9,1),nrow=2,byrow=T)
   1/(2*pi*sqrt(det(S)))*exp(-.5*t(x-mu)%*%solve(S)%*%(x-mu))
 }
 # make looping algorithm
-WALK.BVU <- function(N,var){
+WALK.BVU <- function(N,nburn){
   # make a sample vector
-  vec <- matrix(2,N,0)
+  vec <- matrix(0,N,2)
   vec_bar = vec
-  s <- sqrt(var)
-  vec[1] <- rnorm(1,0,s)
+  vec[1,1] <- runif(1,-.75,.75)
+  vec[1,2] <- runif(1,-1,1)
   accept = 0
   # loop
   for(i in 2:N){
-    # sample from norm 
-    rnorm(1,vec[i-1],s) -> x1
+    # render z
+    z = c(runif(1,-.75,.75),runif(1,-1,1))
+    vecprime = z + vec[i-1,]
    # while(x1 < 0){rnorm(1,vec[i-1],s) -> x1} 
     runif(1) -> u
-    P(x1)/P(vec[i-1]) -> alpha
+   min(P(vecprime)/P(vec[i-1,]),1) -> alpha
     if(u < alpha){
-      vec[i] = x1
+      vec[i,] = vecprime
       accept = accept+1
       #x1 -> x0
     } else {
-      vec[i] = vec[i-1]
+      vec[i,] = vec[i-1,]
     }
-    vec_bar[i] <- mean(vec[1:i])
+    vec_bar[i,] <- mean(vec[1:i,])
   }
+  # burn
+  vec = vec[(nburn+1):N,]
+  vec_bar = vec_bar[(nburn+1):N]
   # return sample vector
   list(vec = vec, means = vec_bar,ratio = accept/N)
 } 
 ```
 
+```{r}
+WALK.BVU(10000,2000) -> chain
+X = chain$vec[,1]
+Y = chain$vec[,2]
+plot(X,Y)
+t = 2001:10000
+plot(t,X,type = 'l')
+plot(t,Y,type = "l")
+sprintf("Acceptance rate is for system 1 is %f",chain$ratio)
+```
+This is not an acceptable acceptance rate because it is just above the 40-50% range in the article.
 
+
+## system 2
+
+```{r}
+# make looping algorithm
+WALK.N2 <- function(N,nburn){
+  # make a sample vector
+  vec <- matrix(0,N,2)
+  vec_bar = vec
+  vec[1,] <- mvrnorm(1,c(0,0),diag(c(.6,.4)))
+  accept = 0
+  # loop
+  for(i in 2:N){
+    # render z
+    z = mvrnorm(1,c(0,0),diag(c(.6,.4)))
+    vecprime = z + vec[i-1,]
+   # while(x1 < 0){rnorm(1,vec[i-1],s) -> x1} 
+    runif(1) -> u
+   min(P(vecprime)/P(vec[i-1,]),1) -> alpha
+    if(u < alpha){
+      vec[i,] = vecprime
+      accept = accept+1
+      #x1 -> x0
+    } else {
+      vec[i,] = vec[i-1,]
+    }
+    vec_bar[i,] <- mean(vec[1:i,])
+  }
+  # burn
+  vec = vec[(nburn+1):N,]
+  vec_bar = vec_bar[(nburn+1):N]
+  # return sample vector
+  list(vec = vec, means = vec_bar,ratio = accept/N)
+} 
+```
+
+```{r}
+WALK.N2(10000,2000) -> chain
+X = chain$vec[,1]
+Y = chain$vec[,2]
+plot(X,Y)
+t = 2001:10000
+plot(t,X,type = 'l')
+plot(t,Y,type = "l")
+sprintf("Acceptance rate is for system 2 is %f",chain$ratio)
+```
+
+## system 3
+
+```{r}
+# render bivariate normal function
+cH <- function(v){
+  v[1] -> X
+  v[2] -> Y
+  x = matrix(c(X,Y),nrow=2)
+  mu = matrix(c(1,2),nrow=2)
+  S = diag(c(2,2))
+  0.9/(2*pi*sqrt(det(S)))*exp(-.5*t(x-mu)%*%solve(S)%*%(x-mu))
+}
+# make looping algorithm
+WALK.P3 <- function(N,nburn){
+  # make a sample vector
+  vec <- matrix(0,N,2)
+  vec_bar = vec
+  #vec[1,] <- mvrnorm(1,c(0,0),diag(2))
+  vec[1,] <- c(rnorm(1,0,2),rnorm(1,0,2))
+  accept = 0
+  # loop
+  for(i in 2:N){
+    # render vecprime
+    vecprime <- mvrnorm(1,c(0,0),diag(2))
+    c(rnorm(1,0,2),rnorm(1,0,2)) -> vecprime
+    runif(1) -> u
+    # render alphas
+      if(P(vec[i-1,]) < cH(vec[i-1,])){ #C1
+       alpha = 1
+      } else if(P(vec[i-1,]) >= cH(vec[i-1,]) && P(vecprime) < cH(vecprime)){ #C2
+       alpha = cH(vec[i-1,])/P(vec[i-1,])
+      } else{ #C3
+       alpha = min(1,(P(vecprime)*cH(vec[i-1,]))/(cH(vecprime)*P(vec[i-1,])))
+      }
+    # accept-reject
+    if(u < alpha){
+      vec[i,] = vecprime
+      accept = accept+1
+
+    } else {
+      vec[i,] = vec[i-1,]
+    }
+    vec_bar[i,] <- mean(vec[1:i,])
+  }
+  # burn
+  vec = vec[(nburn+1):N,]
+  vec_bar = vec_bar[(nburn+1):N]
+  # return sample vector
+  list(vec = vec, means = vec_bar,ratio = accept/N)
+} 
+```
+
+```{r}
+WALK.P3(10000,2000) -> chain
+X = chain$vec[,1]
+Y = chain$vec[,2]
+plot(X,Y)
+t = 2001:10000
+plot(t,X,type = 'l')
+plot(t,Y,type = "l")
+sprintf("Acceptance rate is for system 3 is %f",chain$ratio)
+```
+
+## system 4
+
+```{r}
+# make looping algorithm
+WALK.BVU4 <- function(N,nburn){
+  # make a sample vector
+  vec <- matrix(0,N,2)
+  vec_bar = vec
+  vec[1,1] <- runif(1,-.75,.75)
+  vec[1,2] <- runif(1,-1,1)
+  accept = 0
+  mu = c(1,2)
+  # loop
+  for(i in 2:N){
+    # render z
+    z = c(runif(1,-1,1),runif(1,-1,1))
+    
+    # walk
+    vecprime = z + 2*mu - vec[i-1,]
+    runif(1) -> u
+   min(P(vecprime)/P(vec[i-1,]),1) -> alpha
+    if(u < alpha){
+      vec[i,] = vecprime
+      accept = accept+1
+      #x1 -> x0
+    } else {
+      vec[i,] = vec[i-1,]
+    }
+    vec_bar[i,] <- mean(vec[1:i,])
+  }
+  # burn
+  vec = vec[(nburn+1):N,]
+  vec_bar = vec_bar[(nburn+1):N]
+  # return sample vector
+  list(vec = vec, means = vec_bar,ratio = accept/N)
+} 
+```
+
+```{r}
+WALK.BVU4(10000,2000) -> chain
+X = chain$vec[,1]
+Y = chain$vec[,2]
+plot(X,Y)
+t = 2001:10000
+plot(t,X,type = 'l')
+plot(t,Y,type = "l")
+sprintf("Acceptance rate is for system 4 is %f",chain$ratio)
+```
