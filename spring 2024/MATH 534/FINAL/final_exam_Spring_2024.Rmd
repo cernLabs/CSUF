@@ -412,6 +412,8 @@ hist(p_post,freq = T,breaks = 100)
 Using the 5000 values that you generated in part (b) approximate the probability that Kevin Mitchell makes 4 home runs when he is at bat 50 times. Insert your R code and your final solution below.
 
 ```{r}
-
-
+# from SIR_Jim Albert.R
+py = mean(dbinom(4,size = 50, p_post))
+#statement
+sprintf("The probability that Kevin Mitchell makes 4 home runs when he is at bat 50 times is %f",py)
 ```
