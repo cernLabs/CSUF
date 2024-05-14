@@ -1,5 +1,5 @@
 ---
-title: "534 Final Exam"
+title: "STA 534 Final Submission"
 author: "Michael Pena"
 date: Spring 2024
 output: 
@@ -41,43 +41,31 @@ library(coda)
 
 ## Problem 1 (a) [5 points]
 
-
-
-``` {r, eval = FALSE}
-set.seed(2024)
-x <- rnorm(100000) 
-```
-
 ```{r}
-#get the x's that are in support
-Xnew = x[x <= pi/2 & x >= 0]
-# define W
-w = sin(sin(Xnew))/dnorm(Xnew)
-set.seed(534)
-Xnew <- sample(Xnew,prob = w,replace = T)
-var(Xnew)
-```
+set.seed(2024)
+x <- rnorm(10000) 
 
+# render weight
+w = sin(sin(x))/dnorm(x)
+# make weights zero when oob
+for(i in 1:10000){
+  if(x[i] < 0 | x[i] > (pi/2)){
+    w[i] = 0
+  }
+}
+W = w/sum(w)
+
+# sample
+x <- sample(x,size = 5000,prob = W,replace = T)
+var(x)
+```
 
 ## Problem 1(b) [3 Points]
 
 Suppose that you want to obtain an estimate of the standard error for your estimate in part (a). Explain mathematically what you need to compute, and what quantities would be difficult to compute and why. [2 points for what you need to compute, and 1 point for pointing out possible difficulties.] 
 
-I could simply estimate SE by running 
-
->> sqrt(var(Xnew)/length(Xnew))
-
-to calculate the exact SE would be difficult at the calculating expected value would be difficult due to the following integrals
-
-$$
-E[X] = \int^{\pi/2}_{0}xsin(sin(x))dx \\
-E[X^2] = \int^{\pi/2}_{0}x^2sin(sin(x))dx
-$$
-
 
 ## Problem 2(a) [2 points]
-
-Consider the random variable $Y$ with density $g(y) = \sin(y)$, with support in the interval $[0,\pi/2]$. Explain how you can use inverse transformation method to generate values from this random variable. Describe the method specifically with the functions given in this problem. You won't get any points for describing the method in general terms. No R code needed here.
 
 It will be first necessary to find the inverse  of the CDF for $Y \sim G$
 
@@ -89,9 +77,6 @@ $$
 here if $x \in (0,\pi/2)$ then $y \in (0,1)$ so we don't need any restrictions on our image $x$. We can simply input values for $y_i$ from (0,1) to return an appropriate $x_i$ 
 
 ## Problem 2(b) [3 points]
-Write an R code to generate 10,000 values from the random variable $Y$ using the inverse transformation method that you described in part (a). Use seed 2024. Draw a histogram of the values you obtain, superimposed by a smoothed density, using the following R code [$Y$ is a vector of generated values in the following code]:
-
-Show your R code. Hint: On one of the boundaries of the distribution, the generated values might not look quite right due to rounding error. Ignore issue due to rounding errors. 
 
 ```{r}
 #render samples
@@ -104,35 +89,28 @@ curve(sin(x), 0, pi/2, type = "l", add = TRUE, col="red")
 
 ## Problem 2 (c) [5 points]
 
-Write an R code to implement the accept-reject algorithm that uses the random values of $Y$ that you generated in part (b), to generate random values from the random variable $X$ with the density $f(x)=8x/\pi^2$ with support in $[0, pi/2]$. To obtain an envelope obtain the optimal value of $\alpha$ such that $g(y)/ \alpha \geq f(x).$ .Show how you find $\alpha$. Also show how many of the 10,000 values that you generated are accepted. Note: There is no need to use loops. Implement your code in vectorized form. Show your R code. Use the following code to show your generated values superimposed by the density $f(x)$.
+
+What alpha makes $sin(x) / \alpha \geq 8x/\pi^2$ this true? 
+
+$$
+\alpha \leq \frac{\pi^2 sin(x)}{8x}
+$$
 
 ```{r}
-# render f
-f <- function(X){
-  8*X/(pi^2)
+# render graph
+alF <- function(X){
+  (pi^2*sin(X))/(8*X)
 }
-
-# get alpha
-# Define the range of x-axis
-x <- seq(from = 0, to = 2*pi, length.out = 100)
-
-# Define the functions
-y1 <- sin(x)/f(x)
-
-# Create the plot
-plot(x, y1, type = "l", col = "blue", lwd = 2,  
-     xlim = c(0, pi/2), 
-     xlab = "x", ylab = "y",main = "g(x)/f(x)")  
-
-
+Xseq <- seq(0,pi/2,length = 200)
+plot(Xseq,alF(Xseq),type = "l", col = "forestgreen", lwd = 4,
+     xlab = "x", ylab = "g(x)/f(x)")
 ```
-Given that $g(y)/ f(x) \geq \alpha$ we want $min_{x}[g(y)/ f(x)]$.
-Notice that the min of $g(x)/f(x)$ where $x \in [0,\frac{\pi}{2}]$ is at $\pi/2$.
+ smallest $alpha$ is at $x = \pi/2$
 
-
-set $\alpha = g(\frac{\pi}{2})/f(\frac{\pi}{2})$
 
 ```{r}
+# render function
+f <- function(x){8*x/pi^2}
 # define alpha and vectors
 alpha = sin(pi/2)/f(pi/2)
 ey = sin(Y)/alpha
@@ -149,7 +127,7 @@ X <- Y[U < Ry]
 hist(X, freq = FALSE, breaks = 50)
 curve(8*x/pi^2, 0, pi/2, type = "l", add = TRUE, col="red")
 # show the amount accepted
-sprintf("%d of the 10000 values that were generated were accepted",length(X))
+sprintf("%f of the 10000 values that were generated were accepted",length(X)/10000)
 ```
 
 \newpage
@@ -165,7 +143,19 @@ f(y_1,y_2,y_3)=c\times \exp\left\{-(y_1+y_2+y_3+y_1 y_2+2 y_2 y_3+4 y_1 y_3) \ri
 where $c>0$ is the normalizing constant so that the density integrates to 1.
 
 ## Problem 3(a) [3 points]
-Obtain the distribution of conditional densities of $Y_i|Y_j, Y_k$ for all possible distinct values of$i\neq j\neq k$. Show your work.
+
+we know that 
+
+$$
+f(y_1,y_2,y_3)=c \cdot e^{-(y_1+y_2+y_3+y_1 y_2+2 y_2 y_3+4 y_1 y_3) }
+$$
+$$
+f(Y_1 | Y_2, Y_3) = \frac{c \cdot e^{-(y_1+y_2+y_3+y_1 y_2+2 y_2 y_3+4 y_1 y_3)}}{c \cdot e^{-(y_2+y_3+2 y_2 y_3)}}=e^{-y_1(1+y_2+4y_3)}\\
+f(Y_2 | Y_1, Y_3) = \frac{c \cdot e^{-(y_1+y_2+y_3+y_1 y_2+2 y_2 y_3+4 y_1 y_3)}}{c \cdot e^{-(y_1+y_3+4 y_1 y_3)}} =e^{-y_2(1+y_1+2y_3)}\\
+f(Y_3 | Y_1, Y_2) = \frac{c \cdot e^{-(y_1+y_2+y_3+y_1 y_2+2 y_2 y_3+4 y_1 y_3)}}{c \cdot e^{-(y_1+y_2+y_1 y_2)}} = e^{-y_3(1+2y_2+4y_1)}
+$$
+
+the above are kernels for the below densities
 
 $$
 Y_1 \sim Exp(\frac{1}{1+y_2+4y_3}) \\
@@ -174,8 +164,6 @@ Y_3 \sim Exp(\frac{1}{1+2y_2+4y_1})
 $$
 
 ## Problem 3 (b) [5 points]
-
-Implement the Gibbs sampling algorithm to generate values from the joint density of $(Y_1,Y_2,Y_3)$. Specifically, run a chain with 10,000 points, and burn the first 1000 initially generated values. Then, print the approximation for the mean and covariance matrix of $(Y_1,Y_2,Y_3)$ based on your generated sample.  Also, plot the histogram of the marginals distribution of $Y_1$ only superimposed by a smoothed density curve. Set `breaks = 50` for the histogram, and use the `density()` function for the density curve to be superimposed.
 
 ```{r}
 Gibbs <- function(N,Y0,nburn,see.d){
@@ -229,14 +217,6 @@ lines(density(chain$Y[,1]), col =1, lwd =2)
 
 
 ## Problem 3 (c) [5 points]
-
-Apply the Metropolis-Hastings algorithm to generate values from $(Y_1,Y_2,Y_3)$ using a chain with 50,000 points. Set the proposal density to the trivariate normal density with  covariance matrix equal to two times the identity matrix (i.e., $2*I$). Your code should implement the following:
-
-* Use the `mvrnorm()` function in the package `MASS` to generate multivariate normal values.
-* Begin your simulation with seed 2024.
-* Start with the initial value $y_1=y_2=y_3=1$.
-* Your code should compute the acceptance rate and print it at the end.
-* Burn the first 5000 points from the chain, and plot the histogram of the marginals of $Y_1$, $Y_2$, and $Y_3$, superimposed by a smoothed density curve. Set `breaks = 50` for the histogram, and use the `density()` function for the density curve to be superimposed.
 
 ```{r}
 P <- function(X){
@@ -319,14 +299,13 @@ Use the library `coda` to print the summary of the chain, and the trace plots fo
 traceplot(mcmc(chain$X))
 ```
 
+
 ## Problem 3 (e) [5 points]
 
-Repeat Problem 3(c), except this time adjust the covariance matrix for the proposal density so that the chain mixes well and in particular the chain has acceptance rate somewhere between 25% to 40%. Again use the `coda` package to print the summary of the chain, the trace plots for the chain. Also print the acceptance rate
-
 ```{r}
-D <- diag(3)*.075
+D <- diag(3)*1
 chain2 <- MH(50000,S = D)
-summary(mcmc(chain2))
+summary(mcmc(chain2$X))
 traceplot(mcmc(chain2$X))
 chain2$ratio
 ```
@@ -336,18 +315,7 @@ chain2$ratio
 
 ## Problem 4 
 
-In this problem, we revisit the example that we worked on in class about Kevin Mitchell’s batting average, and we imagine that it is 1988 now! Assuming that the outcomes of Kevin Mitchell’s hits are independent, the number of his home runs, call it $X$, has the following distribution:
-\[
-X\sim Binomial(N, \theta),
-\]
-where $N$ is the number of times he is at bat, and $\theta$ is his batting average (the probability that he makes a home-run each time he is at bat). We assume that $\theta$ has a beta prior distribution with parameters $\alpha = 2$ and $\beta = 5$. Using the Bayesian framework, our goals is to obtain a distribution for $\theta$, his probability of making a home run. Assume that we have observed him in his first 10 games of the season where he was at bat 44 times, and he had made 4 home runs. What will be different than what we did in class  is that we will use a different prior for $\theta$. Specifically, we use the following shifted and truncated double exponential prior:
-\[
-f(\theta) = \frac{50}{1-(e^{-95}+e^{-5})/2}\exp\{-100\times |\theta-0.05|\}\;\;\; 0\leq \theta \leq 1.
-\]
-
 ## Problem 4 (a) [3 points] 
-
-Use the $rexp()$ function in R to generate 10,000 random values from the prior distribution of $\theta$. Use seed 2024. Then, plot the histogram of the generated values, superimposed by a smoothed density curve. Set `breaks = 50` for the histogram, and use the `density()` function for the density curve to be superimposed. The only functions allowed for generating the values are `rexp()`, and one of `sample()` or `runif()`. You will not get credit if you use a packaged function to generate from the prior. [Hint: Generate from exponential with appropriate rate parameter, and then shift and truncate the values. Generate more values than needed (around 11000), and then truncate the values to obtain 10,000 values.]
 
 ```{r}
 # render of the prior
@@ -389,8 +357,6 @@ lines(density(X))
 
 ## Problem 4 (b) [5 points]
 
-Use the 10,000 values that you generated from the prior in part (a) in a Sampling Importance Resampling (SIR) algorithm to draw 5000 values from the posterior for $\theta$. Insert your R code below. Also, draw a frequency histogram (not a density histogram) of the posterior distribution and insert it below. Use the option `breaks = 100` for your histogram.
-
 ```{r}
 set.seed(2024)
 # making weights
@@ -408,8 +374,6 @@ hist(p_post,freq = T,breaks = 100)
 ```
 
 ## Problem 4 (c) [3 points]
-
-Using the 5000 values that you generated in part (b) approximate the probability that Kevin Mitchell makes 4 home runs when he is at bat 50 times. Insert your R code and your final solution below.
 
 ```{r}
 # from SIR_Jim Albert.R
