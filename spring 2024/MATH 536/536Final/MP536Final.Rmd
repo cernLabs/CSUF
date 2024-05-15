@@ -1,0 +1,83 @@
+---
+title: "MP536Final"
+author: "Michael Pena"
+date: "2024-05-14"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(rpart)
+library(adabag)
+library(randomForest)
+library(ROCR)
+library(gbm)
+```
+
+
+```{r}
+# load in data
+data <- read.csv("baseball.csv", head = T)
+
+```
+
+```{r}
+# model the data
+ggplot(data = data) +
+  geom_point(aes(x = plate_x, y = plate_z, color = description))
+```
+
+```{r}
+# filter data
+data <- filter(data, !is.na(plate_x))
+data <- filter(data, !is.na(plate_z))
+
+n = length(data$pitch_type)
+zone = data.frame()
+
+a1 = 1.2
+b1 = 1.2
+a2 = .96
+b2 = .96
+
+  
+for (i in 1:n){
+  X <- data$plate_x[i]
+  Y <- data$plate_z[i]
+  if((X^2/a1^2 + (Y - 2.5)^2/b1^2 <= 1) & (X^2/a2^2 + (Y - 2.5)^2/b2^2 >= 1)){
+    zone = rbind(zone,data[i,])
+  }
+}
+
+# model the data
+ggplot(data = zone) +
+  geom_point(aes(x = plate_x, y = plate_z, color = description))
+```
+
+```{r}
+# remove X
+zone <- zone %>% select(-X)
+zone$description = as.factor(zone$description)
+```
+
+
+```{r}
+# call equation
+equa1 = description ~ plate_x + plate_z + balls + strikes + release_speed + pitch_type + home_score + away_score
+model.rf = randomForest(equa1,data=zone,ntree=500,mtry=3,control=rpart.control(minsplit=10,cp=.02))
+summary(model.rf)
+```
+>> GAMEPLAN
+
+ > + cross validation to find ideal minsplit & cp for random forest
+ > + get prediction probabilities for when all ball = 0, all ball =1, etc...
+ > + graph the probabilities using boxplot
+ > + repeat for boosting
+
+```{r}
+zone
+```
+
+

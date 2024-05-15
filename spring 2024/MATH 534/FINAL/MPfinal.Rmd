@@ -17,28 +17,6 @@ library(coda)
 
 \newpage
 
-# Exam Rules and Instructions
-
-(1)	You must work on this exam individually. Any communication with others about this exam in any form is considered cheating. Should you have any questions, please send an email to mori@fullerton.edu. Do not email from the Canvas!
-
-(2)	 Copying solutions from an Internet source or any other source would be considered plagiarism and will be dealt with according to university policy. 
-
-(3)	You are not allowed to distribute the questions on this exam in any form or share the questions with anyone during the exam or anytime after the due-date. This includes posting questions to the Internet.
-
-(4)	 Your solutions must be typewritten. You must submit a single pdf file that would include your solutions, R codes, and R outputs. Additionally submit your Rmarkdown file.
-
-(5)	Your solutions must appear in the order of the problem numbers. If you don’t know the answer to a problem, write the problem number, and leave a blank space.
-
-(6)	 In multi-part problems where one part depends on another, you may submit your solution for grading **no later than midnight of Sunday May 12th**. If your answer is correct, you will get **deducted one point or 10% of the total grade for the part, whichever is greater**. But if your solution is incorrect, you will lose the points for that part, and I will provide you with the correct answer (**in most cases partial credit will be given**).
-
-(7)	I reserve the right to interview you about the exam after I grade your exam.
-
-(8) Submit your solution to Canvas. 
-
-(9) A total of 50 points is possible.
-
-\newpage
-
 ## Problem 1 (a) [5 points]
 
 ```{r}
