@@ -66,18 +66,82 @@ zone$description = as.factor(zone$description)
 ```{r}
 # call equation
 equa1 = description ~ plate_x + plate_z + balls + strikes + release_speed + pitch_type + home_score + away_score
-model.rf = randomForest(equa1,data=zone,ntree=500,mtry=3,control=rpart.control(minsplit=10,cp=.02))
+# form Rand Forest model
+model.rf = randomForest(equa1,data=zone,ntree=7000,mtry=3,control=rpart.control(minsplit=5,cp=.02))
 summary(model.rf)
+print(model.rf)
 ```
 >> GAMEPLAN
-
- > + cross validation to find ideal minsplit & cp for random forest
+ >
  > + get prediction probabilities for when all ball = 0, all ball =1, etc...
  > + graph the probabilities using boxplot
  > + repeat for boosting
 
 ```{r}
-zone
+plot(model.rf)
 ```
 
+```{r}
+# as factor for some data 
+zone$description <-  as.factor(zone$description)
+zone$pitch_type <- as.factor(zone$pitch_type)
+
+# adap boosting portion
+model.ab = boosting(equa1,data=zone,mfinal=100,control=rpart.control(minsplit=10,cp=.02))
+print(model.ab)
+model.ab$votes
+prediction.ab = model.ab$class
+table(prediction.ab,zone$description)
+```
+
+
+
+```{r}
+y = as.numeric(zone$description) - 1
+
+p.b = predict(model.rf,newdata=zone,type="prob")[,2]
+#Probably don't want rounded probabilities to exactly 0 or 1
+
+p.b[p.b==0] = 0.00001
+p.b[p.b==1] = .9999
+LL.b = sum(y*log(p.b) + (1-y)*log(1-p.b))
+
+LL.b
+
+
+```
+
+```{r}
+###model b wins by a mile, but I'm a little worried about overfitting.  Time to cross validate)
+###Going to 10 fold cross validate
+
+n = dim(zone)[1]
+n
+
+###with 179 data points, going to have 17 data points in each testing set
+###Obviously that means there are 9 data points that never get partitioned
+###as testing data.  But we can pick those up as their own testing group at the end if we want to.
+
+CV.ind.mat = matrix(sample(1:n,3000,replace=F),nrow=10)
+
+#Run same code as before, but each time, we're going to run our models using only train data
+#and testing them using only testing data.
+
+CVLL.b = 0
+
+for(k in 1:10){
+	train.data = data[(1:n)[-CV.ind.mat[k,]],]
+	test.data = data[CV.ind.mat[k,],]
+
+
+	y = (as.numeric(zone$description) - 1)[CV.ind.mat[k,]]
+	p.b = predict(model.rf,newdata=test.data,type="prob")[,2]
+	#Probably don't want rounded probabilities to exactly 0 or 1
+	p.b[p.b==0] = 0.00001
+	p.b[p.b==1] = .9999
+
+	LL.b1 = sum(y*log(p.b) + (1-y)*log(1-p.b))
+	CVLL.b = CVLL.b + LL.b1
+}
+```
 
