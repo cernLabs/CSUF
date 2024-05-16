@@ -166,6 +166,13 @@ for(i.tr in c(100,500,1000)){
 # simulating balls = i
 
 ```{r}
+# render idealmodel here
+
+idealmodel = NULL
+```
+
+
+```{r}
 # sim data to plug into ideal model
 zone0 <- zone %>% mutate(balls = 0)
 zone1 <- zone %>% mutate(balls = 1)
