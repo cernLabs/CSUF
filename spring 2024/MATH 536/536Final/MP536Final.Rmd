@@ -65,7 +65,7 @@ zone$description = as.factor(zone$description)
 
 ```{r}
 # call equation
-equa1 = description ~ plate_x + plate_z + balls + strikes + release_speed + pitch_type + home_score + away_score
+equa1 = description ~ plate_x + plate_z + balls + strikes + release_speed + home_score + away_score
 # form Rand Forest model
 model.rf = randomForest(equa1,data=zone,ntree=7000,mtry=3,control=rpart.control(minsplit=5,cp=.02))
 summary(model.rf)
@@ -84,12 +84,9 @@ plot(model.rf)
 ```{r}
 # as factor for some data 
 zone$description <-  as.factor(zone$description)
-zone$pitch_type <- as.factor(zone$pitch_type)
-
 # adap boosting portion
 model.ab = boosting(equa1,data=zone,mfinal=100,control=rpart.control(minsplit=10,cp=.02))
-print(model.ab)
-model.ab$votes
+
 prediction.ab = model.ab$class
 table(prediction.ab,zone$description)
 ```
@@ -112,36 +109,96 @@ LL.b
 ```
 
 ```{r}
+TenFold <- function(ntree.in, mfinal.in, cp.in, ms.in){
 ###model b wins by a mile, but I'm a little worried about overfitting.  Time to cross validate)
 ###Going to 10 fold cross validate
-
+set.seed(536)
 n = dim(zone)[1]
-n
 
 ###with 179 data points, going to have 17 data points in each testing set
 ###Obviously that means there are 9 data points that never get partitioned
 ###as testing data.  But we can pick those up as their own testing group at the end if we want to.
 
-CV.ind.mat = matrix(sample(1:n,3000,replace=F),nrow=10)
+CV.ind.mat = matrix(sample(1:n,3070,replace=F),nrow=10)
 
 #Run same code as before, but each time, we're going to run our models using only train data
 #and testing them using only testing data.
-
+CVLL.a = 0
 CVLL.b = 0
-
 for(k in 1:10){
-	train.data = data[(1:n)[-CV.ind.mat[k,]],]
-	test.data = data[CV.ind.mat[k,],]
+	train.data = zone[(1:n)[-CV.ind.mat[k,]],]
+	
+	test.data = zone[CV.ind.mat[k,],]
 
+ model.a = randomForest(equa1, data = train.data, ntree = 500, mtry = 3, control=rpart.control(minsplit=ms.in,cp=cp.in))
+ model.b = boosting(equa1, data = train.data, mfinal=100, control=rpart.control(minsplit=ms.in,cp=cp.in))
 
+  	
 	y = (as.numeric(zone$description) - 1)[CV.ind.mat[k,]]
-	p.b = predict(model.rf,newdata=test.data,type="prob")[,2]
+	p.a = predict(model.a,newdata=test.data,type="prob")[,2]
+	p.b = predict(model.b,newdata=test.data)$prob[,2]
 	#Probably don't want rounded probabilities to exactly 0 or 1
 	p.b[p.b==0] = 0.00001
 	p.b[p.b==1] = .9999
 
+	LL.a1 = sum(y*log(p.a) + (1-y)*log(1-p.a))
 	LL.b1 = sum(y*log(p.b) + (1-y)*log(1-p.b))
+	CVLL.a = CVLL.a + LL.a1
 	CVLL.b = CVLL.b + LL.b1
 }
+ ROW <- c(CVLL.a,CVLL.b,ntree.in, mfinal.in, cp.in, ms.in)
+ return(ROW)
+}
+```
+
+```{r}
+LLdf <- data.frame()
+for(i.tr in c(100,500,1000)){
+  for(i.cp in c(.001,.01,.05)){
+    for(i.ms in c(5,10,20)){
+      row <- TenFold(i.tr,i.tr,i.cp,i.ms)
+      LLdf <- rbind(LLdf,row)
+    }
+  }
+}
+```
+
+# simulating balls = i
+
+```{r}
+# sim data to plug into ideal model
+zone0 <- zone %>% mutate(balls = 0)
+zone1 <- zone %>% mutate(balls = 1)
+zone2 <- zone %>% mutate(balls = 2)
+zone3 <- zone %>% mutate(balls = 3)
+```
+
+```{r}
+# if the idealmodel is RandForest
+	 P0 = predict(idealmodel,newdata=zone0,type="prob")[,2]
+	 P1 = predict(idealmodel,newdata=zone1,type="prob")[,2]
+	 P2 = predict(idealmodel,newdata=zone2,type="prob")[,2]
+	 P3 = predict(idealmodel,newdata=zone3,type="prob")[,2]
+```
+
+
+```{r}
+# if the idealmodel is AB
+   P0 = predict(idealmodel,newdata=zone0)$prob[,2]
+	 P1 = predict(idealmodel,newdata=zone1)$prob[,2]
+	 P2 = predict(idealmodel,newdata=zone2)$prob[,2]
+	 P3 = predict(idealmodel,newdata=zone3)$prob[,2]
+```
+
+
+```{r}
+# Plotting multiple boxplots on the same graph
+boxplot(P0, P1, P2, P3, 
+        names = c("Balls = 0", "Balls = 1", "Balls = 2", "Balls = 3"),
+        col = c("skyblue", "lightgreen", "lightpink", "blanchedalmond"),
+        main = "Multiple Boxplots",
+        xlab = "Groups",
+        ylab = "Probability")
+
 ```
 
