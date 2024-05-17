@@ -108,7 +108,7 @@ LL.b
 
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 FiveFold <- function(ntree.in, mfinal.in, cp.in, ms.in){
 ###model b wins by a mile, but I'm a little worried about overfitting.  Time to cross validate)
 ###Going to 10 fold cross validate
@@ -157,14 +157,14 @@ for(k in 1:5){
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 start = date()
 FiveFold(200,200,.01,8)
 end = date()
 ```
 
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 LLdf <- data.frame()
 start = date()
 for(i.tr in c(100,500,1000)){
@@ -178,7 +178,7 @@ for(i.tr in c(100,500,1000)){
 end = date()
 ```
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 startF = date()
 FiveFold(1000,1000,.05,5) -> x1
 endF = date()
@@ -189,7 +189,7 @@ endF = date()
 ```{r}
 # render idealmodel here
 
-idealmodel = NULL
+idealmodel = boosting(equa1,data=zone,mfinal=500,control=rpart.control(minsplit=10,cp=.01))
 ```
 
 
@@ -203,10 +203,10 @@ zone3 <- zone %>% mutate(balls = 3)
 
 ```{r}
 # if the idealmodel is RandForest
-	 P0 = predict(idealmodel,newdata=zone0,type="prob")[,2]
-	 P1 = predict(idealmodel,newdata=zone1,type="prob")[,2]
-	 P2 = predict(idealmodel,newdata=zone2,type="prob")[,2]
-	 P3 = predict(idealmodel,newdata=zone3,type="prob")[,2]
+	 # P0 = predict(idealmodel,newdata=zone0,type="prob")[,2]
+	 # P1 = predict(idealmodel,newdata=zone1,type="prob")[,2]
+	 # P2 = predict(idealmodel,newdata=zone2,type="prob")[,2]
+	 # P3 = predict(idealmodel,newdata=zone3,type="prob")[,2]
 ```
 
 
@@ -216,6 +216,12 @@ zone3 <- zone %>% mutate(balls = 3)
 	 P1 = predict(idealmodel,newdata=zone1)$prob[,2]
 	 P2 = predict(idealmodel,newdata=zone2)$prob[,2]
 	 P3 = predict(idealmodel,newdata=zone3)$prob[,2]
+```
+
+```{r}
+# exporting data
+Probdat <- cbind(P0,P1,P2,P3)
+write.csv(Probdat, "probdat.csv")
 ```
 
 
