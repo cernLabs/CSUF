@@ -178,11 +178,6 @@ for(i.tr in c(100,500,1000)){
 end = date()
 ```
 
-```{r eval=FALSE, include=FALSE}
-startF = date()
-FiveFold(1000,1000,.05,5) -> x1
-endF = date()
-```
 
 # simulating balls = i
 
@@ -230,9 +225,63 @@ write.csv(Probdat, "probdat.csv")
 boxplot(P0, P1, P2, P3, 
         names = c("Balls = 0", "Balls = 1", "Balls = 2", "Balls = 3"),
         col = c("skyblue", "lightgreen", "lightpink", "blanchedalmond"),
-        main = "Multiple Boxplots",
+        main = "Probability of Umpire Calling Strike",
         xlab = "Groups",
         ylab = "Probability")
 
 ```
 
+```{r}
+# doing stats 101
+P02 <- c(P0,P1,P2)
+P02
+mean(P02)
+mean(P3)
+
+
+```
+
+HO : mean1 =  mean2
+H1 : mean1 $\neq$ mean2
+
+```{r}
+t.test(P02,P3,
+       alternative = "two.sided",
+       conf = .99)
+```
+
+```{r}
+hist(P3)
+```
+
+
+```{r}
+# Plotting multiple boxplots on the same graph
+boxplot(P02, P3, 
+        names = c("Balls = 0,1,2", "Balls = 3"),
+        col = c("skyblue", "blanchedalmond"),
+        main = "Prob. of Calling Strike",
+        xlab = "Groups",
+        ylab = "Probability")
+qqnorm(P02);qqnorm(P3)
+# make a conf interval
+mean(P02)
+mean(P3)
+mean(P02) - mean(P3)
+
+# confidence interval
+mean(P02) + quantile(P02,0.005)*sqrt(var(P02)/length(P02))
+mean(P02) + quantile(P02,1-0.005)*sqrt(var(P02)/length(P02))
+```
+
+```{r}
+#BigP <- as.data.frame(cbind(P0,P1,P2,P3))
+
+for(i in 1:4){
+ print(names(BigP[i]))
+ print(mean(BigP[,i]))
+ print(fivenum(BigP[,i]))
+}
+```
+
+means rise by a factor of about 0.02
