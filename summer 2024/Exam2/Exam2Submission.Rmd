@@ -1,0 +1,36 @@
+---
+title: "EXAM2submission"
+author: "Michael Pena"
+date: "2024-06-08"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data <- read.csv("Population-1.csv", header = T)
+series <- ts(data$pop, frequency = 12)
+```
+
+## Question 2.
+
+### part (a).
+
+```{r}
+plot.ts(series)
+```
+
+### part (b).
+
+```{r}
+m <- decompose(series)
+m$figure
+plot(m)
+```
+
+### part (c)
+
+```{r}
+acf(series)
+
+```
+Residuals seem to not look stationary as there is a linear trend in height downward.
