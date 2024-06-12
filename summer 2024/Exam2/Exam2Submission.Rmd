@@ -7,30 +7,174 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
 data <- read.csv("Population-1.csv", header = T)
-series <- ts(data$pop, frequency = 12)
+series <- ts(data$pop, start = c(2010,1), frequency = 12)
 ```
+
+## Question 1.
+
+### 1.
+
+A
+B
+F
+
+### 2a.
+notice that when we take the expected value of $X_t$
+
+\begin{multline*}
+E[X_t] = E[\beta_0 + \beta_1t + \beta_2sin(\frac{\pi}{2}t) + Z_t] \\
+= E [\beta_0 + \beta_1t + \beta_2sin(\frac{\pi}{2}t)]  + E [Z_t]\\
+= \beta_0 + \beta_1t + \beta_2sin(\frac{\pi}{2}t) + 0
+\end{multline*}
+
+The above expectation results in a function that is dependent on $t$, thus it fails the first requirement to be a stationary system.
+
+### 2b.
+
+given the definition $\nabla_4X_t = X_t - X_{t-4}$ we can assume that 
+
+\begin{multline*}
+\nabla_4X_t = \beta_0 + \beta_1t + \beta_2sin(\frac{\pi}{2}t) + Z_t - \Bigg(\beta_0 + \beta_1(t-4) + \beta_2sin(\frac{\pi}{2}(t-4)) + Z_{t-4}\Bigg) \\
+= \beta_0 - \beta_0 + \beta_1t - \beta_1t + 4\beta_1 + \beta_2sin(\frac{\pi}{2}t) - \beta_2sin(\frac{\pi}{2}(t-4)) + Z_t - Z_{t-4}
+\end{multline*}
+
+notice that 
+
+\begin{multline*}
+sin(\frac{\pi}{2}(t-4))=sin(\frac{\pi}{2}t-2\pi)\\
+= sin(\frac{\pi}{2}t)cos(-2\pi) + sin(-2\pi)cos(\frac{\pi}{2}t)\\
+=sin(\frac{\pi}{2}t)\cdot 1 + 0 =  sin(\frac{\pi}{2}t)
+\end{multline*}
+
+thus 
+
+\begin{multline*}
+\beta_0 - \beta_0 + \beta_1t - \beta_1t + 4\beta_1 + \beta_2sin(\frac{\pi}{2}t) - \beta_2sin(\frac{\pi}{2}(t-4)) + Z_t - Z_{t-4} \\ 
+= \beta_0 - \beta_0 + \beta_1t - \beta_1t + 4\beta_1 + \beta_2sin(\frac{\pi}{2}t) - \beta_2sin(\frac{\pi}{2}t) + Z_t - Z_{t-4}\\
+=0 + 0 + 4\beta_1 + 0 + Z_t - Z_{t-4}\\
+= 4\beta_1 + Z_t - Z_{t-4}
+\end{multline*}
+
+moving forward to the expected value 
+
+\begin{multline*}
+E[4\beta_1 + Z_t - Z_{t-4}] \\
+E[4\beta_1] + E[Z_t] - E [Z_{t-4}] \\
+= 4\beta_1 + 0 + 0\\ = 4\beta_1
+\end{multline*}
+
+this expectation is depenedent on $t$; $\nabla_4X_t$ does not have a time-dependent mean.
+
+### 3.
+
+using Bayes
+\begin{multline*}
+f(x_n|x_{n-1},...,x_1)f(x_{n-1},...,x_1)\\
+ = f(x_n|x_{n-1},...,x_1)f(x_{n-1}|x_{n-2},...,x_1)f(x_{n-2},...,x_1)\\
+ = f(x_n|x_{n-1},...,x_1)f(x_{n-1}|x_{n-2},...,x_1)f(x_{n-2} |x_{n-3} ,...,x_1) f(x_{n-3} ,...,x_1) \\
+ ...\text{keep extracting}...\\
+ = \prod^{n}_{i=2} f(x_i|x_{i-1},...,x_1)f(x_1)
+\end{multline*}
+
+note that 
+
+\begin{multline*}
+X_i|X_{i-1},...,X_1 = X_i|X_{i-1} \sim f(X_i|X_{i-1})\\
+E[X_i|X_{i-1}] = \phi X_{t-1}\\
+Var(X_i|X_{i-1}) = \sigma^2\\\\
+\text{express function}\\
+\Longrightarrow
+f(X_i|X_{i-1}) = \frac{1}{\sqrt{2\pi\sigma^2}}\exp\{\frac{-(x_i - \phi X_{i-1})^2}{2 \sigma^2}\}\\
+\Longrightarrow
+\ell(X_i|X_{i-1}) = \sum^{n}_{i=2}  ln(\frac{1}{\sqrt{2\pi\sigma^2}}\exp\{\frac{-(x_i - \phi X_{i-1})^2}{2 \sigma^2}\})\\
+\sum^{n}_{i=2}\frac{-1}{2}ln(2\pi\sigma^2) + \frac{1}{2\sigma^2} (x_i - \phi x_{i-1})
+\\ \text{deriving with respect to } \phi \\
+\frac{\partial\ell}{\partial \phi} = \sum^{n}_{i=2} \frac{1}{2\sigma^2} 2(x_i - \phi x_{i-1})(-x_{i-1})\\ \text{set partial to 0}\\
+\Longrightarrow 0 = \sum^{n}_{i=2} \frac{1}{2\sigma^2} 2(x_i - \phi x_{i-1})(-x_{i-1})\\
+0 = \sum^{n}_{i=2} \frac{1}{\sigma^2} (-x_i x_{i-1}  + \phi x_{i-1}^2) \\
+0 = \sum^{n}_{i=2} -x_i x_{i-1}  + \phi x_{i-1}^2\\ \text{isolate }\phi\\
+\phi \sum^{n}_{i=2} x_{i-1}^2 = \sum^{n}_{i=2} x_i x_{i-1} \\
+\phi = \frac{\sum^{n}_{i=2} x_i x_{i-1}}{\sum^{n}_{i=2} x_{i-1}^2}
+\end{multline*}
+
+MLE for $\hat{\phi}$ is $\frac{\sum^{n}_{i=2} x_i x_{i-1}}{\sum^{n}_{i=2} x_{i-1}^2}$.
 
 ## Question 2.
 
 ### part (a).
 
 ```{r}
-plot.ts(series)
+plot.ts(series, ylab = "popluation", main = "Rotifer Population Over Time")
 ```
+by simply looking at the graph, there seems to be peaks around the 4 month and troughs around the 8th month of every cycle. 
+This could be interpreted as an expansion in population during April and a recession in population in August.
+
+
 
 ### part (b).
 
 ```{r}
-m <- decompose(series)
+m <- decompose(series, type = "additive")
 m$figure
-plot(m)
+plot(m$trend,
+     ylab = "popluation", 
+     main = "General Trend for Rotifer Population")
+plot(m$seasonal,
+     ylab = "popluation",
+     main = "Seasonal Trend for Rotifer Population")
+plot(m$random,
+     ylab = "residuals",
+     main = "Residuals for Rotifer Population TS Data")
 ```
 
 ### part (c)
 
 ```{r}
-acf(series)
-
+acf(na.omit(m$random), main = "Autocorrelation Function")
 ```
-Residuals seem to not look stationary as there is a linear trend in height downward.
+Residuals seem to not look stationary as there is a linear trend in height downward. They also seem to peak out of the confidence interval cyclically.
+
+### part (d)
+
+because ARMA only works with stationary systems, we need to do some referencing
+
+```{r}
+# differencing
+seriesD <- diff(series,diff = 1)
+# ARMA1
+arma1 <-arima(seriesD,order = c(1,0,1))
+arma1
+# ARMA2
+arma2 <-arima(seriesD,order = c(2,0,0))
+arma2
+# ARMA3
+arma3 <-arima(seriesD,order = c(0,0,2))
+arma3
+# ARMA4
+arma4 <-arima(seriesD,order = c(2,0,1))
+arma4
+# ARMA5
+arma5 <-arima(seriesD,order = c(2,0,2))
+arma5
+```
+After a single iteration of differencing, the arima() function was able to accept the model.
+
+```{r}
+# Make table
+fr <- data.frame(
+Model = c("ARMA(1,0,1)","ARMA(2,0,0)","ARMA(0,0,2)","ARMA(2,0,1)","ARMA(2,0,2)"),
+ar1 = c(0.5532,1.1672,'-',0.4946,0.1878),
+ar2 = c('-',-0.4911,'-',0.0775,0.2658),
+ma1 = c(0.7496,'-',1.2078,0.7824,1.0796),
+ma2 = c('-','-',0.3528,'-',0.2205),
+intercept = c(3.0659,3.0132,2.9268,3.0980,3.1055),
+AIC = c(276.84,277.95,282.45,278.62,280.31))
+# render table
+library(kableExtra)
+kable(fr,caption = "Parameter Estimates and AIC for ARMA models")
+```
+
+Our lowest AIC is coming from the model ARMA(1,0,1) which would make sense as it is one of the models with the least parameters. Based on AIC, ARMA(1,0,1) seems to fit the best out of all models; however, I think it would be in our best interest if we did not use AIC alone to determine the model that fits the best.
+
