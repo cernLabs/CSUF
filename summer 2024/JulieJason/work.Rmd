@@ -1,0 +1,69 @@
+---
+title: "JulieJason Project"
+author: "Michael Pena"
+date: "2024-06-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+# Data Exploration
+
+```{r}
+series <- read.csv("/home/cern/Desktop/EMGdata_full.csv",header = T)
+N = length(series[,1])
+```
+
+```{r}
+count = 1
+v <- c()
+i = 1
+for(r in 2:length(series$TimeInSecond)){
+  # if prev = current
+  if(series$TimeInSecond[r] == series$TimeInSecond[r-1]){
+    count  = count + 1
+  }
+  else{
+    v[i] = count
+    count  = 1
+    i = i + 1
+  }
+}
+```
+
+```{r}
+evn = as.vector(unique(series$Event))
+bd = 0
+irot = 0
+irrs = 0
+erot = 0
+for(r in 1:N){
+  if(series$Event[r] == evn[4]){bd = bd +1 # baseline delts
+  }else if(series$Event[r] == evn[6]){irot = irot + 1 # intern rot start
+  }else if(series$Event[r] == evn[8]){irrs = irrs + 1 # internal rotation w/ resistance
+  }else if(series$Event[r] == evn[10]){erot = erot + 1} # external rotation)
+}
+bd;irot;irrs;erot
+```
+////// SO IT LOOKS as if these events only happened once throughout this entire dataset (19mins). 
+now let's just find where this is happening
+
+```{r}
+POINTs <- c()
+for(i in 4:11){
+  POINTs[i-3] <- which(series$Event == evn[i])
+  }
+POINTs <- rbind(evn[4:11],POINTs)
+POINTs
+```
+```{r}
+bl.delt = series[1006325:1061121,2]
+in.rot = series[1237217:1258913,2]
+in.rot.res = series[1439025:1469441,2]
+ex.rot = series[2257184:2318737,2]
+```
+
+>> crap = data.frame(as.character(evn[4]) = series[2,(POINTs[2,4]):(POINTs[2,5])])
