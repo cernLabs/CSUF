@@ -40,3 +40,30 @@ for(i in 1:3){acf(SIM[,i],main = name[i],ylab = "rho(h)")}
 for(i in 1:3){pacf(SIM[,i],main = name[i],ylab = "alpha(h)")}
 ```
 
+The models seem to match the table we went over in class; I do think that even though there seems to be a significant peak in the ARIMA(1,0) PACF, it seems not to peak over enough to claim to be an ARIMA(2,0) model.
+
+## Question 3
+
+```{r}
+# get the data
+library(astsa)
+# make models
+ar.ols(cmort,order= 2) -> cmort.ar2
+arima(cmort, order = c(2,0,0)) -> cmort.arima200
+cmort.ar2$x.intercept
+summary(cmort.arima200)
+```
+
+```{r}
+ts.plot(cmort, main = "fitting with ar.ols()", ylab = "Mortality")
+lines(fitted(cmort.ar2),col = 'red')
+
+```
+```{r}
+ts.plot(cmort, main = "fitting with arima()", ylab = "Mortality")
+lines(fitted(cmort.arima200),col = 'skyblue')
+```
+
+## Question 3
+
+
