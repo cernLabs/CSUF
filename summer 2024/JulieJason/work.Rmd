@@ -13,57 +13,123 @@ library(dplyr)
 # Data Exploration
 
 ```{r}
-series <- read.csv("/home/cern/Desktop/EMGdata_full.csv",header = T)
-N = length(series[,1])
+dat <- read.csv("/home/cern/Desktop/EMGdata_full.csv",header = T)
+N = length(dat[,1])
 ```
 
 ```{r}
-count = 1
-v <- c()
-i = 1
-for(r in 2:length(series$TimeInSecond)){
-  # if prev = current
-  if(series$TimeInSecond[r] == series$TimeInSecond[r-1]){
-    count  = count + 1
-  }
-  else{
-    v[i] = count
-    count  = 1
-    i = i + 1
-  }
-}
-```
-
-```{r}
-evn = as.vector(unique(series$Event))
-bd = 0
-irot = 0
-irrs = 0
-erot = 0
-for(r in 1:N){
-  if(series$Event[r] == evn[4]){bd = bd +1 # baseline delts
-  }else if(series$Event[r] == evn[6]){irot = irot + 1 # intern rot start
-  }else if(series$Event[r] == evn[8]){irrs = irrs + 1 # internal rotation w/ resistance
-  }else if(series$Event[r] == evn[10]){erot = erot + 1} # external rotation)
-}
-bd;irot;irrs;erot
-```
-////// SO IT LOOKS as if these events only happened once throughout this entire dataset (19mins). 
-now let's just find where this is happening
-
-```{r}
-POINTs <- c()
-for(i in 4:11){
-  POINTs[i-3] <- which(series$Event == evn[i])
-  }
-POINTs <- rbind(evn[4:11],POINTs)
-POINTs
-```
-```{r}
-bl.delt = series[1006325:1061121,2]
-in.rot = series[1237217:1258913,2]
-in.rot.res = series[1439025:1469441,2]
-ex.rot = series[2257184:2318737,2]
+# count = 1
+# v <- c()
+# i = 1
+# for(r in 2:length(series$TimeInSecond)){
+#   # if prev = current
+#   if(series$TimeInSecond[r] == series$TimeInSecond[r-1]){
+#     count  = count + 1
+#   }
+#   else{
+#     v[i] = count
+#     count  = 1
+#     i = i + 1
+#   }
+# }
+# ```
+# 
+# ```{r}
+# evn = as.vector(unique(series$Event))
+# bd = 0
+# irot = 0
+# irrs = 0
+# erot = 0
+# for(r in 1:N){
+#   if(series$Event[r] == evn[4]){bd = bd +1 # baseline delts
+#   }else if(series$Event[r] == evn[6]){irot = irot + 1 # intern rot start
+#   }else if(series$Event[r] == evn[8]){irrs = irrs + 1 # internal rotation w/ resistance
+#   }else if(series$Event[r] == evn[10]){erot = erot + 1} # external rotation)
+# }
+# bd;irot;irrs;erot
+# ```
+# ////// SO IT LOOKS as if these events only happened once throughout this entire dataset (19mins). 
+# now let's just find where this is happening
+# 
+# ```{r}
+# POINTs <- c()
+# for(i in 4:11){
+#   POINTs[i-3] <- which(series$Event == evn[i])
+#   }
+# POINTs <- rbind(evn[4:11],POINTs)
+# POINTs
+# 
+# bl.delt = series[1006325:1061121,2]
+# in.rot = series[1237217:1258913,2]
+# in.rot.res = series[1439025:1469441,2]
+# ex.rot = series[2257184:2318737,2]
 ```
 
 >> crap = data.frame(as.character(evn[4]) = series[2,(POINTs[2,4]):(POINTs[2,5])])
+
+plotting the movements as time series
+
+```{r}
+# par(mfrow=c(2,2))
+# plot.ts(bl.delt)
+# plot.ts(in.rot)
+# plot.ts(in.rot.res)
+# plot.ts(ex.rot)
+# 
+# par(mfrow=c(2,2))
+# plot.ts(abs(bl.delt))
+# plot.ts(abs(in.rot))
+# plot.ts(abs(in.rot.res))
+# plot.ts(abs(ex.rot))
+```
+
+Prof is suggesting something with a Poisson thingie
+
+
+This is from Julies final_project.R file
+```{r}
+
+# scan the names of flagged events
+unique(dat$Event)
+# the data we are primarily interested in is column 2
+emg <- dat$EMG
+
+# Row numbers of flagged events
+event.times <- c(1006325, 1061121, 1237217, 1258913, 1439025, 1469441, 2257184, 2318737)
+# Conditions, based on flagged event start/stop times
+# Note that these events are of different lengths.
+base.deltoid <- ts(emg[event.times[1]:event.times[2]])
+IR.pecs <- ts(emg[event.times[3]:event.times[4]])
+IR.pecs.resist <- ts(emg[event.times[5]:event.times[6]])
+ER <- ts(emg[event.times[7]:event.times[8]])
+
+# Plots of the first 10 seconds (2048 samples per second) of each condition.
+# NOTE: Shoulder external rotation has been shifted forward 3 seconds
+#  because nothing was happening in the first few seconds, likely the 
+#  event flag was triggered prior to the event.
+par(mfrow=c(2,2))
+plot(base.deltoid[0:20480], main = "Baseline deltoid activity",
+     ylim = c(-45,45), type='l')
+plot(IR.pecs[0:20480], main = "Deltoid with pectoral activity",
+     ylim = c(-45,45), type='l')
+plot(IR.pecs.resist[0:20480], main = "Deltoid with resisted pectoral activity",
+     ylim = c(-45,45), type='l')
+plot(ER[6144:26624], main = "Shoulder external rotation",
+     ylim = c(-45,45), type='l')
+par(mfrow=c(1,1))
+
+```
+
+```{r}
+# simply doing the absolute value of everything
+#par(mfrow=c(2,2))
+plot(abs(base.deltoid[0:20480]), main = "Baseline deltoid activity",
+      type='l')
+plot(abs(IR.pecs[0:20480]), main = "Deltoid with pectoral activity",
+      type='l')
+plot(abs(IR.pecs.resist[0:20480]), main = "Deltoid with resisted pectoral activity",
+      type='l')
+plot(abs(ER[6144:26624]), main = "Shoulder external rotation",
+      type='l')
+```
+

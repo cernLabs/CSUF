@@ -13,8 +13,15 @@ library(forecast)
 
 ## Question 1
 
-<write out both processes>
+We found previously that
+$$
+\nabla_4X_t = 4\beta_1 + Z_t + Z_{t-4} 
+$$
+for the seasonal differencing, we find that 
 
+$$
+\nabla_4 \nabla X_t = -Z_{t-1} -Z_{t-4} + Z_{t-5}
+$$
 One has more parameters than the other. essentially in the end we want to go with the model that works with less parameters and does the same job in the end; less parameters means less work for the same result.
 
 ## Question 2
@@ -78,6 +85,7 @@ demand <- as.vector(read.csv("Demand-2.txt", head = T)[,1])
 series <- ts(demand, start =c(1992,1), frequency = 12)
 series.train <- series[1:263]
 series.val <- series[264:287]
+
 par(mfrow=c(1,2))
 plot.ts(series.train)
 plot.ts(log(series.train))
@@ -87,6 +95,14 @@ boxplot(series.train)
 boxplot(log(series.train))
 ```
 
+Going to try more transforms
+
+```{r}
+plot.ts(sqrt(series))
+plot.ts((series)^(1/3))
+```
+
+
 ```{r}
 # fit linear model :|
 t = time(series)
@@ -94,30 +110,44 @@ fit0 <- lm(series ~ t)
 fit1 <- lm(series ~ t + t^2)
 fit2 <- lm(series ~ t + t^2 + t^3)
 fit3 <- lm(series ~ t + t^2 + t^3 + t^4)
+fit4 <- lm(sqrt(series) ~ t)
+fit5 <- lm((series)^(1/3) ~ t)
 
 par(mfrow = c(2,2))
 plot(fit0)
 plot(fit1)
 plot(fit2)
 plot(fit3)
+plot(fit4)
+plot(fit5)
 ```
 
-the scale-location line doesn't seem to straighten out for any linear fit we do; I am going to try a Box-Cox transformation to see if this makes a difference.
+the scale-location line doesn't seem to straighten out for any linear fit we do. I am going to difference.
 
 ```{r}
-# BoxCox
-library(MASS)
-bc <- boxcox(fit3, lambda = seq(-3,3))
-plot(bc)
+#difference once 
+seriesD <- diff(series,diff = 1)
+# run kpss test
+seriesD_decomp <- decompose(seriesD,type = c("additive"))
+seriesD_decomp <- na.omit(seriesD_decomp)
+kpss.test(seriesD_decomp$random)
 ```
 
+The test concludes a failure to reject null, there is a chance that the system is stationary, so lets check variance again.
+
+```{r}
+par(mfrow=c(2,2))
+plot(lm(seriesD ~ time(seriesD)))
+```
+
+Yay. It is stabalized now!
 
 ```{r}
 # render graphs the single out random cycles of 12
 par(mfrow=c(2,2))
-plot.ts(series[25:36])
-plot.ts(series[145:156])
-plot.ts(series[217:228])
-plot.ts(series[265:276])
+plot.ts(seriesD[25:36])
+plot.ts(seriesD[145:156])
+plot.ts(seriesD[217:228])
+plot.ts(seriesD[265:276])
 ```
-there doesn't seem to be a significant seasonality tied to a specific month. 
+It seems in the later months, there is a peak it
