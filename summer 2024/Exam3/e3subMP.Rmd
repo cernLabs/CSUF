@@ -11,6 +11,12 @@ library(tseries)
 library(forecast)
 ```
 
+## Question 1
+
+<write out both processes>
+
+One has more parameters than the other. essentially in the end we want to go with the model that works with less parameters and does the same job in the end; less parameters means less work for the same result.
+
 ## Question 2
 
 ```{r}
@@ -64,6 +70,54 @@ ts.plot(cmort, main = "fitting with arima()", ylab = "Mortality")
 lines(fitted(cmort.arima200),col = 'skyblue')
 ```
 
-## Question 3
+## Question 4
+
+```{r}
+# getting data
+demand <- as.vector(read.csv("Demand-2.txt", head = T)[,1])
+series <- ts(demand, start =c(1992,1), frequency = 12)
+series.train <- series[1:263]
+series.val <- series[264:287]
+par(mfrow=c(1,2))
+plot.ts(series.train)
+plot.ts(log(series.train))
+acf(series.train)
+acf(log(series.train))
+boxplot(series.train)
+boxplot(log(series.train))
+```
+
+```{r}
+# fit linear model :|
+t = time(series)
+fit0 <- lm(series ~ t)
+fit1 <- lm(series ~ t + t^2)
+fit2 <- lm(series ~ t + t^2 + t^3)
+fit3 <- lm(series ~ t + t^2 + t^3 + t^4)
+
+par(mfrow = c(2,2))
+plot(fit0)
+plot(fit1)
+plot(fit2)
+plot(fit3)
+```
+
+the scale-location line doesn't seem to straighten out for any linear fit we do; I am going to try a Box-Cox transformation to see if this makes a difference.
+
+```{r}
+# BoxCox
+library(MASS)
+bc <- boxcox(fit3, lambda = seq(-3,3))
+plot(bc)
+```
 
 
+```{r}
+# render graphs the single out random cycles of 12
+par(mfrow=c(2,2))
+plot.ts(series[25:36])
+plot.ts(series[145:156])
+plot.ts(series[217:228])
+plot.ts(series[265:276])
+```
+there doesn't seem to be a significant seasonality tied to a specific month. 
