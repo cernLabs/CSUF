@@ -22,7 +22,7 @@ for the seasonal differencing, we find that
 $$
 \nabla_4 \nabla X_t = -Z_{t-1} -Z_{t-4} + Z_{t-5}
 $$
-One has more parameters than the other. essentially in the end we want to go with the model that works with less parameters and does the same job in the end; less parameters means less work for the same result.
+One has more parameters than the other. essentially in the end we want to go with the model that works with less parameters and does the same job in the end; less parameters means less work for the same result (we would pick the seasonal differenced pathway).
 
 ## Question 2
 
@@ -79,12 +79,14 @@ lines(fitted(cmort.arima200),col = 'skyblue')
 
 ## Question 4
 
+### part (a)
+
 ```{r}
 # getting data
 demand <- as.vector(read.csv("Demand-2.txt", head = T)[,1])
 series <- ts(demand, start =c(1992,1), frequency = 12)
-series.train <- series[1:263]
-series.val <- series[264:287]
+series.train <- ts(demand[1:263], start =c(1992,1), frequency = 12)
+series.val <- ts(demand[264:287], start =c(2014,1), frequency = 12)
 
 par(mfrow=c(1,2))
 plot.ts(series.train)
@@ -98,20 +100,20 @@ boxplot(log(series.train))
 Going to try more transforms
 
 ```{r}
-plot.ts(sqrt(series))
-plot.ts((series)^(1/3))
+plot.ts(sqrt(series.train))
+plot.ts((series.train)^(1/3))
 ```
 
 
 ```{r}
 # fit linear model :|
-t = time(series)
-fit0 <- lm(series ~ t)
-fit1 <- lm(series ~ t + t^2)
-fit2 <- lm(series ~ t + t^2 + t^3)
-fit3 <- lm(series ~ t + t^2 + t^3 + t^4)
-fit4 <- lm(sqrt(series) ~ t)
-fit5 <- lm((series)^(1/3) ~ t)
+t = time(series.train)
+fit0 <- lm(series.train ~ t)
+fit1 <- lm(series.train ~ t + t^2)
+fit2 <- lm(series.train ~ t + t^2 + t^3)
+fit3 <- lm(series.train ~ t + t^2 + t^3 + t^4)
+fit4 <- lm(sqrt(series.train) ~ t)
+fit5 <- lm((series.train)^(1/3) ~ t)
 
 par(mfrow = c(2,2))
 plot(fit0)
@@ -126,28 +128,95 @@ the scale-location line doesn't seem to straighten out for any linear fit we do.
 
 ```{r}
 #difference once 
-seriesD <- diff(series,diff = 1)
+
+series.trainD <- diff(series.train,diff = 1)
 # run kpss test
-seriesD_decomp <- decompose(seriesD,type = c("additive"))
-seriesD_decomp <- na.omit(seriesD_decomp)
-kpss.test(seriesD_decomp$random)
+series.trainD_decomp <- decompose(series.trainD,type = c("additive"))
+series.trainD_decomp <- na.omit(series.trainD_decomp)
+kpss.test(series.trainD_decomp$random)
 ```
 
 The test concludes a failure to reject null, there is a chance that the system is stationary, so lets check variance again.
 
 ```{r}
 par(mfrow=c(2,2))
-plot(lm(seriesD ~ time(seriesD)))
+plot(lm(series.trainD ~ time(series.trainD)))
 ```
 
 Yay. It is stabalized now!
 
+### part (b)
+
 ```{r}
 # render graphs the single out random cycles of 12
 par(mfrow=c(2,2))
-plot.ts(seriesD[25:36])
-plot.ts(seriesD[145:156])
-plot.ts(seriesD[217:228])
-plot.ts(seriesD[265:276])
+plot.ts(series.trainD[25:36])
+plot.ts(series.trainD[145:156])
+plot.ts(series.trainD[217:228])
 ```
-It seems in the later months, there is a peak it
+It seems in the later months, there are peaks at the 2nd, 6th, and 10th month while there are dips in the 4th, 7th, 9th and 12th month. This is not consistent in the earlier months.
+
+```{r}
+# decomposing the series.train (we have done this previously in (a))
+plot(series.trainD_decomp) 
+```
+
+I feel it necessary to try a moving average smoother to find a trend less erratic.
+
+```{r}
+# trying kernal smoothing from the book pp.74
+plot(series.trainD, main= "Kernal Smoother Overlay")
+lines(ksmooth(time(series.trainD), series.trainD, "normal", bandwidth=1), lwd=2, col=4)
+par(fig = c(.65, 1, .65, 1), new = TRUE) # the insert
+gauss = function(x) { 1/sqrt(2*pi) * exp(-(x^2)/2) }
+```
+This looks close to what we got from the decomposed series before. Going to try a smoothing spline for this task.
+
+```{r}
+plot(series.trainD, main= "Kernal Smoothing Spline Overlay")
+lines(smooth.spline(time(series.trainD), series.trainD, spar=.3), lwd=2, col=4)
+```
+
+Let's see how this compares to differencing a decomposing one more time.
+
+```{r}
+series.trainD2 <- diff(series.train,diff = 2)
+series.trainD2_decomp <- decompose(series.trainD2,type = c("additive"))
+series.trainD2_decomp <- na.omit(series.trainD2_decomp)
+plot(series.trainD2_decomp) 
+```
+That made the general trend more spiked; let's stick with the MA kernal smoother.
+
+```{r}
+yspline.hat <- ts(smooth.spline(time(series.trainD), series.trainD, spar=.3)$y, start =c(1992,1), frequency = 12)
+yspline.hat_decomp <- decompose(yspline.hat,type = c("additive"))
+yspline.hat_decomp <- na.omit(yspline.hat_decomp)
+plot(yspline.hat_decomp$random, main = "Random component")
+plot(yspline.hat_decomp$seasonal, main = "Random component") 
+
+```
+
+```{r}
+# testing both for stationarity
+# residuals
+yspline.hat_decompR <- na.omit(yspline.hat_decomp$random)
+kpss.test(yspline.hat_decompR)
+# seasonal
+yspline.hat_decompS <- na.omit(yspline.hat_decomp$seasonal)
+kpss.test(yspline.hat_decompS)
+```
+
+Both test statistics fall in the the "Fail To Reject" region; both systems are stationary.
+
+### part (c)
+
+```{r}
+acf(yspline.hat)
+pacf(yspline.hat)
+```
+
+```{r}
+acf(series.trainD2)
+pacf(series.trainD2)
+```
+
