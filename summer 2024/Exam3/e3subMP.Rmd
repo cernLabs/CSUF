@@ -210,13 +210,24 @@ Both test statistics fall in the the "Fail To Reject" region; both systems are s
 
 ### part (c)
 
-```{r}
-acf(yspline.hat)
-pacf(yspline.hat)
-```
 
 ```{r}
-acf(series.trainD2)
-pacf(series.trainD2)
+par(mfrow = c(1,2))
+acf(series.train)
+pacf(series.train)
+acf(series.trainD)
+pacf(series.trainD)
 ```
 
+I believe it fair to suggest that p = 0 and q = 1; there is are no immediate spikes in PACF graph while there is a single one at the beginning of the ACF graph. 
+
+We saw previously, after differencing once, seasonality every 12 months (s = 12). This makes d = 1 but  we notice a spike in both graphs at every whole number (note the view of the graph cuts of after 2.0). This can imply P $\geq$ 2 and Q $\geq$ 2. I did not conduct seasonal differencing thus D = 0. 
+
+### part (d)
+
+The view of the ACF and PACF graphs cuts off after 2.0. There could be more spikes at later lags.
+
+I will test the following ARIMAs
+(0,1,1)$\times$(2,0,2)$_{12}$
+(0,1,1)$\times$(3,0,3)$_{12}$
+(0,1,1)$\times$(4,0,4)$_{12}$
