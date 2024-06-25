@@ -15,6 +15,7 @@ library(biosignalEMG)
 
 ```{r}
 dat <- read.csv("/home/cern/Desktop/EMGdata_full.csv",header = T)
+dat.ts <- ts(dat)
 N = length(dat[,1])
 ```
 
@@ -132,5 +133,11 @@ plot(abs(IR.pecs.resist[0:20480]), main = "Deltoid with resisted pectoral activi
       type='l')
 plot(abs(ER[6144:26624]), main = "Shoulder external rotation",
       type='l')
+```
+
+
+
+```{r}
+# checkpoint model
 ```
 
