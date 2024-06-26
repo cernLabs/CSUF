@@ -37,17 +37,22 @@ detect_activity <- function(x, omega, lambda, err_tol, sig_A_init,sig_S_init){
     
     # update b using eq 20
     for(i in 1:n){
-      if(bm[i] < 0){b[i] = 0}
+      if(!is.logical(bm[i])){b[i] = 0} # BANDAID
+      else if(bm[i] < 0){b[i] = 0}
       else if(bm[i] >= 0 && bm[i] <= 1){b[i] = bm[i]}
-      else(b[i] = 1)
+      else{b[i] = 1}
     }
 
-    
-    
     if( (norm((b - bm), type  = '2') < err_tol ) || m > 1000){
       break
     }
   }
+  
+  # binarize b
+  bin = rep(0,n)
+  bin = as.numeric(b < 0.5)
+  b = bin
+  
   return(list("onoff" = b, "sd_active" = sig_A, "sd_silent" = sig_S))
 }
 

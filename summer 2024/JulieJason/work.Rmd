@@ -141,3 +141,9 @@ plot(abs(ER[6144:26624]), main = "Shoulder external rotation",
 # checkpoint model
 ```
 
+
+
+```{r}
+
+```
+
