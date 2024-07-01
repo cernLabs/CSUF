@@ -1,0 +1,58 @@
+---
+title: "e4MP_Submission"
+author: "Michael Pena"
+date: "2024-06-29"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/githubbahubba/CSUF/summer 2024/Exam4")
+library(tseries)
+library(forecast)
+```
+
+# Problem 1
+
+### (a).
+
+```{r}
+# loading the data
+data <- read.table("UKg2024.txt", head=T)
+series.train <- ts(data[1:48,1],start = c(1980,1), frequency = 12)
+series.val <- ts(data[49:60,1],start = c(1980,1), frequency = 12)
+# plotting ts
+plot.ts(series.train)
+plot(decompose(series.train))
+plot.ts(decompose(series.train)$season[1:12])
+kpss.test(decompose(series.train)$random)
+```
+
+Our general trend snakes upwards with a some dips in 1981 and 1982. 
+Seasonality is clear and repeats every year. There is a trough in the beginning of the year and two peaks on May and August.
+
+Our KPSS test concludes that this system is most likely stationary.
+
+### (b).
+
+```{r}
+#Note that our first month is actually July
+X <- as.factor(c(rep(seq(1:12),4)))
+cen.mdat <- c(scale(series.train, center = TRUE, scale = FALSE))
+mod.lm <- lm(cen.mdat ~ X - 1)
+# print out the summary
+summary(mod.lm)
+par(mfrow = c(2,2))
+plot(mod.lm)
+```
+
+
+scale location isn't linear; we may have data that does not have constant variance. If this is the case we may need to difference our data in the future.
+
+```{r}
+par(mfrow = c(1,2))
+acf(cen.mdat)
+pacf(cen.mdat)
+auto.arima(cen.mdat)
+```
+
