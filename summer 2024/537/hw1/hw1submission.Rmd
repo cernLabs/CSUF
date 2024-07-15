@@ -1,0 +1,189 @@
+---
+title: "537 Homework 1"
+author: "Michael Pena"
+date: "2024-07-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# load data
+data <- read.csv("hw1.csv", header = T)
+attach(data)
+```
+
+# Problem 1
+
+(a).
+
+```{r}
+ins <- c(25,-2,4,-2,4,1,4,1,9)
+S = matrix(ins, nrow = 3, ncol =3, byrow = T)
+#let's make a function where S goes in and v^(1/2) and rho goes out
+f1 <- function(S){
+  # render the v^(1/2)
+  lam <- eigen(S)$values
+  G <- eigen(S)$vectors
+  L = diag(3)*lam^(1/2)
+  v.5 = G%*%L%*%t(G)
+  # render rho
+  rho = matrix(0,3,3)
+  for(i in 1:3){
+    for(j in 1:3){
+      rho[i,j] = S[i,j]/sqrt(S[i,i]*S[j,j])
+    }
+  }
+  # outputs
+  return(list("v^(1/2)" = v.5, rho = rho))
+}
+
+# run function
+f1(S)
+```
+
+(b).
+
+$$
+\rho(x_1,\frac{1}{2}x_2 + \frac{1}{2}x_3)=\frac{cov(x_1,\frac{1}{2}x_2 + \frac{1}{2}x_3)}{\sqrt{var(x_1)var(\frac{1}{2}x_2 + \frac{1}{2}x_3)}}
+$$
+
+$$
+var(x_1) = 25\\
+var(\frac{1}{2}x_2 + \frac{1}{2}x_3) = \frac{1}{4}(4)+\frac{1}{4}(9) - 2(1)= 5/4
+$$
+$$
+cov(x_1,\frac{1}{2}x_2 + \frac{1}{2}x_3) = \frac{1}{2}cov(x_1,x_2) + \frac{1}{2}cov(x_1,x_3) = 0.5(-2) + 0.5(4) = 1
+$$
+thus $\rho(x_1,\frac{1}{2}x_2 + \frac{1}{2}x_3) = \frac{2}{5\sqrt{5}}$
+
+thus 
+$$
+\rho =
+\begin{bmatrix}
+1 & \frac{2}{5\sqrt{5}}\\
+\frac{2}{5\sqrt{5}} & 1
+\end{bmatrix}
+$$
+
+# Problem 2
+
+note that p=2 and
+
+$\Sigma = I_2$ thus $|B|^{-1} = 1$ and $\Sigma^{-1} = I_2$
+
+thus $(\vec{x} - \vec{\mu})^T\Sigma^{-1} (\vec{x} - \vec{\mu}) = (x_1 +1)^2 + (x_2 - 1)^2$
+
+$$
+f_\vec{X}(\vec{x}) =\frac{1}{2\pi}exp\{-\frac{1}{2} [(x_1 - \mu_1)^2 + (x_2 - \mu_2)^2]\}
+
+$$
+and so
+
+$$
+F_\vec{X}(0,0)=\int^{0}_{-\infty}\int^{0}_{-\infty}
+\frac{1}{2\pi}exp\{-\frac{1}{2} [(x_1 +1)^2 + (x_2 - 1)^2]\}
+dx_1dx_2
+\\
+=
+\frac{1}{2\pi}
+\int^{0}_{-\infty}e^{-\frac{1}{2} (x_1 +1)^2}dx_1
+\int^{0}_{-\infty}e^{-\frac{1}{2} (x_2 -1)^2}dx_2
+\\
+=0.133483764331
+$$
+
+# Problem 3
+
+$$
+\nabla f=
+\begin{bmatrix}
+2x_1+2x_2^2 + 2x_3\\
+4x_1x_2 + 4x_2^3 + 4x_2x_3\\
+2x_1+2x_2^2 + 2x_3
+\end{bmatrix}
+$$
+because $\frac{d}{dx_2}(4x_1x_2 + 4x_2^3 + 4x_2x_3) = 4x_1 + 12x_2^2 + 4x_3$
+$$
+\nabla^2 f=
+\begin{bmatrix}
+2 & 4x_2 & 2\\
+4x_2 & 4x_1 + 12x_2^2 + 4x_3 & 4x_2\\
+2 & 4x_2 & 2
+\end{bmatrix}
+$$
+
+# Problem 4
+
+$$
+|A-\lambda I|=
+\begin{vmatrix}
+2-\lambda & 0 & 4\\
+0 & 3-\lambda & -1\\
+4 & -1 & 1-\lambda
+\end{vmatrix}
+\\
+=(2-\lambda)[(3-\lambda)(1-\lambda)-1] + 4[0 -4(3-\lambda)]\\
+=-\lambda^3 + 6 \lambda^2 + 6 \lambda -44
+$$
+
+```{r}
+# define A
+A = matrix(c(2,0,4,0,3,-1,4,-1,1), ncol=3, nrow = 3, byrow = T)
+# get eigen pairs
+Lambda = diag(3)*eigen(A)$values
+as.matrix(eigen(A)$vectors) -> Gamma
+# print values
+Lambda;Gamma
+```
+
+# Problem 5
+
+### (a).
+
+```{r}
+# render models
+mod1 = lm(y ~ x1 + x2)
+mod2 = lm(y ~ x1)
+mod3 = lm(y ~ x2)
+# getting r^2
+sprintf("r^2 for y ~ x1 + x2 : %f",summary(mod1)$r.squared)
+sprintf("r^2 for y ~ x1 : %f",summary(mod2)$r.squared)
+sprintf("r^2 for y ~ x2 : %f",summary(mod3)$r.squared)
+```
+
+### (b)
+
+```{r}
+S <- cov(cbind(x1,x2))
+Gamma = eigen(S)$vectors
+lam = eigen(S)$values
+Gamma;lam
+```
+
+### (c)
+
+```{r}
+plot(x1,x2,xlim = c(-6,6))
+lines(c(0,lam[1]*Gamma[1,1]),
+      c(0,lam[1]*Gamma[2,1]),lwd=3.5,col=2)
+lines(c(0,lam[2]*Gamma[1,2]),
+      c(0,lam[2]*Gamma[2,2]),lwd=3.5,col=2)
+```
+
+### (d)
+
+```{r}
+# 
+X = cbind(x1,x2)
+X%*%Gamma[,1] -> c1
+X%*%Gamma[,2] -> c2
+# render models
+mod4 = lm(y ~ c1 + c2)
+mod5 = lm(y ~ c1)
+mod6 = lm(y ~ c2)
+# getting r^2
+sprintf("r^2 for y ~ c1 + c2 : %f",summary(mod4)$r.squared)
+sprintf("r^2 for y ~ c1 : %f",summary(mod5)$r.squared)
+sprintf("r^2 for y ~ c2 : %f",summary(mod6)$r.squared)
+```
+
