@@ -49,7 +49,7 @@ $$
 
 $$
 var(x_1) = 25\\
-var(\frac{1}{2}x_2 + \frac{1}{2}x_3) = \frac{1}{4}(4)+\frac{1}{4}(9) - 2(1)= 5/4
+var(\frac{1}{2}x_2 + \frac{1}{2}x_3) = \frac{1}{4}(4)+\frac{1}{4}(9) - 2(1)= 13/4
 $$
 $$
 cov(x_1,\frac{1}{2}x_2 + \frac{1}{2}x_3) = \frac{1}{2}cov(x_1,x_2) + \frac{1}{2}cov(x_1,x_3) = 0.5(-2) + 0.5(4) = 1
@@ -60,8 +60,8 @@ thus
 $$
 \rho =
 \begin{bmatrix}
-1 & \frac{2}{5\sqrt{5}}\\
-\frac{2}{5\sqrt{5}} & 1
+1 & \frac{2}{5\sqrt{13}}\\
+\frac{2}{5\sqrt{13}} & 1
 \end{bmatrix}
 $$
 
@@ -164,19 +164,18 @@ Gamma;lam
 
 ```{r}
 plot(x1,x2,xlim = c(-6,6))
-lines(c(0,lam[1]*Gamma[1,1]),
-      c(0,lam[1]*Gamma[2,1]),lwd=3.5,col=2)
-lines(c(0,lam[2]*Gamma[1,2]),
-      c(0,lam[2]*Gamma[2,2]),lwd=3.5,col=2)
+arrows(0,0,lam[1]*Gamma[1,1],lam[1]*Gamma[2,1],lwd=3.5,col="forestgreen")
+arrows(0,0,lam[2]*Gamma[1,2],lam[2]*Gamma[2,2],lwd=3.5,col="red")
+
 ```
 
 ### (d)
 
 ```{r}
 # 
-X = cbind(x1,x2)
-X%*%Gamma[,1] -> c1
-X%*%Gamma[,2] -> c2
+Cmat = cbind(x1,x2)%*%Gamma
+Cmat[,1] -> c1
+Cmat[,2] -> c2
 # render models
 mod4 = lm(y ~ c1 + c2)
 mod5 = lm(y ~ c1)
@@ -187,3 +186,8 @@ sprintf("r^2 for y ~ c1 : %f",summary(mod5)$r.squared)
 sprintf("r^2 for y ~ c2 : %f",summary(mod6)$r.squared)
 ```
 
+### (e)
+
+Model v. had the best r^2 value of the single variable models.
+
+Both i. and iv. have the same r^2; I would want to pick either of the 2.

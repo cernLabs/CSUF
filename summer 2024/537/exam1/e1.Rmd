@@ -1,0 +1,22 @@
+---
+title: "Exam1"
+author: "Michael Pena"
+date: "2024-07-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data = read.csv("genderwage.csv", header = T)
+```
+
+```{r}
+attach(data)
+x = female
+y = male
+```
+
+```{r}
+plot()
+```
+
