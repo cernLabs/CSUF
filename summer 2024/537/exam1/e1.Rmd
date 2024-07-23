@@ -7,16 +7,104 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+setwd("~/Desktop/githubbahubba/CSUF/summer 2024/537/exam1")
 data = read.csv("genderwage.csv", header = T)
 ```
 
 ```{r}
 attach(data)
-x = female
-y = male
+x1 = female
+x2 = male
 ```
 
+
+### (a).
+
+idk i'm dumb
+
+$$
+H_0 : \vec{\mu} = \vec{\mu_0 } \\
+H_A : \vec{\mu} \ne  \vec{\mu_0 }
+$$
+
+### (b).
+
 ```{r}
-plot()
+plot(x1,x2, xlim = c(0,40) , ylim = c(0,40))
+abline(c(0,0),c(1,1), col = "red")
+```
+
+### (c).
+
+```{r}
+# making confidence interval 
+n = length(x1)
+t = qt(.975,n-1)
+s1 = sd(x1) ; s2 = sd(x2)
+sprintf("95 percent confidence interval for females: ( %f , %f )",mean(x1)-t*s1/sqrt(n),mean(x1)+t*s1/sqrt(n))
+sprintf("95 percent confidence interval for males: ( %f , %f )",mean(x2)-t*s2/sqrt(n),mean(x2)+t*s2/sqrt(n))
+```
+
+### (d).
+
+going to use form. from notes
+
+$$
+\bar{x}_j \pm \sqrt{\frac{p(n-1)s_j^2}{n(n-p)}\cdot F^+_{p,n-p}(\alpha)}
+$$
+
+```{r}
+confInt <- function(data,alpha = .05){
+  X = data
+  p = dim(X)[2]
+  n = dim(X)[1]
+  a = alpha
+  s = apply(X,2,sd)
+  xbar = apply(X,2,mean)
+  CONF <- data.frame()
+  for(j in 1:p){
+    num = p*(n-1)*(s[j])^2*qf(a,n-1,n-1)
+    den = n*(n-p)
+    CONF[j,1] = paste0("x",j)
+    CONF[j,2] = xbar[j] - sqrt(num/den)
+    CONF[j,3] = xbar[j] + sqrt(num/den)
+  }
+
+  names(CONF) = c("var","upper","lower")
+ return("confidence intervals" = CONF)
+}
+confInt(data,.05)
+```
+
+### (e).
+
+```{r}
+library(mvtnorm)
+X = as.matrix(data)
+mu.mle = as.matrix(apply(X,2,mean))
+sigma.mle  = matrix(0,2,2)
+for(i in 1:n){sigma.mle = sigma.mle + (X[i,] - mu.mle)%*%t(X[i,]-mu.mle)}
+sigma.mle = sigma.mle/n
+# Lambda Ratio for Ranjosh
+Sr = matrix(c(12,8,8,12), nrow = 2, ncol = 2, byrow = T)
+Mr = c(22.5,24.5)
+Ran.Rat = prod(dmvnorm(X,Mr,Sr))/prod(dmvnorm(X,mu.mle,sigma.mle))
+# Lambda Ratio for Ethan
+Se = matrix(c(9,8,8,16), nrow = 2, ncol = 2, byrow = T)
+Me = c(21.5,26)
+Eth.Rat = prod(dmvnorm(X,Me,Se))/prod(dmvnorm(X,mu.mle,sigma.mle))
+# print
+Ran.Rat;Eth.Rat
+```
+
+Looks like the Likelihood Ratio value of Ranjosh's parameters are the lower. This leads me to think that Ranjosh had a better estimate. You could say Ranjosh is more "right".
+
+### (f).
+
+```{r}
+I2 = diag(2)
+Ran.Rat = prod(dmvnorm(X,Mr,I2))/prod(dmvnorm(X,mu.mle,sigma.mle))
+Eth.Rat = prod(dmvnorm(X,Me,I2))/prod(dmvnorm(X,mu.mle,sigma.mle))
+Ran.Rat;Eth.Rat
 ```
 
