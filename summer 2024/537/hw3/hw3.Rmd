@@ -1,0 +1,176 @@
+---
+title: "Homework 3"
+author: "Michael Pena"
+date: "2024-07-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+data1 <- read.csv("math120examscores.csv", h= T)
+data2 <- read.csv("drivPoints.txt",h = T)
+```
+
+## Problem 1
+
+let's look at dimensions
+
+```{r}
+X <- as.matrix(data1)
+dim(X)
+head(X)
+```
+
+Things are missing but we have an EM Algorithm to use from a past assignment.
+
+```{r}
+# to.theta function
+to.theta <- function(mu,Sig){
+  theta = c(0)
+  p = length(Sig[,1])
+  q = p*(p+1)/2
+  v = matrix(c(1,1,2,1,2,2,3,1,3,2,3,3),ncol = 2, nrow = 6, byrow = T)
+  for(i in 1:p){theta[i] = mu[i]}
+  for(i in 1:q){theta[p+i] = Sig[v[i,1],v[i,2]]}
+  return(theta)
+} 
+
+# EM algorithm
+ EMfunc <- function(y,mu,Sig,tolgrad){
+  # initials
+  p = length(Sig[,1])
+  n = length(y[,1])
+  th = to.theta(mu,Sig)
+  ip = norm(th, type='2')
+  it = 1
+  # save iterations in here
+  ITER = matrix(c(it,mu[1],mu[3],Sig[1,1],Sig[3,3],ip), nrow =1, ncol = 6, byrow = T)
+    while(ip >= tolgrad){
+      xbar.star = c(0,0,0)
+      S.star = matrix(0,p,p)
+
+      for(i in 1:n){
+
+        # noting missing and observed data
+        obs = which(!is.na(y[i,]))
+        mis = which(is.na(y[i,]))
+
+        # use that info to get mus, sigmas, and data
+        mu_o = mu[obs]
+        mu_m = mu[mis]
+        Sig_oo = Sig[obs,obs]
+        Sig_om = Sig[obs,mis]
+        Sig_mo = Sig[mis,obs]
+        Sig_mm = Sig[mis,mis]
+        y_o = y[i,obs]
+        y_m = y[i,mis]
+
+        # initializing expectations for the xbar and S
+        E.xi = c(0)
+        E.S = matrix(0,p,p)
+
+        # get mu tilde
+        Estar.y_m = mu_m + (Sig_mo %*% solve(Sig_oo)) %*% (y_o - mu_o)
+        E.xi[obs] = y_o
+        E.xi[mis] = Estar.y_m
+        xbar.star = xbar.star + E.xi/n
+        mu.tilde = xbar.star
+
+        # get sigma tilde
+        E.S[obs,obs] = y_o %*% t(y_o)
+        E.S[mis,obs] = Estar.y_m %*% t(y_o)
+        E.S[obs,mis] = Estar.y_m %*% t(y_o)
+        E.S[mis,mis] = Sig_mm - (Sig_mo %*% solve(Sig_oo) %*% Sig_om) + (Estar.y_m %*% t(Estar.y_m))
+        S.star = S.star + E.S/n
+        Sig.tilde = S.star - (xbar.star %*% t(xbar.star))
+    }
+
+    # finding the gradients
+    del.mu = (-1)*n*solve(Sig.tilde) %*% (mu - mu.tilde)
+    J = S.star - xbar.star%*%t(mu.tilde) - mu.tilde%*%t(xbar.star) + mu.tilde%*%t(mu.tilde)
+    I = diag(3)
+    del.Sig = (-n/2) * solve(Sig.tilde)%*%(I - solve(Sig.tilde)%*%J)
+    del.theta = to.theta(del.mu,del.Sig)
+
+    # get the innerproduct of del.theta
+    ip <- norm(del.theta, type = '2')
+
+    # plug back in for iteration
+    mu.tilde -> mu
+    Sig.tilde -> Sig
+    it = it + 1
+
+    # save into dataframe
+    ITER <- rbind(ITER,c(it,mu[1],mu[3],Sig[1,1],Sig[3,3],ip))
+    }
+# print first three and last three rows of dataframe
+u <- length(ITER[,1])
+# colnames(ITER) = c("Iteration","mu1","mu2","Sigma_11","Sigma_33","gradnorm")
+# print("first 3 iterations")
+# print(ITER[1:3,])
+# print("last 3 iterations")
+# print(ITER[(u-2):u,])
+# print final mu and Sigma
+return(list("mu estimator" = mu, "Sigma estimator" = Sig))
+ }
+```
+
+```{r}
+EMfunc(X,c(0,0,0),diag(3),1e-06)
+```
+
+We can use these estimators to construct the confidence interval. Let's just save them.
+
+```{r}
+EMfunc(X,c(0,0,0),diag(3),1e-06) -> Est
+S1 <- Est$`Sigma estimator`
+m1 <- Est$`mu estimator`
+```
+
+Here we can present the confidence intervals. We can use fomrula from notes...
+
+$$
+\bar{x}_j \pm \sqrt{\frac{p(n-1)s_j^2}{n(n-p)}\cdot F^+_{p,n-p}(\alpha)}
+$$
+
+```{r}
+confInt <- function(data,xbar,sigma,alpha = .05){
+  X = data
+  p = dim(X)[2]
+  n = dim(X)[1]
+  a = alpha
+  s = sigma 
+  CONF <- data.frame()
+  for(j in 1:p){
+    num = p*(n-1)*(s[j,j])*qf(1-a,n-1,n-1)
+    den = n*(n-p)
+    CONF[j,1] = names(data)[j]
+    CONF[j,2] = xbar[j] - sqrt(num/den)
+    CONF[j,3] = xbar[j] + sqrt(num/den)
+  }
+
+  names(CONF) = c("var","upper","lower")
+ return("confidence intervals" = CONF)
+}
+confInt(data1,m1,S1,.05)
+```
+
+
+## Problem 2
+
+### (a).
+
+```{r}
+# let's do some PCA work
+# we need a GAMMA and LAMBDA 
+X = as.matrix(data2[,6:19])
+Y = as.matrix(data2[,4:5])
+S = cov((data2)[,6:19])
+GAM = as.matrix(eigen(S)$vectors)
+LAM = eigen(S)$values*(diag(14))
+# generate the C columns
+C = X%*%GAM
+
+```
+
+
