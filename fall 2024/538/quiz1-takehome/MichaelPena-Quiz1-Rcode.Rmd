@@ -1,0 +1,124 @@
+---
+title: "quiz1takehome"
+author: "Michael Pena"
+date: "2024-09-20"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(VGAM)
+library(MCMCpack)
+```
+
+
+
+[65 marks] [RELIABILITY APPLICATION] Consider the Engine.csv data set.The Raleigh distribution was named after Lord Raleigh, a renowned mathematician and physicist who received the Nobel Prize in 1904 for his discovery of Argon and related research. The Raleigh distribution, which is defined by the magnitude of two vectors arising from independent normal distributions centered at zero and having the same variance, is often utilized to model lifetime data. Here, we will apply the Raleigh distribution to a dataset describing the time (in weeks) to a valve seat replacement in 24 diesel engines.
+
+$$
+y_i \sim f(y_i|\sigma^2)=
+\frac{y_i}{\sigma^2}e^{-\frac{y_i^2}{2\sigma^2}}
+\\\text{with prior} 
+\\\sigma^2 \sim p(\sigma^2|a_0,b_0) = \frac{b_0^{a_0}}{\Gamma(a_0)}(\sigma^2)^{-(a_0+1)}e^{-\frac{b_0}{\sigma^2}}
+$$
+
+### problem (a)
+
+```{r}
+# load data
+Y <- as.matrix(read.csv('Engine.csv',header = T))
+# visuals
+hist(Y)
+```
+
+### problem (b)
+
+for the time being let's just pretend $\theta = \sigma^2 $
+
+$$
+L(y_i|\theta) = \prod^{n}_{i}
+\Big[
+\frac{y_i}{\theta}e^{-\frac{y_i^2}{\theta}} 
+\Big]
+=
+(\frac{1}{\theta})^n \cdot e^{-\frac{\sum_i^n y_i^2}{\theta}} \cdot \prod^n_iy_i
+$$
+
+```{r}
+Y = Y[,2]
+n = length(Y)
+Ysum = sum(Y^2)
+Yprod = prod(Y)
+n;Ysum;Yprod
+```
+$n$ = 24
+$\sum_i^n y_i^2$ = 47698.02
+$\prod^n_iy_i$ = 2.844826e+35
+
+we can integrate over all $\theta \in (0,\infty)$
+
+$$
+\prod_i^n y_i
+\int^{\infty}_{0}
+(\frac{1}{\theta})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\theta}} \cdot 
+d\theta
+$$
+we can use the kernel of the Inverse Gamma function to find the normalizing constant where $\alpha =25,\beta = 47698.02/2$
+
+$$
+\int^{\infty}_{0}
+(\frac{1}{\theta})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\theta}} \cdot 
+d\theta=
+\frac{\Gamma(25)}{(\frac{\sum_i^n y_i^2}{2})^{n+1}}
+$$
+$$
+\frac{(\prod_i^n y_i)(\frac{1}{\theta})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\theta}}}{(\prod_i^n y_i)
+\int^{\infty}_{0}
+(\frac{1}{\theta})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\theta}} \cdot 
+d\theta}=
+\frac{(\frac{1}{\theta})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\theta}}}{\frac{\Gamma(25)}{(\frac{\sum_i^n y_i^2}{2})^{n+1}}}
+=
+\frac{(\frac{\sum_i^n y_i^2}{2})^{n+1}}{\Gamma(25)}(\frac{1}{\theta})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\theta}}
+$$
+this leaves the normalized likelihood as such
+
+$$
+Lnorm(y_i|\sigma^2)=
+\frac{(\frac{\sum_i^n y_i^2}{2})^{n+1}}{\Gamma(25)}(\frac{1}{\sigma^2})^{n} \cdot e^{-\frac{\sum_i^n y_i^2}{2\sigma^2}}
+$$
+
+### problem (c)
+
+apriori that $6 = \frac{b_0}{a_0 + 1}$.
+
+Let's choose that $b_0 = 7.2, a_0 = 0.2$
+
+```{r}
+sig2 <- seq(1,3000,0.01)
+dinvgamma(sig2,.1,26.4) -> pri
+like = (Ysum/2)^(n+1)/factorial(n) * (1/sig2)^n * exp(-Ysum/(2*sig2))
+
+post = dinvgamma(sig2,n+0.1,26.4+0.5*Ysum)
+```
+
+```{r}
+plot(sig2,post, ylim = c(0,.004), type = 'l', col = 1, lwd = 2)
+lines(sig2,like,lty = 2, col=2, lwd = 2)
+lines(sig2,pri,lty=3,col=3,lwd=2)
+legend(2300, .004, c("Prior", "Likelihood", "Posterior"),
+       col = c(3, 2, 1),
+       lty = c(3, 2, 1),
+       lwd = c(2, 2, 2))
+
+plot(sig2,post, ylim = c(0,2000), type = 'l', col = 1, lwd = 2)
+lines(sig2,like,lty = 2, col=2, lwd = 2)
+lines(sig2,pri,lty=3,col=3,lwd=2)
+legend(2300, 2000, c("Prior", "Likelihood", "Posterior"),
+       col = c(3, 2, 1),
+       lty = c(3, 2, 1),
+       lwd = c(2, 2, 2))
+```
+
+It does seem that the data driven likelihood has a closer mode to the posterior than that of the prior. Perhaps this means that the data still tells us more than the prior as is normal in bayesian data analysis.
+
+I had to zoom out quite a bit but you can see that posterior peaks around 993.7088 which and no where near 24; the posterior mode is closer to the MLE
