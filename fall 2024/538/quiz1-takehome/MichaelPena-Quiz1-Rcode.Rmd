@@ -33,7 +33,7 @@ hist(Y)
 
 ### problem (b)
 
-for the time being let's just pretend $\theta = \sigma^2 $
+for the time being let's just pretend $\theta = \sigma^2$
 
 $$
 L(y_i|\theta) = \prod^{n}_{i}
@@ -94,11 +94,13 @@ apriori that $6 = \frac{b_0}{a_0 + 1}$.
 Let's choose that $b_0 = 7.2, a_0 = 0.2$
 
 ```{r}
-sig2 <- seq(1,3000,0.01)
-dinvgamma(sig2,.1,26.4) -> pri
-like = (Ysum/2)^(n+1)/factorial(n) * (1/sig2)^n * exp(-Ysum/(2*sig2))
+a0 = 9
+b0 = (a0+1)*24^2
 
-post = dinvgamma(sig2,n+0.1,26.4+0.5*Ysum)
+sig2 <- seq(1,3000,0.01)
+dinvgamma(sig2,a0,b0) -> pri
+like = (Ysum/2)^(n+1)/factorial(n) * (1/sig2)^n * exp(-Ysum/(2*sig2))
+post = dinvgamma(sig2,n+a0,b0+0.5*Ysum)
 ```
 
 ```{r}
@@ -122,3 +124,107 @@ legend(2300, 2000, c("Prior", "Likelihood", "Posterior"),
 It does seem that the data driven likelihood has a closer mode to the posterior than that of the prior. Perhaps this means that the data still tells us more than the prior as is normal in bayesian data analysis.
 
 I had to zoom out quite a bit but you can see that posterior peaks around 993.7088 which and no where near 24; the posterior mode is closer to the MLE
+
+### problem (d)
+
+```{r}
+# generation MC samples
+theta.post = rinvgamma(2000,n+a0,b0+0.5*Ysum)
+plot(theta.post[1:2000], main = "MC Samples", pch = "*",ylab = "sigma^2")
+abline(h = quantile(theta.post,.975) ,lty = 2, col=2, lwd = 2)
+abline(h = quantile(theta.post,.025) ,lty = 2, col=2, lwd = 2)
+# credibla interval
+c(quantile(theta.post,.025),quantile(theta.post,.975))
+```
+
+### problem (e)
+
+predictive prior
+
+$$
+p(\tilde{y}) = \int^{\infty}_0
+p(\tilde{y}|\sigma^2)p(\sigma^2)d\sigma^2 = 
+\int^{\infty}_0
+\frac{\tilde{y}}{\sigma^2}e^{-\frac{\tilde{y}^2}{2\sigma^2}}\cdot
+(\frac{1}{\sigma^2})^{a_0+1}e^{-\frac{b_0}{\sigma^2}}d\sigma^2
+$$
+
+$$
+=\tilde{y}\frac{b_0^{a_0}}{\Gamma(a_0)}
+\int^{\infty}_0
+(\frac{1}{\sigma^2})^{a_0+2}e^{-\frac{\frac{1}{2}\tilde{y}^2+b_0}{\sigma^2}}d\sigma^2=
+\tilde{y}\frac{b_0^{a_0}}{\Gamma(a_0)} \cdot \frac{\Gamma(a_0+1)}{(\frac{1}{2}\tilde{y}^2+b_0)^{a_0+1}}
+$$
+
+$$
+\Rightarrow
+p(\tilde{y}) =
+\frac{\tilde{y}a_0b_0^{a_0}}{(\frac{1}{2}\tilde{y}^2+b_0)^{a_0+1}}
+$$
+
+predictive posterior
+
+$$
+p(\tilde{y}|y) =\int^{\infty}_0 p(\tilde{y}|\sigma^2)p(\sigma^2|y)d\sigma^2 = 
+\int^{\infty}_0 
+\frac{\tilde{y}}{\sigma^2}e^{-\frac{\tilde{y}^2}{2\sigma^2}}\cdot \frac{(\frac{1}{2}\sum^{n}_i y_i^2)^{n+a_0}}{\Gamma(n+a_0)} (\frac{1}{\sigma^2})^{a_0+n+1} e^{-\frac{\frac{1}{2} \sum^{n}_i y_i^2}{\sigma^2}}
+d\sigma^2
+$$
+
+$$
+=\frac{\tilde{y}(\frac{1}{2}\sum^{n}_i y_i^2)^{n+a_0}}{\Gamma(n+a_0)}\int^{\infty}_0 
+e^{-\frac{\tilde{y}^2+\sum^{n}_i y_i^2+2b_0}{2\sigma^2}}(\frac{1}{\sigma^2})^{a_0+n+2}d\sigma^2
+$$
+ 
+this contains a Inverse Gamma kernel for $\Gamma^{-1}(\frac{\tilde{y}^2+\sum^{n}_i y_i^2+2b_0}{2},a_o+n+1)$
+
+$$
+\Rightarrow
+\tilde{y}\frac{(\frac{1}{2}\sum^{n}_i y_i^2 + b_o)^{n+a_o}}{\Gamma^{-1}(n+a_o)}\frac{\Gamma(a_o+n+1)}{(\frac{1}{2}\tilde{y}+\frac{1}{2}\sum^{n}_i y_i^2 + b_o)^{a_o+n+1}} = 
+\frac{\tilde{y}^2(a_o+n)(\frac{1}{2}\sum^{n}_i y_i^2 + b_o)^{n+a_o}}{(\frac{1}{2}\tilde{y}^2+\frac{1}{2}\sum^{n}_i y_i^2 + b_o)^{a_o+n+1}}
+$$
+
+$$
+\Rightarrow
+p(\tilde{y}|y)=
+\frac{\tilde{y}(a_o+n)(\frac{1}{2}\sum^{n}_i y_i^2 + b_o)^{n+a_o}}{(\frac{1}{2}\tilde{y}+\frac{1}{2}\sum^{n}_i y_i^2 + b_o)^{a_o+n+1}}
+$$
+
+```{r}
+# prior predictive
+prior_pred <- function(y){
+  (y*a0*b0^a0)/(0.5*y^2+b0)^(a0+1)
+}
+#posterior predictive
+post_pred <- function(y){
+  (y*(a0+n)*(0.5*Ysum+b0)^(n+a0))/(0.5*y^2+0.5*Ysum+b0)^(a0+n+1)
+}
+ytilde = seq(0,100,0.01)
+```
+
+```{r}
+plot(ytilde,post_pred(ytilde),ylim= c(0,0.025),type='l',ylab="density",main="Predictive Distributions")
+lines(ytilde,prior_pred(ytilde), lty = 2, col =2)
+legend(78, .025, c("Prior", "Posterior"),
+       col = c(1, 2),
+       lty = c(1, 2))
+
+```
+
+The modes of the predictive distributions are closer together. The predictive distributions are closer to each other than the other predictions we have graphed. 
+
+### problem (f)
+
+```{r}
+# monte carlo
+rrayleigh(2000,sqrt(rinvgamma(2000,a0+n,0.5*Ysum+b0))) -> ytildes
+hist(ytildes,freq=F,breaks = 40)
+# credible interval
+c(quantile(ytildes,.025),quantile(ytildes,.975))
+```
+
+```{r}
+# prob of picking a ytildes that is 24 or less
+sum(ytildes <= 24)/length(ytildes)
+```
+
