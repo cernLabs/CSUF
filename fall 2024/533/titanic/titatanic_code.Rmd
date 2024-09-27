@@ -1,0 +1,23 @@
+---
+title: "Titanic"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+X <- read.csv("train.csv",header = T)
+library(dplyr)
+```
+
+```{r}
+X <- X %>% select(Survived,
+            Pclass,
+            Sex,
+            Age,
+            Fare,
+            SibSp,
+            Parch)
+```
+
