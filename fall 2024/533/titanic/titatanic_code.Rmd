@@ -9,7 +9,13 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 X <- read.csv("train.csv",header = T)
 library(dplyr)
+library(caret)
+library(forecast)
+library(naivebayes)
+library(MASS)
 ```
+
+## data processing 
 
 ```{r}
 X <- X %>% select(Survived,
@@ -20,4 +26,175 @@ X <- X %>% select(Survived,
             SibSp,
             Parch)
 ```
+
+Imputing age
+
+```{r}
+meanAge = mean(X$Age[!is.na(X$Age)])
+for(i in 1:length(X$Age)){
+  if(is.na(X$Age[i]) == 1){X$Age[i] = meanAge}
+}
+```
+
+We will make sex numerical
+
+```{r}
+for(i in 1:891){
+  if(X$Sex[i] == "male"){X$Sex[i] = 1}
+  else{X$Sex[i] = 0}
+}
+X$Survived <- as.integer(X$Survived)
+X$Sex <- as.integer(X$Sex)
+```
+
+
+splitting the data (notice 80% 0f 891 $\approx$ 713)
+
+```{r}
+set.seed(533)
+trainIndex <- sample(1:891, size = 713, replace = F)
+Xtrain <- X[trainIndex,]
+Xtest <- X[-trainIndex,]
+```
+
+## Logistic Regression
+
+fit to a logistic regression
+
+```{r}
+# make sure Survived is a factor
+Xtrain$Survived <-as.factor(Xtrain$Survived) 
+# train the logit
+fitLogit <- train(Survived ~ .,
+                  data= Xtrain,
+                  method = "glm",
+                  family = "binomial") 
+# print summary
+summary(fitLogit)
+```
+
+looking at the above summary, it seems as though Pclass and Sex have a major influence on survival.
+
+
+```{r}
+# doing this to get the accuracy
+Xtest <- Xtest %>%
+  mutate(logityhat = predict(fitLogit, newdata =., type = "raw"))
+# confusion matrix
+Xtest$Survived <- as.factor(Xtest$Survived)
+confusionMatrix(Xtest$logityhat,Xtest$Survived)$table -> cm.log
+# display for accuracy, precision, recall, f1score
+table1 <- function(tab,name, printtnr = F){
+  tab[1,1] -> tn
+  tab[2,2] -> tp
+  tab[1,2] -> fp
+  tab[2,1] -> fn
+  a = (tp+tn)/(tp+tn+fp+fn)
+  p = tp/(tp+fp)
+  r = tp/(tp+fn)
+  f1 = 2*p*r/(p+r)
+  tnr = tn/(tn+fp)
+  if(printtnr == 0){  
+    sprintf("%s || Accuracy: %f | Precision: %f | Recall(TPR): %f | F1: %f",name,a,p,r,f1)
+  } else{
+    sprintf("%s || Accuracy: %f | Precision: %f | Recall(TPR): %f | F1: %f | TNR: %f",name,a,p,r,f1,tnr)  
+  }
+  }
+
+table1(cm.log,"Logistic Regression")
+```
+
+## Linear Discriminant Analysis (LDA) or Quadratic Discriminant Analysis (QDA)
+
+let's fit a QDA 
+```{r}
+# training on the QDA
+fitQda <- (train(method = "qda", Survived ~ ., data = Xtrain))
+# accuracy
+Xtest <- Xtest %>%
+  mutate(qdayhat = predict(fitQda, newdata =., type = "raw"))
+# comparing accuracy
+confusionMatrix(Xtest$logityhat,Xtest$Survived)$overall["Accuracy"]
+confusionMatrix(Xtest$qdayhat,Xtest$Survived) -> cm.qda
+cm.qda$overall["Accuracy"]
+```
+the QDA accuracy is better than that of the Logistic. Although this is strange as QDA assumes normality in the predictors and I didn't check for that.
+
+
+
+```{r}
+library(klaR)
+partimat(formula = Survived ~ Age + Fare,data=Xtest,method="qda",main="QDA Partition Plots")
+
+```
+It seems to 
+## Naive Bayes
+
+```{r}
+fitNb <- train(method = "naive_bayes", Survived ~ . , data = Xtrain)
+Xtest <- Xtest %>%
+  mutate(nbyhat = predict(fitNb, newdata =., type = "raw"))
+confusionMatrix(Xtest$nbyhat,Xtest$Survived) -> cm.nb
+cm.nb$overall["Accuracy"]
+
+```
+Naive Bayes has a similar accuracy to logistic regression. Let's see if certain variables improve it's performance metrics.
+
+```{r}
+pca <- prcomp(Xtrain[,2:7], scale. = T)
+evar = pca$sdev^2 / sum(pca$sdev^2)
+plot(evar, type = 'b')
+```
+looks like 3 components are relevant for our analysis, maybe we can see which ones
+
+```{r}
+pca$rotation[, 1:3]
+```
+rotation tells me that Fare is important in three components as it places in all three, so it must be important.
+SibSp places in two components, while Sex seems to be very influential in component three, so I will choose it.
+
+```{r}
+fitNb2 <- train(method = "naive_bayes", Survived ~ Fare + SibSp + Sex , data = Xtrain)
+Xtest <- Xtest %>%
+  mutate(nb2yhat = predict(fitNb2, newdata =., type = "raw"))
+confusionMatrix(Xtest$nb2yhat,Xtest$Survived) -> cm.nb2
+table1(cm.nb2$table,"Naive Bayes with less variables")
+table1(cm.nb$table,"Naive Bayes")
+```
+slight improvement in accuracy and TNR, making it relatively better than all other models so far. Let's see if all other models improve after this variables reduction.
+
+```{r}
+# log regression
+fitLogit <- train(Survived ~ Fare + SibSp + Sex ,
+                  data= Xtrain,
+                  method = "glm",
+                  family = "binomial") 
+Xtest$logityhat <- predict(fitLogit, newdata =Xtest, type = "raw")
+confusionMatrix(Xtest$logityhat,Xtest$Survived)$table -> cm.log    
+
+# QDA 
+fitQda <- (train(method = "qda", Survived ~ Fare + SibSp + Sex , data = Xtrain))
+Xtest$nbyhat <- predict(fitQda, newdata =Xtest, type = "raw")
+confusionMatrix(Xtest$nbyhat,Xtest$Survived)$table -> cm.qda2
+
+# performance metrics
+table1(cm.log,"Logistic Regression with less variables",T)
+table1(cm.qda2,"QDA with less variables",T)
+table1(cm.nb2$table,"Naive Bayes with less variables",T)
+```
+Only using the three variables, Naive Bayes and Logistic Regression improved, however QDA seems to have taken a dive in performance considering the previous accuracy score was around .76.
+
+## Model Comparison
+
+```{r}
+# performance metrics
+table1(cm.log,"Logistic Regression with less variables",T)
+table1(cm.qda$table,"QDA",T)
+table1(cm.nb2$table,"Naive Bayes with less variables",T)
+```
+QDA dominates in all of these performance metrics, including accuracy. It also has the highest true positive and and true negative rate; it is the best model for predicting who survived as well as who did not. 
+
+## Conclusion
+
+Quadratic Discriminant Analysis with all the 6 variables is the model that has the most reliable results. If we are predicting who survived the Titanic, given these 6 particular variables from the data, then this the model I would move forward with.
 

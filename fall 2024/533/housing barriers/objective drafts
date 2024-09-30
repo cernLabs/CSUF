@@ -12,3 +12,14 @@ I must also mention that we have contacted the authors of the article and have t
 The objective of this project is to analyze the impact of zoning discretion on the development of new and affordable housing in Los Angeles, with a focus on assessing the financial costs of discretionary delays on residential developers. Using advanced statistical methods such as Cox-Weighted Regression and Survival Analysis, we aim to address the inefficiencies in traditional OLS approaches, as highlighted in the referenced article, 'Does Discretion Delay Development?' Our analysis will provide insights into three key questions: (1) the financial costs of discretionary delays, (2) the percentage of housing developments that receive earlier permit issuance through by-right approvals compared to discretionary processes, and (3) how Survival Analysis offers improved inference over OLS methods. Additionally, we will make a prediction on the expected time to permit issuance for a prototype housing project in Los Angeles. The data used for this project has been obtained from the original research conducted by the article's authors.
 
 Our projects main aim is to analyze the impact of zoning discretion on the development of new and affordable housing in the Los Angeles metro area while also focusing on the fiscal costs of discretionary delay on residential buildings. Our research takes off from the previous research from the article "Does Discretion Delay Development?" and the data used for this project has been obtained from the authors. We feel that the questions addressed in this article can be better explored with more advanced statistical approaches which is we provide on planning insights into three key questions: (1) the financial costs of discretionary delays, (2) the percentage of housing developments that receive earlier permit issuance through by-right approvals compared to discretionary processes, and (3) how Survival Analysis offers improved inference over OLS methods. Additionally, we will further explore the topic as hand by making a prediction on the expected time to permit issuance for a prototype housing project in Los Angeles.
+
+/// Paste this into your slide ////
+
+
+>> We mainly aim to look at the impact of zoning descretion on affordable residential development 
+> Our analysis is an offshoot from the article "Does Discretion Delay Development?"
+> We will do this seek to answer these questions
++ Cost of discretionary delay
++ Percentage of permit approval of by-right vs. discretionary 
++ Using survival analysis juxtpose to the article's OLS method
+> Also, we will conduct a predictive analysis to estimate the time it takes for permit issuance 
