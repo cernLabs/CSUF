@@ -109,7 +109,7 @@ window.Quarto = {
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
 <h1 class="title">Titanic Guided Project</h1>
-<p class="subtitle lead">Michael Pena</p>
+<p class="subtitle lead">Michael Peña</p>
 </div>
 
 
@@ -187,7 +187,7 @@ Attaching package: 'MASS'</code></pre>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">is.na</span>(X<span class="sc">$</span>Age[i]) <span class="sc">==</span> <span class="dv">1</span>){X<span class="sc">$</span>Age[i] <span class="ot">=</span> meanAge}</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>We will make sex numerical</p>
+<p>We will make Sex numerical</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">891</span>){</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(X<span class="sc">$</span>Sex[i] <span class="sc">==</span> <span class="st">"male"</span>){X<span class="sc">$</span>Sex[i] <span class="ot">=</span> <span class="dv">1</span>}</span>
@@ -247,7 +247,7 @@ Number of Fisher Scoring iterations: 5</code></pre>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># doing this to get the accuracy</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>Xtest <span class="ot">&lt;-</span> Xtest <span class="sc">%&gt;%</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logityhat =</span> <span class="fu">predict</span>(fitLogit, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>))</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logityhat =</span> <span class="fu">predict</span>(fitLogit, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>)) </span>
 <span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># confusion matrix</span></span>
 <span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>Xtest<span class="sc">$</span>Survived <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(Xtest<span class="sc">$</span>Survived)</span>
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>logityhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>table <span class="ot">-&gt;</span> cm.log</span>
@@ -284,8 +284,7 @@ Number of Fisher Scoring iterations: 5</code></pre>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># accuracy</span></span>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>Xtest <span class="ot">&lt;-</span> Xtest <span class="sc">%&gt;%</span></span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">qdayhat =</span> <span class="fu">predict</span>(fitQda, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>))</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co"># comparing accuracy</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>logityhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>overall[<span class="st">"Accuracy"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>logityhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>overall[<span class="st">"Accuracy"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Accuracy 
 0.747191 </code></pre>
@@ -309,25 +308,32 @@ Number of Fisher Scoring iterations: 5</code></pre>
 </div>
 </div>
 </div>
-</section>
-<section id="naive-bayes" class="level2">
-<h2 class="anchored" data-anchor-id="naive-bayes">Naive Bayes</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>fitNb <span class="ot">&lt;-</span> <span class="fu">train</span>(<span class="at">method =</span> <span class="st">"naive_bayes"</span>, Survived <span class="sc">~</span> . , <span class="at">data =</span> Xtrain)</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>Xtest <span class="ot">&lt;-</span> Xtest <span class="sc">%&gt;%</span></span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nbyhat =</span> <span class="fu">predict</span>(fitNb, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>))</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>nbyhat,Xtest<span class="sc">$</span>Survived) <span class="ot">-&gt;</span> cm.nb</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>cm.nb<span class="sc">$</span>overall[<span class="st">"Accuracy"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>Accuracy 
-0.747191 </code></pre>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co">#decision bounds for logistic regression</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>logitPr <span class="ot">=</span> <span class="fu">predict</span>(fitLogit, <span class="at">newdata =</span>Xtest, <span class="at">type =</span> <span class="st">"prob"</span>)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(logitPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">0</span>,<span class="dv">2</span>], <span class="at">col =</span> <span class="fu">rgb</span>(.<span class="dv">8</span>,<span class="dv">1</span> ,.<span class="dv">4</span>,<span class="at">alpha =</span> .<span class="dv">5</span>),</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Logistic Decision Bounds"</span>, <span class="at">xlab =</span> <span class="st">"Prob. of Survival"</span>)</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(logitPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">1</span>,<span class="dv">2</span>], <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">1</span>,.<span class="dv">8</span>,.<span class="dv">6</span>,<span class="at">alpha =</span> .<span class="dv">5</span>),<span class="at">add =</span> <span class="dv">1</span>)</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>v <span class="ot">=</span> <span class="fu">mean</span>(logitPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">0</span>,<span class="dv">2</span>])<span class="sc">+</span><span class="fu">mean</span>(logitPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">1</span>,<span class="dv">2</span>])</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v=</span>v<span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="fl">0.8</span>,<span class="dv">40</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"died"</span>,<span class="st">"survived"</span>), <span class="at">fill =</span> <span class="fu">c</span>(<span class="fu">rgb</span>(.<span class="dv">8</span>,<span class="dv">1</span> ,.<span class="dv">4</span>,.<span class="dv">5</span>), <span class="fu">rgb</span>(<span class="dv">1</span>,.<span class="dv">8</span>,.<span class="dv">6</span>,.<span class="dv">5</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="quarto_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
 </div>
 </div>
-<p>Naive Bayes has a similar accuracy to logistic regression. Let’s see if certain variables improve it’s performance metrics.</p>
+</div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> <span class="fu">prcomp</span>(Xtrain[,<span class="dv">2</span><span class="sc">:</span><span class="dv">7</span>], <span class="at">scale. =</span> T)</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>evar <span class="ot">=</span> pca<span class="sc">$</span>sdev<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> <span class="fu">sum</span>(pca<span class="sc">$</span>sdev<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(evar, <span class="at">type =</span> <span class="st">'b'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co">#decision bounds for QDA </span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>qdaPr <span class="ot">=</span> <span class="fu">predict</span>(fitQda, <span class="at">newdata =</span>Xtest, <span class="at">type =</span> <span class="st">"prob"</span>)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(qdaPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">0</span>,<span class="dv">2</span>], <span class="at">col =</span> <span class="fu">rgb</span>(.<span class="dv">8</span>,<span class="dv">1</span> ,.<span class="dv">4</span>,<span class="at">alpha =</span> .<span class="dv">5</span>),</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"QDA Decision Bounds"</span>, <span class="at">xlab =</span> <span class="st">"Prob. of Survival"</span>)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(qdaPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">1</span>,<span class="dv">2</span>], <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">1</span>,.<span class="dv">8</span>,.<span class="dv">6</span>,<span class="at">alpha =</span> .<span class="dv">5</span>),<span class="at">add =</span> <span class="dv">1</span>)</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>v <span class="ot">=</span> <span class="fu">mean</span>(qdaPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">0</span>,<span class="dv">2</span>])<span class="sc">+</span><span class="fu">mean</span>(qdaPr[Xtest<span class="sc">$</span>Survived <span class="sc">==</span> <span class="dv">1</span>,<span class="dv">2</span>])</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v=</span>v<span class="sc">/</span><span class="dv">2</span>)</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="fl">0.8</span>,<span class="dv">60</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"died"</span>,<span class="st">"survived"</span>), <span class="at">fill =</span> <span class="fu">c</span>(<span class="fu">rgb</span>(.<span class="dv">8</span>,<span class="dv">1</span> ,.<span class="dv">4</span>,.<span class="dv">5</span>), <span class="fu">rgb</span>(<span class="dv">1</span>,.<span class="dv">8</span>,.<span class="dv">6</span>,.<span class="dv">5</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -336,9 +342,37 @@ Number of Fisher Scoring iterations: 5</code></pre>
 </div>
 </div>
 </div>
+<p>Comparing the two decision bounds, QDA does seem to be more accurate and definite than does the Logistic Regression. This does reflect the accuracy score of the two models.</p>
+</section>
+<section id="naive-bayes" class="level2">
+<h2 class="anchored" data-anchor-id="naive-bayes">Naive Bayes</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>fitNb <span class="ot">&lt;-</span> <span class="fu">train</span>(<span class="at">method =</span> <span class="st">"naive_bayes"</span>, Survived <span class="sc">~</span> . , <span class="at">data =</span> Xtrain)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>Xtest <span class="ot">&lt;-</span> Xtest <span class="sc">%&gt;%</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nbyhat =</span> <span class="fu">predict</span>(fitNb, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>))</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>nbyhat,Xtest<span class="sc">$</span>Survived) <span class="ot">-&gt;</span> cm.nb</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>cm.nb<span class="sc">$</span>overall[<span class="st">"Accuracy"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Accuracy 
+0.747191 </code></pre>
+</div>
+</div>
+<p>Naive Bayes has a similar accuracy to logistic regression. Let’s see if certain variables improve it’s performance metrics.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> <span class="fu">prcomp</span>(Xtrain[,<span class="dv">2</span><span class="sc">:</span><span class="dv">7</span>], <span class="at">scale. =</span> T)</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>evar <span class="ot">=</span> pca<span class="sc">$</span>sdev<span class="sc">^</span><span class="dv">2</span> <span class="sc">/</span> <span class="fu">sum</span>(pca<span class="sc">$</span>sdev<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(evar, <span class="at">type =</span> <span class="st">'b'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="quarto_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 <p>looks like 3 components are relevant for our analysis, maybe we can see which ones</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>pca<span class="sc">$</span>rotation[, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>pca<span class="sc">$</span>rotation[, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>              PC1         PC2         PC3
 Pclass -0.2881179 -0.60622454 -0.07153728
@@ -351,44 +385,44 @@ Parch   0.5389579 -0.24430058  0.10245408</code></pre>
 </div>
 <p>rotation tells me that Fare is important in three components as it places in all three, so it must be important. SibSp places in two components, while Sex seems to be very influential in component three, so I will choose it.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>fitNb2 <span class="ot">&lt;-</span> <span class="fu">train</span>(<span class="at">method =</span> <span class="st">"naive_bayes"</span>, Survived <span class="sc">~</span> Fare <span class="sc">+</span> SibSp <span class="sc">+</span> Sex , <span class="at">data =</span> Xtrain)</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>Xtest <span class="ot">&lt;-</span> Xtest <span class="sc">%&gt;%</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nb2yhat =</span> <span class="fu">predict</span>(fitNb2, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>))</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>nb2yhat,Xtest<span class="sc">$</span>Survived) <span class="ot">-&gt;</span> cm.nb2</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb2<span class="sc">$</span>table,<span class="st">"Naive Bayes with less variables"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>fitNb2 <span class="ot">&lt;-</span> <span class="fu">train</span>(<span class="at">method =</span> <span class="st">"naive_bayes"</span>, Survived <span class="sc">~</span> Fare <span class="sc">+</span> SibSp <span class="sc">+</span> Sex , <span class="at">data =</span> Xtrain)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>Xtest <span class="ot">&lt;-</span> Xtest <span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nb2yhat =</span> <span class="fu">predict</span>(fitNb2, <span class="at">newdata =</span>., <span class="at">type =</span> <span class="st">"raw"</span>))</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>nb2yhat,Xtest<span class="sc">$</span>Survived) <span class="ot">-&gt;</span> cm.nb2</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb2<span class="sc">$</span>table,<span class="st">"Naive Bayes with less variables"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Naive Bayes with less variables || Accuracy: 0.758427 | Precision: 0.666667 | Recall(TPR): 0.612903 | F1: 0.638655"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb<span class="sc">$</span>table,<span class="st">"Naive Bayes"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb<span class="sc">$</span>table,<span class="st">"Naive Bayes"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Naive Bayes || Accuracy: 0.747191 | Precision: 0.701754 | Recall(TPR): 0.588235 | F1: 0.640000"</code></pre>
 </div>
 </div>
 <p>slight improvement in accuracy and TNR, making it relatively better than all other models so far. Let’s see if all other models improve after this variables reduction.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># log regression</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>fitLogit <span class="ot">&lt;-</span> <span class="fu">train</span>(Survived <span class="sc">~</span> Fare <span class="sc">+</span> SibSp <span class="sc">+</span> Sex ,</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data=</span> Xtrain,</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">method =</span> <span class="st">"glm"</span>,</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">family =</span> <span class="st">"binomial"</span>) </span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>Xtest<span class="sc">$</span>logityhat <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitLogit, <span class="at">newdata =</span>Xtest, <span class="at">type =</span> <span class="st">"raw"</span>)</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>logityhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>table <span class="ot">-&gt;</span> cm.log    </span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co"># QDA </span></span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>fitQda <span class="ot">&lt;-</span> (<span class="fu">train</span>(<span class="at">method =</span> <span class="st">"qda"</span>, Survived <span class="sc">~</span> Fare <span class="sc">+</span> SibSp <span class="sc">+</span> Sex , <span class="at">data =</span> Xtrain))</span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>Xtest<span class="sc">$</span>nbyhat <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitQda, <span class="at">newdata =</span>Xtest, <span class="at">type =</span> <span class="st">"raw"</span>)</span>
-<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>nbyhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>table <span class="ot">-&gt;</span> cm.qda2</span>
-<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
-<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.log,<span class="st">"Logistic Regression with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># log regression</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>fitLogit <span class="ot">&lt;-</span> <span class="fu">train</span>(Survived <span class="sc">~</span> Fare <span class="sc">+</span> SibSp <span class="sc">+</span> Sex ,</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">data=</span> Xtrain,</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">method =</span> <span class="st">"glm"</span>,</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">family =</span> <span class="st">"binomial"</span>) </span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>Xtest<span class="sc">$</span>logityhat <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitLogit, <span class="at">newdata =</span>Xtest, <span class="at">type =</span> <span class="st">"raw"</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>logityhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>table <span class="ot">-&gt;</span> cm.log    </span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="co"># QDA </span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>fitQda <span class="ot">&lt;-</span> (<span class="fu">train</span>(<span class="at">method =</span> <span class="st">"qda"</span>, Survived <span class="sc">~</span> Fare <span class="sc">+</span> SibSp <span class="sc">+</span> Sex , <span class="at">data =</span> Xtrain))</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>Xtest<span class="sc">$</span>nbyhat <span class="ot">&lt;-</span> <span class="fu">predict</span>(fitQda, <span class="at">newdata =</span>Xtest, <span class="at">type =</span> <span class="st">"raw"</span>)</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a><span class="fu">confusionMatrix</span>(Xtest<span class="sc">$</span>nbyhat,Xtest<span class="sc">$</span>Survived)<span class="sc">$</span>table <span class="ot">-&gt;</span> cm.qda2</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.log,<span class="st">"Logistic Regression with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Logistic Regression with less variables || Accuracy: 0.752809 | Precision: 0.649123 | Recall(TPR): 0.606557 | F1: 0.627119 | TNR: 0.829060"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.qda2,<span class="st">"QDA with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.qda2,<span class="st">"QDA with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "QDA with less variables || Accuracy: 0.758427 | Precision: 0.666667 | Recall(TPR): 0.612903 | F1: 0.638655 | TNR: 0.836207"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb2<span class="sc">$</span>table,<span class="st">"Naive Bayes with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb2<span class="sc">$</span>table,<span class="st">"Naive Bayes with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Naive Bayes with less variables || Accuracy: 0.758427 | Precision: 0.666667 | Recall(TPR): 0.612903 | F1: 0.638655 | TNR: 0.836207"</code></pre>
 </div>
@@ -398,28 +432,28 @@ Parch   0.5389579 -0.24430058  0.10245408</code></pre>
 <section id="model-comparison" class="level2">
 <h2 class="anchored" data-anchor-id="model-comparison">Model Comparison</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.log,<span class="st">"Logistic Regression with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># performance metrics</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.log,<span class="st">"Logistic Regression with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Logistic Regression with less variables || Accuracy: 0.752809 | Precision: 0.649123 | Recall(TPR): 0.606557 | F1: 0.627119 | TNR: 0.829060"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.qda<span class="sc">$</span>table,<span class="st">"QDA"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.qda<span class="sc">$</span>table,<span class="st">"QDA"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "QDA || Accuracy: 0.764045 | Precision: 0.736842 | Recall(TPR): 0.608696 | F1: 0.666667 | TNR: 0.862385"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb2<span class="sc">$</span>table,<span class="st">"Naive Bayes with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table1</span>(cm.nb2<span class="sc">$</span>table,<span class="st">"Naive Bayes with less variables"</span>,T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Naive Bayes with less variables || Accuracy: 0.758427 | Precision: 0.666667 | Recall(TPR): 0.612903 | F1: 0.638655 | TNR: 0.836207"</code></pre>
 </div>
 </div>
 <table class="table">
 <colgroup>
-<col style="width: 25%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
-<col style="width: 14%">
+<col style="width: 17%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 16%">
 </colgroup>
 <thead>
 <tr class="header">

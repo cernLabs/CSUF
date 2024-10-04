@@ -1,18 +1,22 @@
 ---
 title: "Titanic Guided Project"
 subtitle: "Michael Peña"
-format: html
+format: pdf
 editor: visual
 ---
 
 ## Data Processing
 
-```{r}
+```{r, include=FALSE}
 library(dplyr)
 library(caret)
 library(forecast)
 library(naivebayes)
 library(MASS)
+
+```
+
+```{r}
 X <- read.csv("train.csv",header = T)
 X <- X %>% dplyr::select(Survived,Pclass,Sex,Age,Fare,SibSp,Parch)
 ```
@@ -67,7 +71,7 @@ looking at the above summary, it seems as though Pclass and Sex have a major inf
 ```{r}
 # doing this to get the accuracy
 Xtest <- Xtest %>%
-  mutate(logityhat = predict(fitLogit, newdata =., type = "raw"))
+  mutate(logityhat = predict(fitLogit, newdata =., type = "raw")) 
 # confusion matrix
 Xtest$Survived <- as.factor(Xtest$Survived)
 confusionMatrix(Xtest$logityhat,Xtest$Survived)$table -> cm.log
@@ -102,7 +106,6 @@ fitQda <- (train(method = "qda", Survived ~ ., data = Xtrain))
 # accuracy
 Xtest <- Xtest %>%
   mutate(qdayhat = predict(fitQda, newdata =., type = "raw"))
-# comparing accuracy
 confusionMatrix(Xtest$logityhat,Xtest$Survived)$overall["Accuracy"]
 confusionMatrix(Xtest$qdayhat,Xtest$Survived) -> cm.qda
 cm.qda$overall["Accuracy"]
@@ -111,10 +114,29 @@ cm.qda$overall["Accuracy"]
 the QDA accuracy is better than that of the Logistic. Although this is strange as QDA assumes normality in the predictors and I didn't check for that.
 
 ```{r}
-library(klaR)
-partimat(formula = Survived ~ Age + Fare,data=Xtest,method="qda",main="QDA Partition Plots")
+#decision bounds for logistic regression
+logitPr = predict(fitLogit, newdata =Xtest, type = "prob")
+hist(logitPr[Xtest$Survived == 0,2], col = rgb(.8,1 ,.4,alpha = .5),
+     main = "Logistic Decision Bounds", xlab = "Prob. of Survival")
+hist(logitPr[Xtest$Survived == 1,2], col = rgb(1,.8,.6,alpha = .5),add = 1)
+v = mean(logitPr[Xtest$Survived == 0,2])+mean(logitPr[Xtest$Survived == 1,2])
+abline(v=v/2)
+legend(0.8,40, legend = c("died","survived"), fill = c(rgb(.8,1 ,.4,.5), rgb(1,.8,.6,.5)))
 
 ```
+
+```{r}
+#decision bounds for QDA 
+qdaPr = predict(fitQda, newdata =Xtest, type = "prob")
+hist(qdaPr[Xtest$Survived == 0,2], col = rgb(.8,1 ,.4,alpha = .5),
+     main = "QDA Decision Bounds", xlab = "Prob. of Survival")
+hist(qdaPr[Xtest$Survived == 1,2], col = rgb(1,.8,.6,alpha = .5),add = 1)
+v = mean(qdaPr[Xtest$Survived == 0,2])+mean(qdaPr[Xtest$Survived == 1,2])
+abline(v=v/2)
+legend(0.8,60, legend = c("died","survived"), fill = c(rgb(.8,1 ,.4,.5), rgb(1,.8,.6,.5)))
+```
+
+Comparing the two decision bounds, QDA does seem to be more accurate and definite than does the Logistic Regression. This does reflect the accuracy score of the two models.
 
 ## Naive Bayes
 
@@ -186,7 +208,7 @@ table1(cm.nb2$table,"Naive Bayes with less variables",T)
 ```
 
 |                model                 | Accuracy | Precision | Recall(TPR) |    F1    |   TNR    |
-|:-----------------:|:---------:|:---------:|:---------:|:---------:|:---------:|
+|:-----------:|:----------:|:----------:|:----------:|:----------:|:----------:|
 | Logistic Regression (less variables) | 0.752809 | 0.649123  |  0.606557   | 0.627119 | 0.829060 |
 |         QDA (all variables)          | 0.764045 | 0.736842  |  0.608696   | 0.666667 | 0.862385 |
 |     Naive Bayes (less variables)     | 0.758427 | 0.666667  |  0.612903   | 0.638655 | 0.836207 |
