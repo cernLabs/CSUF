@@ -1,0 +1,71 @@
+---
+title: "hw2"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(530)
+library(geoR)
+library(ggplot2)
+library(metRology)
+```
+
+\newpage
+
+
+### (b)
+
+```{r}
+# simulation
+n = 1000
+y = rnorm(n,0,1)
+s = sd(y)
+```
+
+### (c)
+
+```{r}
+# posterior sample
+sigsq <- rinvchisq(2000, n - 1, s^2)
+muvec <- rnorm(2000, mean(y),sqrt(sigsq/n)) 
+
+post <- data.frame(cbind(muvec,sigsq))
+ggplot(post, aes(x = muvec, y = sigsq)) + 
+  geom_point() + geom_density2d()
+
+```
+
+```{r}
+# plotting the marginal posterior distribution for mu
+plot(density(muvec))
+x <- seq(-3,3,.01)
+lines(x,
+      dt.scaled(x,
+      df = n-1,
+      mean(y),
+      s/sqrt(n)),
+      lty =2,
+      col = 2)
+```
+
+```{r}
+# plotting the marginal posterior distribution for sigsq
+plot(density(sigsq))
+x <- seq(0,2,0.01)
+lines(x,dinvchisq(x,df = n-1, scale = s^2),
+      lty =2,
+      col = 2)
+```
+### (d)
+```{r}
+# estimate posterior predictive distribution
+ysim <- c()
+for(i in 1:2000){
+  ysim[i] = rnorm(1, post$muvec[i], sqrt(post$sigsq[i]))
+}
+plot(density(ysim))
+```
+
