@@ -1,0 +1,71 @@
+---
+title: "Homework 3"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MCMCpack)
+library(ggplot2)
+library(metRology)
+library(geoR)
+```
+
+
+## Question 1
+
+####(a)
+
+input data (y-vector)
+
+determine recognize that the posterior can be divided as so.
+
+Recognize that we can integrate out \mu 
+
+Generate \sigma^2 from Sc.InvX^2(n-1, s^2)
+
+use \sigma^2 to generate \mu from N(\bar{y},\frac{\sigma^2}{n})
+
+do the last two steps B amount of times
+
+####(b)
+```{r}
+set.seed(88899)
+# grab some data
+n = 280
+y = rnorm(n,1,2)
+ybar = mean(y)
+sy = sd(y)
+# grab sigma-squareds from scaled inverse chisquared
+B = 50
+sigmsq <- (n-1) * sy^2/rchisq(B,n-1)
+# grab mus from normal
+mu <- rnorm(B,ybar,sqrt(sigmsq/n))
+```
+
+```{r}
+post <- data.frame(cbind(mu,sigmsq))
+ggplot(post, aes(x = mu, y =sigmsq)) + geom_point() + geom_density2d()
+```
+
+```{r}
+# Plot Marginal Posterior of mu
+plot(density(mu), main = "p(mu|data)")
+mu_grid = seq(min(mu), max(mu), length.out = B)
+lines(mu_grid, dt.scaled(mu_grid, n-1, ybar, sqrt(sy^2/n)), col = 2, lty = 2)
+legend("topright", legend = c("MC Estimate", "True Density"), col = c("black", "red"), lty = c(1, 2))
+
+
+# Plot Marginal Posterior of sigma
+plot(density(sigmsq), main = "p(sigma2|data)")
+sig2.grid = seq(min(sigmsq), max(sigmsq), length.out = B)
+lines(sig2.grid, dinvchisq(sig2.grid, n-1, sy^2), col = 2, lty = 2)
+legend("topright", legend = c("MC Estimate", "True Density"), col = c("black", "red"), lty = c(1, 2))
+```
+```{r}
+
+```
+
+
