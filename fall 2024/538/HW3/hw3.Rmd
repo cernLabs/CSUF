@@ -20,13 +20,21 @@ library(geoR)
 
 input data (y-vector)
 
-determine recognize that the posterior can be divided as so.
+determine recognize that the posterior can be seperate as so.
 
-Recognize that we can integrate out \mu 
+$$
+P(\mu,\sigma^2|data) = P(\mu|\sigma^2,data)\cdot P(\sigma^2|data) 
+$$
 
-Generate \sigma^2 from Sc.InvX^2(n-1, s^2)
+Recognize that we can integrate out $\mu$ 
 
-use \sigma^2 to generate \mu from N(\bar{y},\frac{\sigma^2}{n})
+$$
+
+$$
+
+Generate $\sigma^2$ from $Sc.Inv -\chi^2$(n-1, s^2)
+
+use $\sigma^2$ to generate $\mu$ from N($\bar{y},\frac{\sigma^2}{n}$)
 
 do the last two steps B amount of times
 
@@ -50,22 +58,77 @@ post <- data.frame(cbind(mu,sigmsq))
 ggplot(post, aes(x = mu, y =sigmsq)) + geom_point() + geom_density2d()
 ```
 
+####(c)
+
 ```{r}
 # Plot Marginal Posterior of mu
 plot(density(mu), main = "p(mu|data)")
-mu_grid = seq(min(mu), max(mu), length.out = B)
-lines(mu_grid, dt.scaled(mu_grid, n-1, ybar, sqrt(sy^2/n)), col = 2, lty = 2)
+mu.seq = seq(min(mu), max(mu), length.out = B)
+lines(mu_grid, dt.scaled(mu.seq, n-1, ybar, sqrt(sy^2/n)), col = 2, lty = 2)
 legend("topright", legend = c("MC Estimate", "True Density"), col = c("black", "red"), lty = c(1, 2))
-
-
+# get the MAP value
+density(mu)$x[density(mu)$y == max(density(mu)$y)] -> v1
+abline(v=v1)
+# get actual MLE
+av1 = mu.seq[dt.scaled(mu.seq, n-1, ybar, sqrt(sy^2/n)) == max(dt.scaled(mu.seq, n-1, ybar, sqrt(sy^2/n)))]
+abline(v = av1, col = "red", lty = 2)
 # Plot Marginal Posterior of sigma
-plot(density(sigmsq), main = "p(sigma2|data)")
-sig2.grid = seq(min(sigmsq), max(sigmsq), length.out = B)
-lines(sig2.grid, dinvchisq(sig2.grid, n-1, sy^2), col = 2, lty = 2)
+plot(density(sigmsq), main = "p(sigma2|data)", ylim = c(0,1.4))
+sigmsq.seq = seq(min(sigmsq), max(sigmsq), length.out = B)
+lines(sigmsq.seq, dinvchisq(sigmsq.seq, n-1, sy^2), col = 2, lty = 2)
 legend("topright", legend = c("MC Estimate", "True Density"), col = c("black", "red"), lty = c(1, 2))
+# get the MAP value
+density(sigmsq)$x[density(sigmsq)$y == max(density(sigmsq)$y)] -> v2
+abline(v=v2)
+# get actual MLE
+av2 = sigmsq.seq[dinvchisq(sigmsq.seq, n-1, sy^2) == max(dinvchisq(sigmsq.seq, n-1, sy^2))]
+abline(v = av2, col = "red", lty = 2)
+# get absolute differences
+abs(av1 - v1); abs(av2 - v2)
 ```
+
+$\mu$ MC estimate flattens out so I went ahead and tried to look for an actual number by essentially looking for the mode. I eventually decided to so this for both estimators and both True and MC estimates.
+At the end I took the absolute difference and because $\mu$ has the smaller difference, I took that to be the one that is better estimate. Nevertheless, they both get relatively close.
+
+####(d)
+
+```{r}
+# get y's
+ypredpost = c()
+for(i in 1:B){
+ ypredpost[i] = rnorm(1,mean=mu[1],sd = sqrt(sigmsq[i])) 
+}
+```
+
+recall from hw2 that 
+
+$$
+P(\mu, \sigma^2 |y_i) \propto (\sigma^2)^{-2} \prod_{i=1}^{n} \left[ (\sigma^2)^{1/2} \exp \left( -\frac{1}{2} \left( \frac{y_i - \mu}{\sigma} \right)^2 \right) \right]
+$$
+so that 
+
+$$
+P(\tilde y|y_i) = \int_{R^+} \int_{R} N(\tilde y | \mu, \sigma^2 )P(\mu, \sigma^2 |y_i)d\mu d\sigma^2 
+$$
+$$
+=
+t_{n-1}(\bar{y}, s_y^2/n)
+$$
+which is the t-distribution
+
+```{r}
+# plot density of MC samples
+plot(density(ypredpost), main = expression(paste('P(y_new | data)', sep ="")))
+# overlay "true" values
+y.seq = seq(min(ypredpost),max(ypredpost),length.out = B)
+lines(y.seq,dnorm(y.seq,mean(ypredpost),sd(ypredpost)),col = "red", lty = 2)
+```
+
+
+
+####(e)
+
 ```{r}
 
 ```
-
 
