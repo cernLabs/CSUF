@@ -64,7 +64,7 @@ ggplot(post, aes(x = mu, y =sigmsq)) + geom_point() + geom_density2d()
 # Plot Marginal Posterior of mu
 plot(density(mu), main = "p(mu|data)")
 mu.seq = seq(min(mu), max(mu), length.out = B)
-lines(mu_grid, dt.scaled(mu.seq, n-1, ybar, sqrt(sy^2/n)), col = 2, lty = 2)
+lines(mu.seq, dt.scaled(mu.seq, n-1, ybar, sqrt(sy^2/n)), col = 2, lty = 2)
 legend("topright", legend = c("MC Estimate", "True Density"), col = c("black", "red"), lty = c(1, 2))
 # get the MAP value
 density(mu)$x[density(mu)$y == max(density(mu)$y)] -> v1
@@ -128,7 +128,33 @@ lines(y.seq,dnorm(y.seq,mean(ypredpost),sd(ypredpost)),col = "red", lty = 2)
 
 ####(e)
 
-```{r}
+The conditionals
 
+$$
+\mu|\sigma^2,data \sim N(\mu,\sigma^2 / \kappa_n)
+$$
+$$
+\sigma^2| \mu,data \sim Sc.Inv-\chi^2(\nu_n',\sigma_n^2 )
+$$
+
+```{r}
+mu_n <- (k0/(k0 + n) * mu0) + (n/(k0 + n) *
+ybar)
+k_n <- k0 + n
+nu_n.p <- nu0 + n + 1
+#
+## Posterior samples of mu and sigma2 initialize
+mu.post.gibbs <- numeric()
+sig2.post.gibbs <- numeric()
+mu.post.gibbs[1] <- mean(y)
+B <- 2000
+
+### Running the Gibbs Sampler
+for (b in 2:(B + 1)) {
+sig2n.p <- (kappa0 * (mu.post.gibbs[(b - 1)] - mu0)ˆ2 + nu0 * sig20 + (n - 1) * sˆ2 + (n *(ybar - mu.post.gibbs[(b - 1)])ˆ2))/nu_n.p
+sig2.post.gibbs[(b)] <- rinvchisq(1, df = nun.p,
+scale = sig2n.p) #sig2| mu,data
+mu.post.gibbs[(b)] <- rnorm(1, mean = mu_n, sd = sqrt(sig2.post.gibbs[(b)]/k_n)) #mu|sig2,data
+}
 ```
 
