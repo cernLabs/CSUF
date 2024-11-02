@@ -1,0 +1,120 @@
+---
+title: "takehome"
+output: pdf_document
+date: "2024-11-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(EnvStats)
+library(ggplot2)
+```
+
+## Question 1
+
+```{r}
+data <- read.csv("income20train-2.csv", header = T)
+data[,2] -> y
+```
+
+#### (a)
+
+```{r}
+plot(data$X,data$x)
+boxplot(y)
+hist(y, breaks = 100)
+summary(y)
+mean(y)
+```
+
+Important to note that the incomes tend to be dense towards the minimum rather than being in the middle; these numbers skew heavily to the right. We can try to fit a Pareto distribution to this later to see how is models the data and run our test set against it. We have a median of 320084 and a mean of 341938.1 while he have a max of 1484705. Also note the amount of outliers in the boxplot and where these outliers are. Also note how these outliers range wider than that of the not unusual data. This shows support to the phenomenon of American income inequality (even among the 20% richest in the nation). 
+
+
+#### (b)
+
+* consider an initial $\alpha_{b-1}$
+* sample $\beta_{b-1}$ from $Mono(n\alpha_{b-1} + 1, min(y_1,...,y_n))$
+* enter loop for $B$ amount of times
+  + sample $\alpha_{b}$ from $\Gamma(n+1, \sum^n_{i=1}[ln(y_i)] - nln(\beta_{b-1}))$
+  + sample $\beta_{b}$ from $Mono(n\alpha_{b} + 1, min(y_1,...,y_n))$
+  + $\beta_{b}$ is set to $\beta_{b-1}$
+* these $\alpha$'s and $\beta$'s are stored in a vector.
+
+#### (c)
+
+```{r}
+# prep the mono sample function 
+rmono = function(n,alpha,beta){
+  u = runif(n)
+  x = exp(log(beta) + (log(u)/alpha))
+  return(x)
+}
+# make this the last this 
+GIBBS1 <- function(B,data,alpha.init){
+  # define n
+  n = length(data)
+  # make vector spaces
+  alpha <- beta <- rep(0,B)
+  # apply initials
+  alpha[1] = alpha.init
+  beta[1] = rmono(1,n*alpha.init + 1, min(data))
+  
+  #loop
+  for(b in 2:B){
+    rgamma(1,n+1,sum(log(data)) - n*log(beta[b-1])) -> alpha[b]
+    rmono(1,n*alpha[b] + 1, min(data)) -> beta[b]
+  }
+  # output
+  theta = cbind(alpha,beta)
+  return(theta)
+}
+GIBBS1(2000,y,1) -> theta
+```
+
+```{r}
+par(mfrow = c(1,2))
+plot.ts(theta[,1], main = "alpha posterior trace plot", ylab = "alpha")
+plot.ts(theta[,2], main = "beta posterior trace plot", ylab = "beta")
+acf(theta[,1], main = "alpha Autocorrelation")
+acf(theta[,2], main = "beta Autocorrelation")
+```
+There seems to be clear stabilization with $\beta$ and $\alpha$ doesn't need much to be burnt off. I will remove the the first 49. That said, I do see the 13th lag peaking out and I want to "thin" by removing every 13th lag.
+
+```{r}
+# thinning
+ B = length(theta[,1])
+ k = 13*(1:B)
+ k = k[k < B]
+theta.thin = theta[-k,]
+# burning
+B = length(theta.thin[,1])
+theta.thin = theta.thin[50:B,]
+# visuals
+par(mfrow = c(1,2))
+plot.ts(theta.thin[,1], main = "alpha posterior burned/thinned trace plot", ylab = "alpha")
+plot.ts(theta.thin[,2], main = "beta posterior burned/thinned trace plot", ylab = "beta")
+acf(theta.thin[,1], main = "alpha burned/thinned")
+acf(theta.thin[,2], main = "beta burned/thinned")
+```
+The results are still acceptable but worse correlation is worse so I'm just going to stick just burning
+
+```{r}
+# burning
+B = length(theta[,1])
+theta.burn = theta[50:B,]
+# visuals
+par(mfrow = c(1,2))
+plot.ts(theta.burn[,1], main = "alpha posterior burned trace plot", ylab = "alpha")
+plot.ts(theta.burn[,2], main = "beta posterior burned trace plot", ylab = "beta")
+acf(theta.burn[,1], main = "alpha burned")
+acf(theta.burn[,2], main = "beta burned")
+```
+
+```{r}
+# generate bivariate scatterplot
+post <- data.frame(theta.burn)
+ggplot(post, aes(x = alpha, y = beta)) + geom_point() + geom_density2d()
+```
+
+
