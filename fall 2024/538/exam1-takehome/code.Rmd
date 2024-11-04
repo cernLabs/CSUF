@@ -52,6 +52,7 @@ rmono = function(n,alpha,beta){
 }
 # make this the last this 
 GIBBS1 <- function(B,data,alpha.init){
+  set.seed(90909)
   # define n
   n = length(data)
   # make vector spaces
@@ -79,25 +80,7 @@ plot.ts(theta[,2], main = "beta posterior trace plot", ylab = "beta")
 acf(theta[,1], main = "alpha Autocorrelation")
 acf(theta[,2], main = "beta Autocorrelation")
 ```
-There seems to be clear stabilization with $\beta$ and $\alpha$ doesn't need much to be burnt off. I will remove the the first 49. That said, I do see the 13th lag peaking out and I want to "thin" by removing every 13th lag.
-
-```{r}
-# thinning
- B = length(theta[,1])
- k = 13*(1:B)
- k = k[k < B]
-theta.thin = theta[-k,]
-# burning
-B = length(theta.thin[,1])
-theta.thin = theta.thin[50:B,]
-# visuals
-par(mfrow = c(1,2))
-plot.ts(theta.thin[,1], main = "alpha posterior burned/thinned trace plot", ylab = "alpha")
-plot.ts(theta.thin[,2], main = "beta posterior burned/thinned trace plot", ylab = "beta")
-acf(theta.thin[,1], main = "alpha burned/thinned")
-acf(theta.thin[,2], main = "beta burned/thinned")
-```
-The results are still acceptable but worse correlation is worse so I'm just going to stick just burning
+There seems to be clear stabilization with $\beta$ and $\alpha$ doesn't need much to be burnt off. I will remove the the first 49. 
 
 ```{r}
 # burning
@@ -117,4 +100,36 @@ post <- data.frame(theta.burn)
 ggplot(post, aes(x = alpha, y = beta)) + geom_point() + geom_density2d()
 ```
 
+#### (d)
 
+```{r}
+# plot alpha|data
+plot(density(theta.burn[,1]),
+     main = "P(alpha|data)")
+dens = density(theta.burn[,1])
+point.est.a = dens$x[dens$y == max(dens$y)]
+abline(v = point.est.a)
+# confidence interval
+c(quantile(theta.burn[,1],.025),quantile(theta.burn[,1],.975))
+# plot beta|data
+plot(density(theta.burn[,2]),
+     main = "P(beta|data)")
+dens = density(theta.burn[,2])
+point.est.b = dens$x[dens$y == max(dens$y)]
+abline(v = point.est.b)
+# confidence interval
+c(quantile(theta.burn[,2],.025),quantile(theta.burn[,2],.975))
+```
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+param. & lower & dense point & upper \\ \hline
+$\alpha$ & 3.420024 & 3.50072 & 3.580153 \\ \hline
+$\beta$ & 249994.6 & 250031.6 & 250033.7 
+\end{tabular}
+\end{table}
+
+Note that the $\beta$ parameter can be interpreted as an average lower end of the income data. Our most dense point for this parameter is 250031.6 and this is very close to our data's actual minimum of 250034. 
+On the note about the 
