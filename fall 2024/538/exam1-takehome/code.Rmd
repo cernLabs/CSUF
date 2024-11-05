@@ -176,3 +176,31 @@ point.est.y
 dens.test$x[dens.test$y == max(dens.test$y)]
 ```
 
+## Problem 2
+
+```{r}
+# get the rat data
+rat = as.matrix(read.csv("rat-3.csv"))
+```
+
+#### problem (a)
+
+```{r}
+# EDA
+# boxplot
+adlib  = rat[rat[,2] == 0,1]
+restr = rat[rat[,2] == 1,1]
+boxplot(adlib,restr,names = c("Ad libitum", "Restricted"), horizontal = T)
+# 5p summaries
+summary(restr)
+summary(adlib)
+```
+
+
+```{r}
+plot(density(restr), ylim = c(0,1.75), col = "blue", main = "Density of Rat Expectancies")
+lines(density(adlib),col = 'red')
+legend("topright", legend = c("Restticted", "Ad libitum"), col = c("blue", "red"), lty = c(1,1))
+```
+
+We can observe that the the *Ad libitum* group tends to have a lower average expectancy that the Restricted group. There can support the speculation that rats eat themselves to death.
