@@ -108,7 +108,7 @@ plot(density(theta.burn[,1]),
      main = "P(alpha|data)")
 dens = density(theta.burn[,1])
 point.est.a = dens$x[dens$y == max(dens$y)]
-abline(v = point.est.a)
+abline(v = point.est.a,lty=2)
 # confidence interval
 c(quantile(theta.burn[,1],.025),quantile(theta.burn[,1],.975))
 # plot beta|data
@@ -116,7 +116,7 @@ plot(density(theta.burn[,2]),
      main = "P(beta|data)")
 dens = density(theta.burn[,2])
 point.est.b = dens$x[dens$y == max(dens$y)]
-abline(v = point.est.b)
+abline(v = point.est.b,lty=2)
 # confidence interval
 c(quantile(theta.burn[,2],.025),quantile(theta.burn[,2],.975))
 ```
@@ -125,11 +125,54 @@ c(quantile(theta.burn[,2],.025),quantile(theta.burn[,2],.975))
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
-param. & lower & dense point & upper \\ \hline
+param. & CI lower & mode & CI upper \\ \hline
 $\alpha$ & 3.420024 & 3.50072 & 3.580153 \\ \hline
 $\beta$ & 249994.6 & 250031.6 & 250033.7 
 \end{tabular}
 \end{table}
 
 Note that the $\beta$ parameter can be interpreted as an average lower end of the income data. Our most dense point for this parameter is 250031.6 and this is very close to our data's actual minimum of 250034. 
-On the note about the 
+On the note about the <more>
+
+#### (d)
+
+```{r}
+set.seed(90909)
+# get the the 2000 samples
+ynew = rpareto(1951,location = theta.burn[,2], shape = theta.burn[,1])
+ynew = sample(ynew, size = 2000, rep = T)
+# visuals
+dens = density(ynew)
+plot(dens, main = "P(Ynew|Y_i)")
+point.est.y = dens$x[dens$y ==max(dens$y)]
+abline(v=point.est.y, lty =2)
+# confidence interval
+lowr = quantile(ynew,.025)
+uppr = quantile(ynew,.975)
+sprintf("Mode : %0.2f",point.est.y)
+sprintf("Conf. Interval : ( %0.2f , %0.2f )",lowr,uppr)
+```
+
+```{r}
+# test data
+y.test <- as.vector(read.csv("income20test-2.csv", header = T)[,2])
+# count how much falls into the confidence interval
+I = as.numeric(y.test > lowr & y.test < uppr)
+sum(I)/length(I)
+```
+
+The Pareto distribution seems to be an accurate tool for modeling the top 20% of the incomes of US adults. Our confidence interval captures more than 95% of the data as we see in the above script. We can also overly the predictive model over or actual test data and observe the similarities in the test data and predicted data; they almost follow each other exactly. The modes are almost similar too; they are presented below. At this current seed, they present only difference of 15.3 dollars which is arguably negligible considering these high end salaries.
+
+```{r}
+# overlay prediction on test data
+dens.test = density(y.test)
+plot(dens.test,
+     ylim = c(0,8.5e-06),
+     main = "Test Data and Predicted Data")
+lines(dens,lty = 2, col = 'red')
+legend("topright", legend = c("Test Data", "Predicted Data"), col = c("black", "red"), lty = c(1, 2))
+# modes
+point.est.y
+dens.test$x[dens.test$y == max(dens.test$y)]
+```
+
