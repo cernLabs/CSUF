@@ -1,5 +1,6 @@
 ---
-title: "takehome"
+title: "takehome midterm"
+author: Michael Peña
 output: pdf_document
 date: "2024-11-02"
 ---
@@ -342,11 +343,12 @@ if(ar > .75){print("YAY!")}
 ```
 
 This tuning parameter .82 with a tuning One's matrix gives us an eventually matrix of
-
+$$
 \begin{bmatrix}
 0.82 & 0.82 \\
 0.82 & 0.82
 \end{bmatrix}
+$$
 
 This gives an acceptance rate of around 39% and rather low autocorrelation without giving us NaNs or singularities.
 
@@ -427,10 +429,56 @@ HazRat = function(sigma0,sigma1){
 HazRat(sig0,sig1) -> HRvec
 dens = density(HRvec)
 hrmap = dens$x[dens$y == max(dens$y)]
-sprintf("Credible Interval for sigma when x = 0 : ( %f , %f )",quantile(HRvec,.025),quantile(HRvec,.975))
+sprintf("Credible Interval for HR : ( %f , %f )",quantile(HRvec,.025),quantile(HRvec,.975))
 sprintf("MAP : %f",hrmap)
 ```
 
 HR is definitely below 1. This implies that the group (x = 0) in the denominator of our HR expression is experiencing more less time to event that the group (x = 1) represented in the numerator. For context of the problem, we have implied that *Ad libitum* group has a significantly higher risk of failure as the credible interval does not include 1 (nor does it include 0.5). Regarding the research question, The MAP and credible interval of the Hazard Ratio does imply that there is strong evidence support the claim that "rats tend to eat themselves to an earlier grave."
 
 
+#### (f)
+
+we know that EV(Z|0,1) = $e^{z - e^{z}}$
+
+we also know that $log(Y) = \beta_0 + \beta_1 x + \tau Z$ 
+
+which implies $Z = \frac{1}{\tau}(log(Y) -\beta_0 - \beta_1 x ) = g^{-1}(y)$ when we define Z in terms of Y.
+
+The Jacobian is given by
+
+$$
+J = |\frac{d}{dy}(\frac{1}{\tau}(log(Y) -\beta_0 - \beta_1 x ))| = |\frac{1}{\tau y}|
+$$
+
+Thus the transform can be expressed as follows
+
+$$
+f_Z(z) = e^{\frac{1}{\tau}(\log(y) - \beta_0 - \beta_1 x) -e^{\frac{1}{\tau}(log(y) - \beta_0 - \beta_1 x)} } \cdot |\frac{1}{\tau y} |
+$$
+
+notice that $e^{\frac{1}{\tau}(\log(y) - \beta_0 - \beta_1 x)} = y^{\frac{1}{\tau}}e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x)}$
+
+so then the transform then becomes
+
+$$
+f_Z(z) =  y^{\frac{1}{\tau}}e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x) - y^{\frac{1}{\tau}}e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x)}}\cdot |\frac{1}{\tau y} |
+$$
+$$
+= y^{\frac{1}{\tau}}e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x)} e^{- y^{\frac{1}{\tau}}e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x)}}\cdot |\frac{1}{\tau y}|
+$$
+$$
+= \frac{1}{\tau} y^{\frac{1}{\tau} - 1} e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x)} e^{- y^{\frac{1}{\tau}}e^{-\frac{1}{\tau}(\beta_0 + \beta_1 x)}}
+$$
+
+$$
+= \frac{1}{\tau}[e^{\frac{1}{\tau}(\beta_0 + \beta_1 x)}]^{-1}
+y^{\frac{1}{\tau} - 1}
+e^{- y^{\frac{1}{\tau}}[e^{\frac{1}{\tau}(\beta_0 + \beta_1 x)}]^{-1}}
+$$
+
+This reveals that in for Weibull distributed Y that  
+
+* for shape, $\alpha = \frac{1}{\tau}$
+* for scale, 
+  + when x = 1, $\sigma = e^{\frac{1}{\tau}(\beta_0 + \beta_1)}$
+  + when x = 0, $\sigma = e^{\frac{1}{\tau} \beta_0}$
