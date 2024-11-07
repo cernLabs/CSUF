@@ -9,6 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(EnvStats)
 library(ggplot2)
+library(mvtnorm)
 ```
 
 ## Question 1
@@ -109,7 +110,7 @@ plot(density(theta.burn[,1]),
 dens = density(theta.burn[,1])
 point.est.a = dens$x[dens$y == max(dens$y)]
 abline(v = point.est.a,lty=2)
-# confidence interval
+# credible interval
 c(quantile(theta.burn[,1],.025),quantile(theta.burn[,1],.975))
 # plot beta|data
 plot(density(theta.burn[,2]),
@@ -117,7 +118,7 @@ plot(density(theta.burn[,2]),
 dens = density(theta.burn[,2])
 point.est.b = dens$x[dens$y == max(dens$y)]
 abline(v = point.est.b,lty=2)
-# confidence interval
+# credible interval
 c(quantile(theta.burn[,2],.025),quantile(theta.burn[,2],.975))
 ```
 
@@ -132,7 +133,6 @@ $\beta$ & 249994.6 & 250031.6 & 250033.7
 \end{table}
 
 Note that the $\beta$ parameter can be interpreted as an average lower end of the income data. Our most dense point for this parameter is 250031.6 and this is very close to our data's actual minimum of 250034. 
-On the note about the <more>
 
 #### (d)
 
@@ -146,22 +146,22 @@ dens = density(ynew)
 plot(dens, main = "P(Ynew|Y_i)")
 point.est.y = dens$x[dens$y ==max(dens$y)]
 abline(v=point.est.y, lty =2)
-# confidence interval
+# credible interval
 lowr = quantile(ynew,.025)
 uppr = quantile(ynew,.975)
 sprintf("Mode : %0.2f",point.est.y)
-sprintf("Conf. Interval : ( %0.2f , %0.2f )",lowr,uppr)
+sprintf("Credible Interval : ( %0.2f , %0.2f )",lowr,uppr)
 ```
 
 ```{r}
 # test data
 y.test <- as.vector(read.csv("income20test-2.csv", header = T)[,2])
-# count how much falls into the confidence interval
+# count how much falls into the credible interval
 I = as.numeric(y.test > lowr & y.test < uppr)
 sum(I)/length(I)
 ```
 
-The Pareto distribution seems to be an accurate tool for modeling the top 20% of the incomes of US adults. Our confidence interval captures more than 95% of the data as we see in the above script. We can also overly the predictive model over or actual test data and observe the similarities in the test data and predicted data; they almost follow each other exactly. The modes are almost similar too; they are presented below. At this current seed, they present only difference of 15.3 dollars which is arguably negligible considering these high end salaries.
+The Pareto distribution seems to be an accurate tool for modeling the top 20% of the incomes of US adults. Our credible interval captures more than 95% of the data as we see in the above script. We can also overly the predictive model over or actual test data and observe the similarities in the test data and predicted data; they almost follow each other exactly. The modes are almost similar too; they are presented below. At this current seed, they present only difference of 15.3 dollars which is arguably negligible considering these high end salaries.
 
 ```{r}
 # overlay prediction on test data
@@ -203,4 +203,234 @@ lines(density(adlib),col = 'red')
 legend("topright", legend = c("Restticted", "Ad libitum"), col = c("blue", "red"), lty = c(1,1))
 ```
 
-We can observe that the the *Ad libitum* group tends to have a lower average expectancy that the Restricted group. There can support the speculation that rats eat themselves to death.
+We can observe that the the *Ad libitum* group tends to have a lower average expectancy that the Restricted group. There can support the speculation that rats eat themselves to death. The span for *Ad libitum* is also smaller than the span for the Restricted rats; the Restricted deaths varies more in time.
+
+#### (b)
+
+```{r}
+# establish functions
+# prior 
+prior = function(beta0,beta1){1}
+
+# likelihood
+like = function(X,Y,beta0,beta1){
+  sigma = log(beta0 + beta1*X)
+  D = dweibull(Y,shape = 4, scale = sigma)
+  D = D[!is.na(D) == 1]
+  prod(D)
+}
+
+# log-likelihood
+llike = function(X,Y,beta0,beta1){
+  sigma = log(beta0 + beta1*X)
+  D = log(dweibull(Y,shape = 4, scale = sigma))
+  return(sum(D))
+}
+
+# proposal
+rPro = function(beta0,beta1,s,S){
+  rmvnorm(1,mean = c(beta0,beta1), sigma = s*S)
+}
+
+MH2 <- function(data,group,B = 10000,beta.init = c(1,1), tuning.param = 1, cov.mat = diag(2)){
+  # initialize
+  accept = 0
+  s = tuning.param # tuning param
+  S = cov.mat
+  y = data
+  x = group
+
+  # posterior params.
+  beta0.post <- beta1.post <- numeric()
+  beta0.post[1] = beta.init[1]
+  beta1.post[1] = beta.init[2]
+  
+  # loop
+  for(b in 2:(B+1)){
+    # proposal
+    beta.star = rPro(beta0.post[b-1],beta1.post[b-1],s,S)
+
+    # Ratio of Densities
+    # r.num = like(x,y,beta.star[1],beta.star[2]) * prior(beta.star[1],beta.star[2])
+    # r.den = like(x,y,beta0.post[b-1],beta1.post[b-1]) * prior(beta0.post[b-1],beta1.post[b-1])
+    # r = r.num/r.den
+    
+    # Ratio of Densities log method
+    # because the prior is uniform, we can just disregard it
+    alpha = llike(x,y,beta.star[1],beta.star[2]) - llike(x,y,beta0.post[b-1],beta1.post[b-1])
+    r = exp(alpha) 
+
+    # Accept/Reject
+    if(runif(1) < min(1, r)){
+     beta0.post[b] = beta.star[1]
+     beta1.post[b] = beta.star[2]
+     accept = accept + 1
+    }else{
+     beta0.post[b] = beta0.post[(b-1)]
+     beta1.post[b] = beta1.post[(b-1)]
+    }
+    
+  }
+  # return
+  beta0 = beta0.post
+  beta1 = beta1.post
+  beta.post = cbind(beta0,beta1)
+  list("beta" = beta.post,"AR" = accept/B)
+}
+
+# running the program
+MH2(rat[,1],rat[,2],beta.init = c(30,30),tuning.param = 1) -> mh.obj
+beta.post = mh.obj$beta
+ar = mh.obj$AR
+```
+
+#### (c)
+
+```{r}
+#traceplots
+par(mfrow = c(1,2))
+ts.plot(beta.post[,1], main = "beta0 trace", xlab = "index", ylab = "beta0")
+ts.plot(beta.post[,2], main = "beta1 trace", xlab = "index", ylab = "beta1")
+# autocorrelation
+acf(beta.post[,1], main = "beta0")
+acf(beta.post[,2], main = "beta1")
+```
+Going to burn 499.
+
+```{r}
+burn = 500
+beta.burn = beta.post[burn:10001,]
+#traceplots
+par(mfrow = c(1,2))
+ts.plot(beta.burn[,1], main = "beta0 trace", xlab = "index", ylab = "beta0")
+ts.plot(beta.burn[,2], main = "beta1 trace", xlab = "index", ylab = "beta1")
+# autocorrelation
+acf(beta.burn[,1], main = "beta0")
+acf(beta.burn[,2], main = "beta1")
+```
+Going to thin by taking the 25th lag
+
+```{r}
+#thinning
+k = 25*(1:9502)
+k = k[k < 9502]
+beta.thin = beta.burn[k,]
+#traceplots
+par(mfrow = c(1,2))
+ts.plot(beta.thin[,1], main = "beta0 trace", xlab = "index", ylab = "beta0")
+ts.plot(beta.thin[,2], main = "beta1 trace", xlab = "index", ylab = "beta1")
+# autocorrelation
+acf(beta.thin[,1], main = "beta0")
+acf(beta.thin[,2], main = "beta1")
+```
+
+Tuning to get good mixing (use initial 7,11)
+
+```{r}
+tuncov = matrix(c(1,1,1,1),2,2)
+MH2(rat[,1],rat[,2],beta.init = c(7,11),tuning.param = .84, cov.mat =tuncov ) -> mh.obj
+beta.post = mh.obj$beta
+ar = mh.obj$AR
+#traceplots
+par(mfrow = c(1,2))
+ts.plot(beta.post[,1], main = "beta0 trace", xlab = "index", ylab = "beta0")
+ts.plot(beta.post[,2], main = "beta1 trace", xlab = "index", ylab = "beta1")
+# autocorrelation
+acf(beta.post[,1], main = "beta0")
+acf(beta.post[,2], main = "beta1")
+if(ar > .75){print("YAY!")}
+```
+
+This tuning parameter .82 with a tuning One's matrix gives us an eventually matrix of
+
+\begin{bmatrix}
+0.82 & 0.82 \\
+0.82 & 0.82
+\end{bmatrix}
+
+This gives an acceptance rate of around 39% and rather low autocorrelation without giving us NaNs or singularities.
+
+
+#### (d)
+
+```{r}
+# generate bivariate scatterplot
+samp = sample(1:length(beta.post[,1]), size = 2000, rep = F)
+beta.post = beta.post[samp,]
+post <- data.frame(beta.post)
+ggplot(post, aes(x = beta0, y = beta1)) + geom_jitter() + geom_density2d()
+```
+
+```{r}
+# plot alpha|data
+plot(density(beta.post[,1]),
+     main = "P(beta0|data)")
+dens = density(beta.post[,1])
+point.est.0 = dens$x[dens$y == max(dens$y)]
+abline(v = point.est.0,lty=2)
+# plot beta|data
+plot(density(beta.post[,2]),
+     main = "P(beta1|data)")
+dens = density(beta.post[,2])
+point.est.1 = dens$x[dens$y == max(dens$y)]
+abline(v = point.est.1,lty=2)
+# credible interval/MAP
+sprintf("Credible Interval for beta_0: ( %f , %f )",quantile(beta.post[,1],.025),quantile(beta.post[,1],.975))
+sprintf("MAP : %f",point.est.0)
+sprintf("Credible Interval for beta_1 : ( %f , %f )",quantile(beta.post[,2],.025),quantile(beta.post[,2],.975))
+sprintf("MAP : %f",point.est.1)
+```
+
+I want to look at this in context of the $\sigma_i$
+
+```{r}
+# sigmas
+sig0 = log(beta.post[,1])
+sig1 = log(beta.post[,1] + beta.post[,2])
+summary(sig0)
+summary(sig1)
+# plot sigma where x = 0 
+plot(density(sig0),
+     main = "sigma_i where X_i = 0")
+dens = density(sig0)
+point.est.0 = dens$x[dens$y == max(dens$y)]
+abline(v = point.est.0,lty=2)
+# plot sigma where x = 1
+plot(density(sig1),
+     main = "sigma_i where X_i = 1")
+dens = density(sig1)
+point.est.1 = dens$x[dens$y == max(dens$y)]
+abline(v = point.est.1,lty=2)
+# credible interval + MAP
+sprintf("Credible Interval for sigma when x = 0 : ( %f , %f )",quantile(sig0,.025),quantile(sig0,.975))
+sprintf("MAP : %f",point.est.0)
+sprintf("Credible Interval for sigma when x = 1 : ( %f , %f )",quantile(sig1,.025),quantile(sig1,.975))
+sprintf("MAP : %f",point.est.1)
+```
+When we apply $\beta_0$ and $\beta_1$ to into standard deviation, there is clearly a difference that the value of $x_i$ plays on the spread survival time. Note how the two credible intervals do not even intersect; this implies the a significant affect that group the rat is in will have on its survival.
+
+#### (e)
+
+Our model's HR can be expressed as 
+
+$$
+\frac{h(y|4,\sigma(x=1))}{h(y|4,\sigma(x=0))} = (\frac{\sigma_{x = 0}}{\sigma_{x = 1}})^4
+$$
+
+
+```{r}
+# HR function
+HazRat = function(sigma0,sigma1){
+(sigma0/sigma1)^4
+}
+# get credible interval
+HazRat(sig0,sig1) -> HRvec
+dens = density(HRvec)
+hrmap = dens$x[dens$y == max(dens$y)]
+sprintf("Credible Interval for sigma when x = 0 : ( %f , %f )",quantile(HRvec,.025),quantile(HRvec,.975))
+sprintf("MAP : %f",hrmap)
+```
+
+HR is definitely below 1. This implies that the group (x = 0) in the denominator of our HR expression is experiencing more less time to event that the group (x = 1) represented in the numerator. For context of the problem, we have implied that *Ad libitum* group has a significantly higher risk of failure as the credible interval does not include 1 (nor does it include 0.5). Regarding the research question, The MAP and credible interval of the Hazard Ratio does imply that there is strong evidence support the claim that "rats tend to eat themselves to an earlier grave."
+
+
