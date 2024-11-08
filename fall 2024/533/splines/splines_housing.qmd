@@ -1,0 +1,42 @@
+---
+title: "Splines and Housing"
+author: "Michael Pena"
+format: pdf
+editor: visual
+---
+
+## Introduction
+
+\<rewrite this\>
+
+Prediction of the Median House value and what factors affect this.
+
+## Data Exploration
+
+```{r}
+# import data
+df <- read.csv("housing.csv", header = T)
+# import libraries
+library(splines)
+library(GGally)
+```
+
+```{r}
+# need to correlation of these predictors
+par(mfrow = c(1,2))
+plot(df$median_house_value,df$housing_median_age)
+plot(df$median_house_value,df$population)
+ggcorr(df)
+```
+
+From here we see that population and housing_median_age are not well correlated.
+
+```{r}
+# linear model 
+prim_lm <- lm(df$median_house_value ~ df$population + df$housing_median_age)
+
+```
+
+```{r}
+# spline model
+```
