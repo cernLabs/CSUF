@@ -19,24 +19,84 @@ df <- read.csv("housing.csv", header = T)
 # import libraries
 library(splines)
 library(GGally)
+# sample from the data
+k <- sample(1:20640, size = 2000, rep = F)
+df = df[k,]
 ```
 
 ```{r}
 # need to correlation of these predictors
 par(mfrow = c(1,2))
-plot(df$median_house_value,df$housing_median_age)
-plot(df$median_house_value,df$population)
+plot(y=df$median_house_value,x=df$housing_median_age)
+plot(y=df$median_house_value,x=df$population)
 ggcorr(df)
 ```
 
 From here we see that population and housing_median_age are not well correlated.
 
+## Model Fitting
+
 ```{r}
 # linear model 
-prim_lm <- lm(df$median_house_value ~ df$population + df$housing_median_age)
-
+prim_lm1 <- lm(df$median_house_value ~ df$population)
+prim_lm2 <- lm(df$median_house_value ~ df$housing_median_age)
+summary(prim_lm1)
+summary(prim_lm2)
 ```
 
 ```{r}
-# spline model
+# spline models
+spline1 <- lm(median_house_value ~ ns(population, df = 3), data = df)
+spline2 <- lm(median_house_value ~ ns(housing_median_age, df = 3), data = df)
+summary(spline1)
+summary(spline2)
+
 ```
+
+## Compare Models
+
+```{r}
+# compare the models
+models <- list("prim_lm1" = prim_lm1, "prim_lm2" = prim_lm2, 'spline1' = spline1, 'spline2' = spline2)
+for (name in names(models)) {
+  model <- models[[name]]
+  cat("Model:", name, "\n")
+  cat("AIC:", AIC(model), "\n")
+  cat("BIC:", BIC(model), "\n\n")
+}
+```
+
+```{r}
+# denote predictions
+df$pred_lin1 <- predict(prim_lm1, newdata = df)
+df$pred_lin2 <- predict(prim_lm2, newdata = df)
+df$pred_spl1 <- predict(spline_model1, newdata = df)
+df$pred_spl2 <- predict(spline_model2, newdata = df)
+```
+
+```{r}
+# visualizations
+  # linear models
+  plot(df$population ,df$median_house_value, xlab = "population", ylab = "Med House Value")
+  lines(df$population ,df$pred_lin1, col = 'red', lwd = 2)
+  plot(df$housing_median_age ,df$median_house_value, xlab = "Age of House", ylab = "Med House Value")
+  lines(df$housing_median_age ,df$pred_lin2, col = 'red', lwd = 2)
+  
+  # splines
+  plot(df$population ,df$median_house_value, xlab = "population", ylab = "Med House Value")
+  lines(df$population ,df$pred_spl1, col = 'red', lwd = 2)
+  plot(df$housing_median_age ,df$median_house_value, xlab = "Age of House", ylab = "Med House Value")
+  lines(df$housing_median_age ,df$pred_spl2, col = 'red', lwd = 2)
+  
+```
+
+## Interpretation
+
+## Conclusion
+
+1.  Introduction: A brief introduction to the dataset, your objective, and the chosen predictors.
+2.  Data Exploration: Visualizations and explanations of your exploratory analysis.
+3.  Model Fitting: Summarize the linear model and spline models you have fitted.
+4.  Model Comparison: Include AIC/BIC comparisons and performance metrics.
+5.  Interpretation: Discuss the interpretation of your spline models and how they differ from the linear models.
+6.  Conclusion: A final summary of your results, including the practical implications of your findings.
