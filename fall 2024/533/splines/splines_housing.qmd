@@ -7,9 +7,9 @@ editor: visual
 
 ## Introduction
 
-\<rewrite this\>
+I have sourced this dataset from Kaggle.com, which is based on the 1990 California Census Data. The goal of this analysis is to explore the effects that the median age of homes in an area and the population size have on the median value of California homes. Each observation represents data from a census block group, a geographic unit used by the Census Bureau that typically consists of several hundred to a few thousand people.
 
-Prediction of the Median House value and what factors affect this.
+In examining the relationship that home age and population density have on home values, I plan to apply both linear regression and spline regression models. Linear regression will help establish a baseline by modeling a straightforward relationship between these predictors and home values. In contrast, spline regression will allow for flexibility in capturing potential non-linear trends in the data, particularly if home value changes in complex ways with varying house age or population density. By comparing these models, I aim to assess whether a more flexible approach improves predictive accuracy and provides deeper insights into the factors influencing home value.
 
 ## Data Exploration
 
@@ -19,8 +19,12 @@ df <- read.csv("housing.csv", header = T)
 # import libraries
 library(splines)
 library(GGally)
+library(dplyr)
+library(npreg)
+df <- df %>% select(median_house_value,population,housing_median_age)
 # sample from the data
-k <- sample(1:20640, size = 2000, rep = F)
+set.seed(80808)
+k <- sample(1:20640, size = 500, rep = F)
 df = df[k,]
 ```
 
@@ -32,7 +36,23 @@ plot(y=df$median_house_value,x=df$population)
 ggcorr(df)
 ```
 
-From here we see that population and housing_median_age are not well correlated.
+From here we see that population and housing_median_age are not well correlated. Let's also work within bounds of usual data that and we can consider the other data sample that we don't use anomalies.
+
+```{r}
+par(mfrow = c(1,2))
+boxplot(df$housing_median_age, ylab = "Age of Home") -> bp1
+boxplot(df$population, ylab = "Population") -> bp2
+```
+
+Let's remove outliers of the population first.
+
+```{r}
+# remove outliers and plot the graphs again
+df = df[df$population < min(bp2$out),]
+par(mfrow = c(1,2))
+plot(y=df$median_house_value,x=df$housing_median_age)
+plot(y=df$median_house_value,x=df$population)
+```
 
 ## Model Fitting
 
@@ -46,11 +66,10 @@ summary(prim_lm2)
 
 ```{r}
 # spline models
-spline1 <- lm(median_house_value ~ ns(population, df = 3), data = df)
-spline2 <- lm(median_house_value ~ ns(housing_median_age, df = 3), data = df)
+ spline1 <- lm(median_house_value ~ ns(population, df = 4), data = df)
+ spline2 <- lm(median_house_value ~ ns(housing_median_age, df = 3), data = df)
 summary(spline1)
 summary(spline2)
-
 ```
 
 ## Compare Models
@@ -68,35 +87,48 @@ for (name in names(models)) {
 
 ```{r}
 # denote predictions
-df$pred_lin1 <- predict(prim_lm1, newdata = df)
-df$pred_lin2 <- predict(prim_lm2, newdata = df)
-df$pred_spl1 <- predict(spline_model1, newdata = df)
-df$pred_spl2 <- predict(spline_model2, newdata = df)
+n = length(df[,1])
+pseq = seq(0,12000,length = n)
+aseq = seq(0,50, length = n)
+df.seq = as.data.frame(cbind(pseq,aseq))
+names(df.seq) = c("population","housing_median_age")
+df$pred_spl1 <- predict(spline1, newdata = df.seq)
+df$pred_spl2 <- predict(spline2, newdata = df.seq)
 ```
 
 ```{r}
+par(mfrow = c(1,2))
 # visualizations
-  # linear models
-  plot(df$population ,df$median_house_value, xlab = "population", ylab = "Med House Value")
-  lines(df$population ,df$pred_lin1, col = 'red', lwd = 2)
-  plot(df$housing_median_age ,df$median_house_value, xlab = "Age of House", ylab = "Med House Value")
-  lines(df$housing_median_age ,df$pred_lin2, col = 'red', lwd = 2)
-  
-  # splines
-  plot(df$population ,df$median_house_value, xlab = "population", ylab = "Med House Value")
-  lines(df$population ,df$pred_spl1, col = 'red', lwd = 2)
-  plot(df$housing_median_age ,df$median_house_value, xlab = "Age of House", ylab = "Med House Value")
-  lines(df$housing_median_age ,df$pred_spl2, col = 'red', lwd = 2)
+  # population
+  plot(df$population ,df$median_house_value, xlab = "population", ylab = "Med House Value",col = "darkgrey")
+  abline(prim_lm1, col = "red")
+  lines(pseq ,df$pred_spl1, col = 'blue', lty = 2, )
+  # housing median age
+  plot(df$housing_median_age ,df$median_house_value, xlab = "Age of House", ylab = "Med House Value",col = "darkgrey")
+  abline(prim_lm2, col = "red")
+  lines(aseq,df$pred_spl2, col = 'blue', lty = 2, lwd = 2)  
   
 ```
 
 ## Interpretation
 
+I find that the splines are better at pointing out slight trends when for example we observe the Population plot, we do notice that smaller towns tend to have cheaper homes. This reflects in the real world where the smaller the less populated an area is, it will not be as in demand. However, the splines could possibly be exaggerating these trends and the correct move forward would be to cross validate this.
+
+In the short term, the splines models score lower AIC and BIC than the linear models, but this difference is arguably negligible.
+
+| Model                     | AIC      | BIC      |
+|---------------------------|----------|----------|
+| linear model (population) | 12373.14 | 12385.63 |
+| linear model (house age)  | 12373.29 | 12385.77 |
+| spline model (population) | 12372.86 | 12397.83 |
+| spline model (house age)  | 12367.03 | 12387.84 |
+
+This data seems to be so uncorrelated that while the splines reveals slight trends of up and down, it's not significantly different from what the linear line is already saying. I think if we care about these subtleties, then sure, splines are reveal a swooping trend the Value of the home versus Age; Smaller populated areas have lower home values then densely populated areas. But even for the latter, there is not much change. I think this can only reveal that predicting Home Value based on these two predictors is not time well spent.
+
+In general, splines are probably better than linear regression (excluding polynomial) in regards to curve fitting as splines allow for flexibility which can in-turn lead to more accurate predictions. Note that it is crucial to address over-fitting as this can happen when one mindlessly uses this method. Still, if we are practical and use this on data that has an obvious trend, it will most likely be more efficient than a plain linear line.
+
 ## Conclusion
 
-1.  Introduction: A brief introduction to the dataset, your objective, and the chosen predictors.
-2.  Data Exploration: Visualizations and explanations of your exploratory analysis.
-3.  Model Fitting: Summarize the linear model and spline models you have fitted.
-4.  Model Comparison: Include AIC/BIC comparisons and performance metrics.
-5.  Interpretation: Discuss the interpretation of your spline models and how they differ from the linear models.
-6.  Conclusion: A final summary of your results, including the practical implications of your findings.
+The variables selected for this analysis—median age of homes and population size—may not have been optimal predictors of California home prices, as they do not appear to have a strong general effect on housing values. The spline models, while capable of capturing subtle non-linear patterns, did not reveal a meaningful relationship between the predictors and the response variable. In a practical context, the results suggest that these predictors are not significantly associated with home values, and further analysis might benefit from exploring other variables that have a more direct impact on housing prices in California.
+
+Moreover, this analysis did not provide clear evidence that splines outperform a linear approach in this context. Although spline models can reveal subtle trends that linear regression might miss, these trends may be too minor to hold interpretive value here. Additionally, I did not perform cross-validation; implementing a k-fold cross-validation could provide insights into the generalizability and robustness of the spline models compared to linear regression. Overall, splines are best applied to data that exhibit clear non-linear relationships, and in cases where predictors are only weakly correlated with the response variable, a more straightforward modeling approach may be sufficient.
