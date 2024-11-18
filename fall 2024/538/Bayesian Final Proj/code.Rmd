@@ -1,0 +1,111 @@
+---
+title: "Bayesian Cars"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ISLR2)
+```
+
+
+How do we take a hierachical model from this?
+
+```{r}
+Auto
+```
+
+```{r}
+plot(density(Auto$mpg))
+lines(dnorm(2:38,mean = 19, sd = 8), col = 'blue')
+lines(dnorm(0:50,mean = 24, sd = 9.9), col = 'blue')
+```
+I did this bc: I wanted to see if the car data is normally distributed
+this could possible be a mixture model as well, somethin we can explore with maybe cross validation
+
+```{r}
+n <- length(Auto[,1])
+k <- sample(1:n,rep = 0, size = 313)
+auto.test = Auto[-k,]
+auto.train = Auto[k,]
+```
+
+
+```{r}
+plot(density(auto.train$mpg))
+```
+I still want to do a mixture model, this is simple 2-piece mixture model we can do. let's assume the data follows a normal distribution such that
+
+$$ 
+
+y_i \sim P(y_i | \mu, \sigma^2,\pi) \propto \pi(y_i|\mu_1,\sigma^2_1) + (1 - \pi)N(y_i|\mu_2,\sigma^2_2)
+$$
+where $\pi \in (0,1)$
+
+this is no doubt a hierarchical model because  of the way $\mu_i$ is defined with the predictors horsepower, weight, and origin.
+
+$$
+\mu_i = \bf{X_i}^T\vec{\beta_i}
+$$
+
+I've written it in this notation because I don't know if we will need account for interaction or not (hopefully not)
+
+This gives way to the fact that we now need priors for 
+
+* $\vec{\beta_i}$
+* $ \pi$
+* $ \mu_i$
+* $ \sigma^2_i$ where $i = {1,2}$
+
+Obviously, we will need to do an MCMC algorithm and most likely it will be Metropolis Hastings.
+
+
+```{r}
+par(mfrow = c(1,2))
+plot(auto.train$horsepower, auto.train$mpg, col = auto.train$origin)
+legend("topright",legend = c('US','EU','Jp'), fill = c(1,2,3))
+plot(auto.train$weight, auto.train$mpg, col = auto.train$origin)
+legend("topright",legend = c('US','EU','Jp'), fill = c(1,2,3))
+
+
+```
+
+Origin for US cars do interact on Horsepower and Japanese cars interact with weight
+
+To cut corners and save brain power, notice how these curves are elliptic. 
+
+We can then guess a relationship with the mpg as an ellipsoid to keep things simple.
+
+
+$$
+1 = \frac{(\mu_i)^2}{40^2} + \frac{(x_1 - 300)^2}{225^2} + \frac{(x_2-5000)^2}{3000^2}
+$$
+
+$$
+\Rightarrow
+\mu_i = 40 - \sqrt{27^2 \Big(1- \frac{(x_1 - 300)^2}{225^2} - \frac{(x_2-5000)^2}{3000^2}\Big)}
+$$
+where $x_1$ is horsepower and $x_2$ is weight.
+
+Conditional domains will account for when for Origin $x_3$
+
+e.g.
+
+$x_1 \in (0,300)$ if $x_3 = 0$, $x_1 \in (0,150)$ o.w.
+
+$x_2 \in (0,3000)$ if $x_3 = 2$, $x_2 \in (0,5000)$ o.w.
+
+EDIT: I am starting to think that, because we are considering a geometric ellipsoid to choose $\mu$, Origin of the vehicle won't really matter because origin doesn't necessarily have an affect on the shape of the ellipsoid. If different origins made new ellipsoids that were tighter or  looser, than I think it would make sense to account for this.
+
+This geometric relationship rids us of the need to find a $\vec{\beta_i}$.
+
+$\pi$ can be drawn from a uniform distribution $\pi \sim U(0,1)$
+
+GPT suggests that we draw $\sigma^2$ from a half-cauchy distribution, but for the sake of simplicity, let's go for a bivar-norm
+
+$$
+\sigma_
+$$
+
