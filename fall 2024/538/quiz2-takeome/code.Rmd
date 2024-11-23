@@ -1,0 +1,25 @@
+---
+title: "Quiz 2 Takehome"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+contr <- read.csv("contraceptive.csv")
+hear <- read.table("hearing-2.txt",header = T)
+```
+
+## Question 1
+
+#### (a)
+
+```{r}
+boxplot(hear)
+```
+
+```{r}
+summary(hear)
+```
+
