@@ -23,3 +23,103 @@ boxplot(hear)
 summary(hear)
 ```
 
+#### (b)
+
+\[
+\begin{aligned}
+P(\theta,\mu,\sigma^2|\bf{y})\\
+&= P(\mu)P(\sigma^2)\prod^{J}_{j=1}P(\theta_j | \mu, \sigma^2)\prod^{J}_{j=1}\prod^{n_j}_{i=1}P(y_{ij} | \theta_j,\sigma^2)
+\end{aligned}
+\]
+
+#### (c)
+
+we care about $\theta_j$ so we extract $P(\theta_j | \mu, \sigma^2)\prod^{n_j}_{i=1}P(y_{ij} | \theta_j,\sigma^2)$
+
+\[
+\begin{aligned}
+& P(\theta_i | \mu,\sigma^2) \prod^{n_j}_i P(y_{ij} | \theta_j,\sigma^2) \\
+& \propto exp\Big[\frac{-1}{2\sigma^2}
+((\theta_j - \mu)^2 + \sum^{n_j}_i(y_{ij} - \theta_j)^2)
+\Big]\\
+&= exp\Big[\frac{-1}{2\sigma^2}
+(\theta_j^2 - 2\mu\theta_j + \mu^2 + \sum^{n_j}_i(y_{ij}^2 - 2\theta_j y_{ij} + \theta_j^2 )
+\Big]\\
+& \propto exp\Big[\frac{-1}{2\sigma^2}
+(\theta_j^2 - 2\mu\theta_j + n_j \theta_j^2 - 2\theta_j \sum^{n_j}_i y_{ij})
+\Big]\\
+&= exp\Big[\frac{-(n_j + 1)}{2\sigma^2}
+(\theta_j^2 - 2\theta_j\frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1} + (\frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1})^2 - (\frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1})^2)\Big]\\
+& \propto exp\Big[\frac{-(n_j + 1)}{2\sigma^2}
+(\theta_j^2 - 2\theta_j\frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1} + (\frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1})^2)\Big]\\
+&= exp\Big[\frac{-(n_j + 1)}{2\sigma^2}
+(\theta_j - \frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1})^2
+\Big]
+\end{aligned}
+\]
+
+This gives us $N(\frac{\mu + \sum^{n_j}_i y_{ij}}{n_j + 1},\frac{\sigma^2}{1+n_j})$
+
+Thus we have $P(\theta_j | \theta_{-j},\mu,\sigma^2,Y_{ij}) \sim N(\frac{\mu + \sum^{n_j}_i y_{ij}}{25},\frac{\sigma^2}{25})$
+
+#### (d)
+finding the $\mu | \theta_j,\mu,\sigma^2,\bf Y$
+
+\[
+\begin{aligned}
+& P(\mu)\prod^4_jP(\theta_i | \mu, \sigma^2)\\
+& \propto exp\Big[
+-(\mu - 30)^2 - \frac{1}{2 \sigma^2}\sum^4_i(\theta_j - \mu)^2
+\Big]\\
+& = exp\Big[
+-\Big[
+\mu^2 - 60\mu + 900 +\frac{1}{2\sigma^2}\sum^4_j\theta^2_j - \frac{2\mu}{2\sigma^2}\sum^4_j\theta_j + \frac{24}{2\sigma^2}\mu^2
+\Big]
+\Big]\\
+& \propto exp\Big[
+-\Big[
+\mu^2 - 60\mu - \frac{2\mu}{2\sigma^2}\sum^4_j\theta_j + \frac{24}{2\sigma^2}\mu^2
+\Big]
+\Big]\\
+& = exp\Big[
+-\Big[
+\mu^2(1 + \frac{12}{\sigma^2}) -\mu(60+\frac{1}{\sigma^2}\sum^4_j\theta_j)
+\Big]
+\Big]\\
+& = exp\Big[
+-\frac{1}{1+\frac{12}{\sigma^2}}\Big[
+\mu^2 -\mu(\frac{60+\frac{1}{\sigma^2}\sum^4_j\theta_j}{1+\frac{12}{\sigma^2}})
+\Big]
+\Big]\\
+&\text{note:}\\
+&-\frac{1}{1+\frac{12}{\sigma^2}} = \frac{-\sigma^2}{2(\frac{\sigma^2}{2}+6)}\\
+&\frac{60+\frac{1}{\sigma^2}\sum^4_j\theta_j}{1+\frac{12}{\sigma^2}}=
+\frac{60\sigma^2 + \sum^4_j\theta_j}{\sigma^2 + 12}\\
+& = exp\Big[
+\frac{-\sigma^2}{2(\frac{\sigma^2}{2}+6)}\Big[
+\mu^2 -\mu(\frac{60\sigma^2 + \sum^4_j\theta_j}{\sigma^2 + 12}) + [\frac{1}{2}(\frac{60\sigma^2 + \sum^4_j\theta_j}{\sigma^2 + 12})]^2 - [\frac{1}{2}(\frac{60\sigma^2 + \sum^4_j\theta_j}{\sigma^2 + 12})]^2
+\Big]
+\Big]\\
+& \propto exp\Big[
+\frac{\sigma^2}{2(\frac{\sigma^2}{2}+6)}\Big[
+\mu -\frac{1}{2}(\frac{60\sigma^2 + \sum^4_j\theta_j}{\sigma^2 + 12})
+\Big]^2
+\Big]\\
+& \Rightarrow
+\mu|\theta,\sigma^2,Y \sim Norm\Bigg(\frac{1}{2}(\frac{60\sigma^2 + \sum^4_j\theta_j}{\sigma^2 + 12}),\frac{\sigma^2}{\frac{\sigma^2}{2}+6}\Bigg)
+\end{aligned}
+\]
+
+finding the distribution of $\sigma^2|\mu,\theta,\bf Y$
+
+\[
+\begin{aligned}
+& P(\sigma^2)\prod^4_j P(\theta_i|\mu,\sigma^2) \prod^4_j \prod^{24}_i P(y_{ij}|\theta_j,\sigma^2)\\
+& = 100(\frac{1}{\sigma^2})^3 e^{\frac{-10}{\sigma^2}}
+\Big[\prod^4_j\prod^{24}_i\frac{1}{\sqrt{2\pi}\sigma^2}e^{\frac{-1}{2\sigma^2}(y_{ij}-\theta_j)^2}\Big]
+\Big[\prod^{24}_i\frac{1}{\sqrt{2\pi}\sigma^2}e^{\frac{-1}{2\sigma^2}(\theta_j - \mu)^2}\Big]\\
+& \propto \Big(\frac{1}{\sigma^2}\Big)^{24(5) + 3}
+exp\Big[\frac{-1}{\sigma^2}\Big(10 + \frac{1}{2}\sum^4_j\sum^{24}_i(y_{ij}-\theta_j)^2+\frac{1}{2}\sum^{24}_i(\theta_j - \mu)^2\Big)\Big]\\
+& \propto InvGamma\Bigg(122,10 + \frac{1}{2}\sum^4_j\sum^{24}_i(y_{ij}-\theta_j)^2+\frac{1}{2}\sum^{24}_i(\theta_j - \mu)^2\Bigg)
+\end{aligned}
+\]
