@@ -9,6 +9,8 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 contr <- read.csv("contraceptive.csv")
 hear <- read.table("hearing-2.txt",header = T)
+library(MCMCpack)
+library(knitr)
 ```
 
 ## Question 1
@@ -123,3 +125,144 @@ exp\Big[\frac{-1}{\sigma^2}\Big(10 + \frac{1}{2}\sum^4_j\sum^{24}_i(y_{ij}-\thet
 & \propto InvGamma\Bigg(122,10 + \frac{1}{2}\sum^4_j\sum^{24}_i(y_{ij}-\theta_j)^2+\frac{1}{2}\sum^{24}_i(\theta_j - \mu)^2\Bigg)
 \end{aligned}
 \]
+
+#### (e)
+
+```{r}
+set.seed(538)
+# making the MCMC algorithm
+GIBBS <- function(y,B = 5000){
+  # estiblish initials
+   nrow(y) -> nj
+   ncol(y) -> J
+   theta.post <- matrix(0,B,J) 
+   mu.post <- sigsq.post <- numeric(length = B)
+   theta.post[1,] = as.vector(colMeans(y))
+   mu.post[1] = mean(theta.post[1,])
+   sigsq.post[1] = var(as.vector(y))
+
+  # MCMC loop
+  for(i in 2:B){
+    # set/reset
+    sigsq0 <- sigsq.post[i-1]
+    mu0 <-  mu.post[i-1]
+    theta0 <- theta.post[i-1,]
+    
+    # mu's
+    mu.mu = 0.5*(60*sigsq0 + sum(theta0))/(sigsq0 + 12)
+    var.mu = sigsq0/(6 + 0.5*sigsq0)
+    mu.post[i] = rnorm(1,mean = mu.mu, sd = sqrt(var.mu))
+    
+    # sigma-squareds
+    beta.sigsq = 10 + 0.5*sum((t(y)-theta0)^2) + 0.5*sum((theta0 - mu0)^2)
+    sigsq.post[i] = rinvgamma(1,shape = 122, scale = beta.sigsq)
+    
+    # thetas
+    for(j in 1:J){
+      mu.theta = (mu0 + sum(y[,j]))/25
+      sd.theta = sqrt(sigsq0/25)
+      theta.post[i,j] = rnorm(1,mean = mu.theta, sd = sd.theta)
+    }
+  }
+ return(list("theta"=theta.post,"mu"=mu.post,"sig2"=sigsq.post))
+}
+# put in some data
+GIBBS(as.matrix(hear)) -> obj1
+```
+
+
+```{r}
+# visualizations
+par(mfrow = c(1,2))
+plot.ts(obj1$mu,main="posterior mu", xlab ="index")
+plot.ts(obj1$sig2,main="posterior sigma^2", xlab ="index")
+acf(obj1$mu,main="posterior mu")
+acf(obj1$sig2,main="posterior mu")
+```
+
+no thinning needed for these parameters
+
+```{r}
+#visualizing the four thetas
+par(mfrow = c(1,2))
+for(i in 1:4){
+  plot.ts(obj1$theta[,i],xlab = "index")
+  acf(obj1$theta[,i])
+}
+
+```
+
+no thinning needed for $theta$ either. Let's burn off the first 3000
+
+```{r}
+# burning 
+k = 3001:5000
+mu.burn = obj1$mu[k]
+sig2.burn = obj1$sig2[k]
+theta1.burn = obj1$theta[k,1]
+theta2.burn = obj1$theta[k,2]
+theta3.burn = obj1$theta[k,3]
+theta4.burn = obj1$theta[k,4]
+```
+
+#### (f)
+
+```{r}
+#par(mfrow=c(2,1))
+MAP <- function(X){density(X)$x[density(X)$y == max(density(X)$y)]}
+#theta1
+dens = density(theta1.burn)
+plot(dens)
+abline(v = MAP(theta1.burn))
+abline(v = mean(y[,1]),lty = 2, col = 'red')
+abline(v = mean(y), lty = 2, col="forestgreen")
+legend("topright",
+       c("MAP","observed mean","overall observed mean"),
+       lty = c(1,2,2),
+       col = c("black",'red','forestgreen'))
+#theta2
+dens = density(theta2.burn)
+plot(dens)
+abline(v = MAP(theta2.burn))
+abline(v = mean(y[,2]),lty = 2, col = 'red')
+abline(v = mean(y), lty = 2, col="forestgreen")
+legend("topright",
+       c("MAP","observed mean","overall observed mean"),
+       lty = c(1,2,2),
+       col = c("black",'red','forestgreen'))
+#theta3
+dens = density(theta3.burn)
+plot(dens)
+abline(v = MAP(theta3.burn))
+abline(v = mean(y[,3]),lty = 2, col = 'red')
+abline(v = mean(y), lty = 2, col="forestgreen")
+legend("topright",
+       c("MAP","observed mean","overall observed mean"),
+       lty = c(1,2,2),
+       col = c("black",'red','forestgreen'))
+#theta4
+dens = density(theta4.burn)
+plot(dens)
+abline(v = MAP(theta4.burn))
+abline(v = mean(y[,4]),lty = 2, col = 'red')
+abline(v = mean(y), lty = 2, col="forestgreen")
+legend("topright",
+       c("MAP","observed mean","overall observed mean"),
+       lty = c(1,2,2),
+       col = c("black",'red','forestgreen'))
+```
+
+
+```{r}
+# credible intervals and point estimates
+THET <- cbind(theta1.burn,theta2.burn,theta3.burn,theta4.burn)
+row = matrix(0,4,3)
+for(r in 1:4){
+  row[r,]= c(quantile(THET[,r],0.025),MAP(THET[,r]),quantile(THET[,r],.975))
+}
+colnames(row) <- c("Lower","MAP","Upper")
+rownames(row) <- c("theta_1","theta_2","theta_3","theta_4")
+kable(row, caption = "95% credible interval and MAP")
+```
+
+It seems that the overall observed mean is always farther from the poitn estimate than the 
