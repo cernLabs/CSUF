@@ -1,0 +1,143 @@
+---
+title: "Random Forest Guided Activity"
+format: pdf
+editor: visual
+---
+
+## Guided Activity for Random Forest
+
+```{r, warning = FALSE, message=FALSE}
+#import data
+library(readr)
+library(caret)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+adult <- read_csv("/Users/henrysurjono/Documents/Math 533/adult.data", 
+                  col_names = FALSE)
+colnames(adult) <- c("age", "workclass", "fnlwgt", "education",
+"education_num", "marital_status", "occupation", "relationship","race", "sex",
+"capitalgain", "capitalloss", "hoursperweek", "nativecountry", "income")
+```
+
+### Checking for Missing data
+
+```{r}
+#check data for missing value per column with ?
+any(sapply(adult, function(x) any(x == "?")))
+which(sapply(adult, function(x) any(x == "?")))
+#remove all rows with missing value
+adult <- adult[!adult$workclass == "?",]
+adult <- adult[!adult$occupation == "?",]
+adult <- adult[!adult$nativecountry == "?",]
+
+```
+
+Instead of using mean or median imputation, we found that the missing values in the dataset are categorical. Since we cannot determine the native country, occupation, or working class of the individuals with missing data, we explored potential solutions for handling these gaps. Ultimately, we concluded that removing 23 entries from the dataset would not significantly impact the results of the decision tree model.
+
+### Split the dataset into test and train
+
+```{r}
+#split the data into training and testing set
+set.seed(533)
+
+inTrain <- createDataPartition(y = adult$income, p = 0.7, list = FALSE)
+training <- adult[inTrain,]
+testing <- adult[-inTrain,]
+```
+
+### Model Building
+
+```{r}
+#random forest model
+training$income <- as.factor(training$income)
+rf_model <- randomForest(income ~ ., data = training, ntree = 500, mtry = 5, nodesize = 10)
+
+```
+
+For the initial random forest model, I chose the parameters ntree = 500, mtry = 5, and nodesize = 10. The ntree parameter specifies the number of trees in the forest, with more trees generally improving the model by reducing variability. The `mtry` parameter determines the number of features considered at each split; a lower value increases diversity between trees, while a higher value risks overfitting. Finally, nodesize represents the minimum number of observations required in a node. Larger nodesize values help prevent overfitting by creating simpler trees, whereas smaller values allow the model to capture more complex patterns in the data.
+
+### Optimization 
+
+```{r}
+# Define ranges for the hyperparameters
+ntree_values <- c(100, 500, 1000)
+mtry_values <- c(2, 3, 4) # Adjust based on the number of predictors
+nodesize_values <- c(1, 5, 10)
+
+# Placeholder for results
+results <- data.frame(ntree = numeric(), mtry = numeric(), nodesize = numeric(), accuracy = numeric())
+
+# Cross-validation
+for (ntree in ntree_values) {
+  for (mtry in mtry_values) {
+    for (nodesize in nodesize_values) {
+      # Train the Random Forest model
+      rf_model <- randomForest(
+        income ~ ., 
+        data = training, 
+        ntree = ntree, 
+        mtry = mtry, 
+        nodesize = nodesize
+      )
+      
+      # Evaluate performance (e.g., using OOB error or validation set)
+      oob_error <- rf_model$err.rate[ntree, "OOB"] # Out-of-bag error
+      
+      # Store results
+      results <- rbind(results, data.frame(ntree = ntree, mtry = mtry, nodesize = nodesize, accuracy = 1 - oob_error))
+    }
+  }
+}
+
+# View the best combination
+best_params <- results[which.max(results$accuracy), ]
+print(best_params)
+```
+
+From the cross validation, we can see that the how ntree = 1000, mtry =4 and nodesize =5. We will use these parameters into the model prediction.
+
+### Model Prediction
+
+```{r}
+rf_model <- randomForest(income ~ ., data = training, ntree = 1000, mtry = 4, nodesize = 5)
+
+#predict the testing set
+testing$income <- as.factor(testing$income)
+rf_predict <- predict(rf_model, testing)
+
+#confusion matrix
+confusionMatrix(rf_predict, testing$income)
+
+#importance plot
+varImpPlot(rf_model)
+
+```
+
+Based on our confusion matrix, the model achieved an accuracy of approximately 86% using the parameters determined through cross-validation. This suggests that the model is performing reasonably well at classifying whether an individual's income is above or below \$50,000 per year.
+
+From the feature importance plot, we can see that **capital gain**, **relationship**, and **age** were the top three factors influencing the predictions. This indicates that these variables play a key role in determining income level. For instance, capital gain may reflect financial investments, relationship status could correlate with family dynamics or dependents, and age often ties to career progression and earning potential.
+
+### Simple Decision tree
+
+```{r}
+
+dt_model <- rpart(income ~ ., data = training, method = "class")
+rpart.plot(dt_model)
+
+#predict the testing set
+dt_predict <- predict(dt_model, testing, type = "class")
+
+#confusion matrix
+confusionMatrix(dt_predict, testing$income)
+```
+
+Random forests usually do a better job with predictions than decision trees because they combine the results of multiple decision trees. This helps reduce the variance and makes the predictions more accurate overall. By averaging the outcomes from many trees, random forests are more stable and less likely to overfit compared to a single decision tree.
+
+While decision trees aren’t bad at making predictions, they’re not as reliable as random forests. A single tree is more sensitive to the training data, so small changes can lead to big differences in predictions. Random forests, on the other hand, smooth out those differences by combining multiple trees, which is why they often deliver better results.
+
+### Discussion on the advantages/limitations of Random Forest Model
+
+One big advantage of Random Forest is that it’s great at making accurate predictions because it combines multiple decision trees. This setup helps reduce errors and makes the model more reliable. It’s also really good at handling non-linear relationships between variables, which can be tricky for some models. On top of that, Random Forest gives you feature importance scores, so you can see which factors have the biggest impact on predictions—super helpful for understanding what’s driving the results.
+
+That said, Random Forest isn’t perfect. One downside is that it can be pretty slow to run, especially when you’re using cross-validation to tune the parameters—it can take a while on a regular computer. While it’s generally good at avoiding overfitting, it can still overfit if you don’t fine-tune the settings like mtry or nodesize Plus, some of the decision trees in the forest can end up being redundant, where they don’t add much to the accuracy but still take time to build.

@@ -1,0 +1,59 @@
+---
+title: "Random Forest Guided Project"
+format: pdf
+editor: visual
+---
+
+## *Data Preparation* 
+
+*3. Check for missing values and impute them using median/mode imputation.*
+
+*4. Clean and preprocess the dataset (e.g., remove leading/trailing spaces, convert categorical variables to factors, etc.).*
+
+```{r}
+adult <- read.csv("adult.data")
+names(adult) <- c("age",
+                 "workclass",
+                 "fnlwgt",
+                 "education",
+                 "education.num",
+                 "marital.status",
+                 "occupation",
+                 "relationship",
+                 "race",
+                 "sex",
+                 "capital.gain",
+                 "capital.loss",
+                 "hours.per.week",
+                 "native.country",
+                 "high")
+```
+
+Let's eradicate the " ?"'s
+
+```{r}
+any(sapply(adult, function(x) any(x == " ?")))
+which(sapply(adult, function(x) any(x == " ?")))
+
+
+adult <- adult[!adult$workclass == " ?",]
+adult <- adult[!adult$occupation == " ?",]
+adult <- adult[!adult$native.country== " ?",]
+```
+
+Make a 70/30 split
+
+```{r}
+ k = sample(1:30161, size = 9048, rep =F)
+ adult.train <- adult[-k,]
+ adult.test <- adult[k,]
+```
+
+use the randomforest function
+
+```{r}
+# make change the high column to a boolean
+
+# fit a random forest
+
+```
