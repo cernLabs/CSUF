@@ -4,14 +4,15 @@ format: pdf
 editor: visual
 ---
 
-## *Data Preparation* 
+## Discussion
 
-*3. Check for missing values and impute them using median/mode imputation.*
+\newpage
 
-*4. Clean and preprocess the dataset (e.g., remove leading/trailing spaces, convert categorical variables to factors, etc.).*
+## Code
 
 ```{r}
 adult <- read.csv("adult.data")
+# name the columns
 names(adult) <- c("age",
                  "workclass",
                  "fnlwgt",
@@ -26,7 +27,9 @@ names(adult) <- c("age",
                  "capital.loss",
                  "hours.per.week",
                  "native.country",
-                 "high")
+                 "y")
+# make change the high column to a boolean
+adult$y <- factor(ifelse(adult$y== " >50K", "yes", "no"))
 ```
 
 Let's eradicate the " ?"'s
@@ -52,8 +55,39 @@ Make a 70/30 split
 use the randomforest function
 
 ```{r}
-# make change the high column to a boolean
-
 # fit a random forest
+library(randomForest)
+fit.rf <- randomForest(y ~ ., data = adult.train, ntree = 100, mtry = 4, nodesize = 10)
+# confusionmatrix for the random forest
+library(caret)
+adult.test$rf0_yhat = predict(fit.rf, newdata = adult.test, type = "response")
+cmat_0 <- confusionMatrix(adult.test$rf0_yhat, adult.test$y)
+```
 
+Given that I have 14 features, I am going to make the mtry = 4. We will start with 100 trees to save RAM.
+
+I like to make a function to display all the accuracy metrics.
+
+```{r}
+# display for accuracy, precision, recall, f1score
+table1 <- function(confusion_matrix,model_name){
+  confusion_matrix -> tab
+  tab[1,1] -> tn
+  tab[2,2] -> tp
+  tab[1,2] -> fp
+  tab[2,1] -> fn
+  a = (tp+tn)/(tp+tn+fp+fn)
+  p = tp/(tp+fp)
+  r = tp/(tp+fn)
+  sprintf("%s || Accuracy: %f | Precision: %f | Recall(TPR): %f",model_name,a,p,r)
+}
+
+table1(cmat_0$table,"initial randForest")
+```
+
+```{r}
+# variables importance test is here
+library(vip)
+vi(fit.rf) -> X
+barplot(X$Importance,names.arg = X$Variable, horiz = F,las = 2, cex.names = 0.8)
 ```

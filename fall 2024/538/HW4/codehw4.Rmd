@@ -1,0 +1,144 @@
+---
+title: "hw4"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rstan)
+library(mvtnorm)
+```
+\newpage
+
+## problem 13
+
+```{r}
+# setting up data
+bike <- read.csv("bike-data.csv", header = T)
+```
+
+
+```{r}
+# in class code with MH and gibbs sampling
+# predef the beyes functions
+Prior <- function(a,b){
+   (a + b)^(-5/2)
+}
+
+LLH <- function(theta,a,b){
+    sum(log(dbeta(theta,a,b)))
+}
+
+Proposal <- function(a,b){ #Jacobian
+    1/(a*b)
+}
+
+rProposal <- function(n,mean,cov){
+    rmvnorm(n,mean,cov)
+}
+
+# build a function just for this algorithm
+MHGIBBs <- function(y,N,B,alpha0,beta0,S.tune = diag(2)){
+	# initializations
+	J = length(y)
+	accept = 0 
+	alpha.post = beta.post = numeric()
+	theta.post = matrix(0,J,B)
+	theta0 <- numeric(length = J)
+
+	#loop
+	for(b in 1:B){
+	    # Gibbs Step for theta
+	    for(j in 1:J){
+		shp1 =  alpha0 + y[j]
+		shp2 = beta0 + N[j] - y[j]
+		theta0[j] = rbeta(1, shp1, shp2)
+		}
+	    # Metro-Haste step for alpha and beta
+	    phi1 = rProposal(1, c(log(alpha0),log(beta0)), 1*S.tune)
+	    
+	    alpha1 =  exp(phi1[1])
+	    beta1 = exp(phi1[2])
+	    
+	    r = exp(
+	    LLH(theta0,alpha1,beta1)
+	    + log(Prior(alpha1,beta1))
+	    + log(Proposal(alpha0,beta0))
+	    - LLH(theta0,alpha0,beta0)
+	    - log(Prior(alpha0,beta0))
+	    - log(Proposal(alpha1,beta1)))
+	    
+	    ## accept check
+	    if(runif(1) < min(1,r)){
+		alpha0 = alpha1
+		beta0 = beta1
+		accept = accept + 1
+		}
+	    # drop off the samplings
+	    alpha.post[b] <- alpha0
+	    beta.post[b] <- beta0
+	    theta.post[,b] <- theta0
+	    }
+	# tuning the covariance matrix
+	S.tune <- matrix(0,2,2)
+        S.tune[2,1] <- S.tune[1,2] <- cov(log(alpha.post),log(beta.post))
+	S.tune[1,1] <- var(log(alpha.post))
+	S.tune[2,2] <- var(log(beta.post))
+  
+	 print(accept/B)
+	# attributes in the function
+	return(list("alpha" = alpha.post, "beta" = beta.post, "theta" = theta.post, "AR" = accept/B, "S" = S.tune))
+	
+}
+
+```
+
+
+```{r}
+# let's run our functions
+y <- bike$Bicycles
+N <- bike$Bicycles + bike$OtherVehicles
+mean(y/N) # this is about .2, make alpha0 = 2, beta0 = 8
+MHGIBBs(y,N,5000,2,8)$S -> S1 # run 1 time to get tuning matrix
+MHGIBBs(y,N,10000,2,8,S1) -> obj1
+```
+
+```{r}
+# visualizations
+par(mfrow = c(2,2))
+plot.ts(obj1$alpha)
+plot.ts(obj1$beta)
+acf(obj1$alpha)
+acf(obj1$beta)
+```
+
+```{r}
+# take out all but the 10th lag
+k = 10*(1:10000)
+k = k[k <= 10000]
+```
+
+```{r}
+# visualizations
+par(mfrow = c(2,2))
+plot.ts(obj1$alpha[k])
+plot.ts(obj1$beta[k])
+acf(obj1$alpha[k])
+acf(obj1$beta[k])
+```
+
+```{r}
+par(mfrow = c(2,2))
+for(d in 1:10){
+  plot(density(obj1$theta[d,k]),main = paste("Density of theta_",d, "with raw proportion",d))
+  abline(v = (y/N)[d])
+}
+```
+
+```{r}
+plot(density(as.vector(obj1$theta[,k])))
+quantile(obj1$theta[,k], c(0.025,.975))
+```
+
