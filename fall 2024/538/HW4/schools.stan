@@ -1,9 +1,9 @@
 data {
 int<lower=0> J;
 // number of schools
-real y[J];
+array[J] real y;
 // estimated treatment effects
-real<lower=0> sigma[J]; // s.e.’s of effect estimates
+array[J] real<lower=0> sigma; // s.e.’s of effect estimates
 }
 parameters {
 real mu;
@@ -16,7 +16,7 @@ vector[J] eta;
 transformed parameters {
 vector[J] theta;
 // school effects
-theta <- mu + tau*eta;
+theta = mu + tau*eta;
 }
 model {
 eta ~ normal(0, 1);

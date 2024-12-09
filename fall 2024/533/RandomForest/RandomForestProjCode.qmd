@@ -4,11 +4,9 @@ format: pdf
 editor: visual
 ---
 
-## Discussion
-
-\newpage
-
 ## Code
+
+### Data Preparation
 
 ```{r}
 adult <- read.csv("adult.data")
@@ -47,10 +45,13 @@ adult <- adult[!adult$native.country== " ?",]
 Make a 70/30 split
 
 ```{r}
+set.seed(5333)
  k = sample(1:30161, size = 9048, rep =F)
  adult.train <- adult[-k,]
  adult.test <- adult[k,]
 ```
+
+### Model Building
 
 use the randomforest function
 
@@ -80,14 +81,103 @@ table1 <- function(confusion_matrix,model_name){
   p = tp/(tp+fp)
   r = tp/(tp+fn)
   sprintf("%s || Accuracy: %f | Precision: %f | Recall(TPR): %f",model_name,a,p,r)
+  return(list("model.name" = model_name,"accuracy" = a, "precision" = p, "recall" = r))
 }
 
 table1(cmat_0$table,"initial randForest")
 ```
 
+### Optimization
+
+```{r}
+# let's try different things
+v.ns = c(5,10,20) # put into node size
+v.nt = c(100,500,1000) # put into ntrees
+v.mt = c(3,4,5) # put into mtry
+```
+
+```{r}
+set.seed(5333)
+# intialize the results
+ROW <- data.frame(ntree = numeric(), mtry = numeric(), nodesize = numeric(), accuracy = numeric())
+
+# run the long loop
+for(i in v.ns){
+  for(j in v.nt){
+    for(k in v.mt){
+      # feed these into the forest
+      atm.rf <- randomForest(y ~ ., data = adult.train, ntree = j, mtry = k, nodesize = i)
+      yhat.atm = predict(atm.rf, newdata = adult.test, type = "response")
+      cmat.atm <- confusionMatrix(yhat.atm, adult.test$y)
+      table1(cmat.atm$table,"model at the moment")$accuracy -> acc
+      ROW <- rbind(ROW, data.frame(ntree = j, mtry = k, nodesize = i, accuracy = acc))
+    }
+  }
+}
+
+# get the best model
+opt <- ROW[which.max(ROW$accuracy), ]
+print(opt)
+
+```
+
+```{r}
+bestfit.rf <- randomForest(y ~ ., data = adult.train, ntree = 500, mtry = 3, nodesize = 10)
+yhat.atm = predict(bestfit.rf, newdata = adult.test, type = "response")
+cmat.atm <- confusionMatrix(yhat.atm, adult.test$y)
+table1(cmat.atm$table,"best fit random forest")
+table1(cmat_0$table,"initial randForest")
+```
+
+It looks as though the optimal rf model does preform better than our initial rf model. Note that every preformance metric is about 0.01 higher.
+
+### Analysis
+
 ```{r}
 # variables importance test is here
 library(vip)
-vi(fit.rf) -> X
+vi(bestfit.rf) -> X
 barplot(X$Importance,names.arg = X$Variable, horiz = F,las = 2, cex.names = 0.8)
 ```
+
+Here we can see the top preforming predictors were "capital gain", relationship status, education, age, "final weight", and hours worked per week.
+
+```{r}
+# tree training
+library(rpart)
+library(rpart.plot)
+simple.tree <- rpart(y ~., data = adult.train, method = "class")
+# get performance
+tree.yhat <- predict(simple.tree, newdata = adult.test, type = "class")
+confusionMatrix(tree.yhat,adult.test$y) -> cmat.stree
+table1(cmat.stree$table, "simple tree")
+```
+
+Looks like the random forest gets a better accuracy than the a basic decision tree although by 0.02 factor. I think it is important to remember that because random forest will generate a forest of decision trees while rpart() or tree() produces a single tree; it is only intuitive to assume that random forest preforms better than a single decision tree. Because of this, overfitting is less likely and this reduces variance.
+
+
+```{r}
+# visualize
+par(mfrow = c(1,3))
+COR = round(cor(ROW$mtry,ROW$accuracy),5)
+plot(ROW$mtry,ROW$accuracy, xlab = "mtry", ylab = "accuracy",
+     sub = paste("correlation :",COR))
+COR = round(cor(ROW$ntree,ROW$accuracy),5)
+plot(ROW$ntree,ROW$accuracy, xlab = "tree number", ylab = "accuracy",
+     sub = paste("correlation :",COR))
+COR = round(cor(ROW$nodesize,ROW$accuracy),5)
+plot(ROW$nodesize,ROW$accuracy, xlab = "node size", ylab = "accuracy",
+     sub = paste("correlation :",COR))
+library(kableExtra)
+kable(sort_by(ROW,ROW$accuracy),caption = "comparison of decision tree perfomance")
+```
+
+While the accuracy differences ranged from 0.8538 to 0.8635, it does seem that `mtry` has the biggest impact here when it is at the lowest value. The other tuning metrics seem to have no real affect on accuracy as their correlation is closer to zero juxtapose to `mtry` which is around -0.8.
+
+\newpage
+
+## Reporting
+
+Random forest is a powerful machine learning algorithm that leverages multiple decision trees. This ensemble approach results in more accurate and robust predictions compared to a single decision tree. Additionally, Random Forest enables us to assess the relative importance of different predictors, helping us identify the key drivers of the outcome variable and gain valuable insights from our data analysis.
+
+The biggest drawback of random forest is that is computationally expensive. Because of how long it took to render this document, we would need more time and heftier equipment to find precise tuning parameters. (I think a Bayesian approach utilizing C++ based systems like RStan could be considered if time is an issue). Random forest is a "forest" of trees meaning many decision trees (at most I rendered over 4900 trees in total) here are being render by the program.

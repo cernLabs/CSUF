@@ -142,3 +142,67 @@ plot(density(as.vector(obj1$theta[,k])))
 quantile(obj1$theta[,k], c(0.025,.975))
 ```
 
+```{r}
+# input alphas and betas into a beta distribution
+rbeta(1000,obj1$alpha[k],obj1$beta[k]) -> newtheta
+rbinom(1000,100,newtheta) -> newy
+```
+
+```{r}
+plot(density(newy), main = "y_new")
+quantile(newy,c(.025,.975))
+```
+
+```{r}
+# checking analytically if this makes sense
+CI = matrix(0, ncol = 3, nrow = 10)
+for(j in 1:10){
+  CI[j,] = quantile(obj1$theta[j,k], probs = c(0.025,0.5, 0.975))
+}
+plot(y/N, y/N, type = "l")
+points(y/N, CI[,2], pch = 19, col = 3)
+for(j in 1:10){
+  points(c(y[j]/N[j],y[j]/N[j]),  c(CI[j,1],CI[j,3]), type ="l", col = 4) 
+}
+```
+
+This distribution is pretty reasonable according to this graph
+
+
+## Additional Problem
+
+```{r}
+# setup the data
+schools <- read.csv(file = "schools.csv", header = T)
+schools <- list("J" = 8,
+                "y" = schools$estimate,
+                "sigma" = schools$sd)
+```
+
+
+```{r}
+# run the STAN and fit the data
+# schools_fit <- stan(file="schools.stan",
+#                     data = schools,
+#                     iter = 1000,
+#                     chains = 4)
+fit1 <- stan(
+  file = "schools.stan", # Stan program
+  data = schools,    # named list of data
+  chains = 4,             # number of Markov chains
+  warmup = 1000,          # number of warmup iterations per chain
+  iter = 20000,           # total number of iterations per chain
+  cores = 2,              # number of cores 
+  refresh = 1000,         # show progress every 'refresh' iterations
+  thin = 10               # number of thinning
+)
+print (fit1)
+plot (fit1)
+```
+
+```{r}
+# traceplot
+traceplot(fit1, pars = c("mu", "tau"), inc_warmup = T, nrow = 2)
+```
+
+
