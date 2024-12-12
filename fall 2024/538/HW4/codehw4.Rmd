@@ -10,19 +10,21 @@ knitr::opts_chunk$set(echo = TRUE)
 library(rstan)
 library(mvtnorm)
 ```
-\newpage
 
+\newpage
+ 
 ## problem 13
+
+#### (b)
 
 ```{r}
 # setting up data
 bike <- read.csv("bike-data.csv", header = T)
 ```
 
-
 ```{r}
 # in class code with MH and gibbs sampling
-# predef the beyes functions
+# predef the bayes functions
 Prior <- function(a,b){
    (a + b)^(-5/2)
 }
@@ -95,7 +97,6 @@ MHGIBBs <- function(y,N,B,alpha0,beta0,S.tune = diag(2)){
 
 ```
 
-
 ```{r}
 # let's run our functions
 y <- bike$Bicycles
@@ -129,6 +130,8 @@ acf(obj1$alpha[k])
 acf(obj1$beta[k])
 ```
 
+#### (c)
+
 ```{r}
 par(mfrow = c(2,2))
 for(d in 1:10){
@@ -137,10 +140,19 @@ for(d in 1:10){
 }
 ```
 
+The MAPs of the simulated inferences from the posterior distribution are not too far off from the raw data proportions and so I think there is reality to the model that we've derived.
+
+#### (d)
+
 ```{r}
-plot(density(as.vector(obj1$theta[,k])))
-quantile(obj1$theta[,k], c(0.025,.975))
+alp <- obj1$alpha[k]
+bet <- obj1$beta[k]
+expec <- alp/(bet + alp)
+plot(density(expec), main = "density for E[theta] = alpha / (beta + alpha)")
+quantile(expec, c(0.025,.975))
 ```
+
+#### (e)
 
 ```{r}
 # input alphas and betas into a beta distribution
@@ -150,8 +162,15 @@ rbinom(1000,100,newtheta) -> newy
 
 ```{r}
 plot(density(newy), main = "y_new")
-quantile(newy,c(.025,.975))
+quantile(newy,c(.025,.975)) -> q1
+abline(v=q1, lty = 2)
+q1
+
 ```
+
+I am not sure I can trust this confidence interval and the density skews right and this might not look good to city planners who I am consulting.
+
+#### (f)
 
 ```{r}
 # checking analytically if this makes sense
@@ -166,8 +185,7 @@ for(j in 1:10){
 }
 ```
 
-This distribution is pretty reasonable according to this graph
-
+This distribution is pretty reasonable according to this graph as it is diagonal.
 
 ## Additional Problem
 
@@ -178,7 +196,6 @@ schools <- list("J" = 8,
                 "y" = schools$estimate,
                 "sigma" = schools$sd)
 ```
-
 
 ```{r}
 # run the STAN and fit the data
@@ -204,5 +221,3 @@ plot (fit1)
 # traceplot
 traceplot(fit1, pars = c("mu", "tau"), inc_warmup = T, nrow = 2)
 ```
-
-
