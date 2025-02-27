@@ -1,0 +1,124 @@
+---
+title: "The Effects of Neuromuscular Activity and Muscle Structure on Stepping Performance in Older Adults"
+subtitle: "Math 539 - Exam 1"
+date: "February 19, 2025"
+author: "Ann Kim, Michael Peña, Julie Werner"
+abstract: \noindent Report was prepared as part of Math 539 Statistical Consulting class. Client for this project is Dr. Marcel Lanza of the University of Maryland.
+format:
+  pdf:
+    toc: true
+bibliography: references.bib
+---
+
+\newpage
+
+# Introduction
+
+Falls pose a significant threat to older adults, with nearly one in four individuals aged 65 and older experiencing a fall each year that often results in severe injuries and a loss of independence. In response our topic is The Effects of Neuromuscular Activity and Muscle Structure on Stepping Performance in Older Adults”. This study examines age-related differences in stepping performance and muscular structure: a critical component of balance recovery by evaluating factors such as stepping speed, weight transfer speed, and neuromuscular activation, while also investigating how muscle structure including muscle size, stiffness, and intramuscular fat content influences movement ability in both younger and older populations. The research integrates detailed assessments from electromyography and ultrasound imaging with clinical evaluations including the Stair Climb Power Test, Timed Up-and-Go Test, Four Square Step Test, and Handgrip Strength Test to control for confounding factors and provide comprehensive insights. Ultimately, these findings aim to inform targeted fall prevention strategies and mobility interventions designed to enhance stability and maintain independence among older adults.
+
+
+# Goals and Objectives
+
+## Goals
+
+This study aims to examine age-related differences in stepping performance and investigate how muscle structure influences movement ability in younger and older adults. Specifically, it analyzes stepping speed, weight transfer speed, and neuromuscular activity to identify potential differences between age groups. By exploring these factors, this research seeks to provide valuable insights that can inform fall prevention strategies and mobility interventions for older adults.
+
+## Objectives
+
+To achieve these goals, the study will measure stepping speed and weight transfer speed in both younger and older adults. It will also analyze lateral, forward, and backward stepping performance to detect potential age-related impairments. Additionally, the research will assess the relationship between muscle structure—specifically muscle size, stiffness, and fat content—and stepping ability. By comparing stepping performance factors across age groups, the study aims to uncover neuromuscular differences that may contribute to balance and mobility challenges in aging populations.
+
+Ultimately, the findings from this research will enhance understanding of how aging affects stepping performance and how muscle composition and function influence movement ability. This knowledge may guide the development of targeted fall prevention strategies and mobility interventions to support older adults in maintaining stability and independence.
+
+# Literature Review
+
+## Scope of the Problem
+
+Older adults are at a significantly higher risk of falling compared to younger adults, with approximately one in four adults aged 65 and older experiencing a fall each year [@NCOA2024]. Age-related declines in sensory perception, motor control, and cognitive processing contribute to impaired balance, increasing susceptibility to falls [@NSC2024]. The vestibular, visual, and proprioceptive systems, which are critical for maintaining postural stability, deteriorate with age, leading to slower reaction times and reduced coordination [@Fitzpatrick1994; @Kandel2021]. As a result, older adults struggle to recover from sudden balance disturbances. In addition, muscle function and strength decline with age. Together, these factors make older adults more prone to falls.
+
+The consequences of falls are severe, as they are the leading cause of injury-related deaths among older adults [@CDC2024a]. Falls frequently result in hip fractures, head trauma, and other serious injuries, leading to long-term disability, loss of independence, and increased healthcare costs [@NSC2024]. In 2022 alone, over 3.5 million older adults required emergency medical attention due to falls [@CDC2024b]. These incidents contribute to a substantial burden on the healthcare system and significantly impact the quality of life for aging individuals. Given the high prevalence and serious consequences of falls, fall prevention strategies are essential to reduce injury risks and improve overall well-being in older adults.
+
+## Physiology of Balance Recovery
+
+One key component of fall prevention is understanding balance recovery—the process in which a person who loses balance avoids falling by using strategies like stepping. The physiology of balance recovery involves the coordinated interaction of the brain, nerves, and muscles to maintain or restore postural stability after a disturbance in balance. This relies on sensory input to detect imbalance and provide real-time updates, central processing to integrate sensory information and initiate action, and motor output, which is the execution of a balance recovery response.
+
+### Sensory Input
+
+There are three primary sensory systems that the body uses to detect sway: vestibular, visual, and proprioceptive [@Fitzpatrick1994]. The vestibular system detects rotational movements, acceleration, and head position relative to gravity, and transmits this information from the vestibular labyrinth in the inner ear \[Figure 1A\] via the vestibular nerve to the vestibular nuclei in the brainstem \[Figure 1B\] [@Purves2001]. The eyes detect body orientation relative to the environment, and this visual information is processed in the occipital cortex of the brain and integrated with other sensory information about body position and orientation in the brain’s parietal lobe \[Figure 2\][@Kandel2021]. Proprioceptive information is first detected by special sensory receptors in the body that detect physical forces like pressure, stretch, and vibration, called mechanoreceptors. Different types of mechanoreceptors are located in the muscle spindles, Golgi tendon organs, and joint receptors. Muscle spindles detect how fast a muscle is stretching, Golgi tendon organs detect muscle tension, and joint receptors detect movement, pressure, and position of the joints \[Figure 3\][@Kandel2021]. These signals provide feedback about body position and limb movement conveyed via peripheral nerves to the spinal cord, brainstem, and primary sensory cortex \[Figure 4\] [@Kandel2021].
+
+![(A) Movements of the head are detected by the vestibular labyrinth structures in the inner ear, (B) The information is then transmitted via the vestibulocochlear nerve to the vestibular nuclei and reticular formation in the brainstem.](/Figures_for_report_PNG/Fig1.png)
+
+[^1]
+
+[^1]: Anatomical figures adapted from @Marieb2020
+
+![Visual information about balance is detected by the eyes and transmitted to the visual cortex in the occipital lobe of the brain.](/Figures_for_report_PNG/Fig2.png)
+
+![Two types of sensory receptors that contribute to proprioception are muscle spindles and Golgi tendon organs. Joint receptors (not pictured) are a third type.](/Figures_for_report_PNG/Fig3.png)
+
+![Information about body position and limb movement is transmitted up the spinal cord, brainstem, and into the primary sensory cortex in the parietal lobe of the brain. It is integrated with visual information from the occipital lobe, vestibular information from the brainstem, and sent to the primary motor cortex in the frontal lobe of the cerebral cortex.](/Figures_for_report_PNG/Fig4.png)
+
+### Central Processing
+
+After receiving sensory information from the body, the brainstem, cerebellum, and cerebral cortex integrate this information and transmit motor commands [@Kandel2021]. The vestibular nuclei and reticular formation in the brainstem integrate vestibular, visual, and proprioceptive inputs to form motor commands for quick postural adjustments. The cerebellum is involved with fine-tuning balance by adjusting muscle activity based on sensory information and plays a role in motor learning and adaptation over time [@Brooks2015]. Conscious balance strategies and voluntary postural corrections—such as stepping to recover from a stumble—are produced mainly in the premotor and primary motor cortices of the frontal lobe, as well as some processing in the parietal lobe of the cerebral cortex \[Figure 4\].
+
+### Motor Output
+
+Motor output in balance recovery is the execution of an observable response. This is accomplished in coordination with eye movement, such as the vestibulo-ocular reflex and several spinal cord reflexes, which provide immediate corrections to maintain balance and posture [@Robinson2022; @Bonsu2021]. For example, a sudden stretch of the hip flexors—muscles on the front of the hip joint—during unexpected backward sway would result in hip flexor muscle activation in an attempt to recover balance. In addition to immediate corrections brought about by spinal cord reflexes, more complex muscle activation patterns occur, such as in the ankle, where muscles responsible for lifting the foot, called dorsiflexors (e.g., tibialis anterior), or muscles responsible for pushing the foot downward, called plantarflexors (e.g., gastrocnemius, soleus) \[Figure 5A\], trigger small ankle movements to restore equilibrium. Large disturbances in balance result in a coordinated step to the side, forward, or backward to prevent falling. Of particular interest to the current investigation is hip muscle activation and stepping strategy. Stepping necessarily relies on hip muscle activation strategy. Hip strategy may engage the hip flexor muscles such as iliopsoas during forward stepping, hip abductor muscles (used for moving the lower limb out to the side of the body) such as gluteus medius during lateral stepping \[Figure 5B, 5C\], and hip extensors (used for moving the lower limb to the rear of the body) such as gluteus maximus during backward stepping \[Figure 5B, 5C\].
+
+![(A) Tibialis anterior lifts the foot while gastrocnemius and soleus press the foot down, (B) Gluteus medius moves the lower limb out to the side of the body at the hip joint while gluteus maximum moves it to the rear of the body, (C) Iliopsoas is two conjoint muscles which move the lower limb toward the front of the body, such as during forward stepping.](/Figures_for_report_PNG/Fig5.png)
+
+## Features of Muscles Related to Balance Recovery
+
+The speed and quality of motor output when executing a balance recovery stepping response is dependent not only on sensory input, central processing, and motor signals from the nervous system, but also on the quality of muscle function, called neuromuscular activation, and muscle structure characteristics. Neuromuscular activity refers to the activation of muscles through neural signals, which can be represented by electromyogram (EMG) amplitude—a measure of the electrical activity of muscles fibers, indicating the level of muscle activation and force generation [@Kamen1996]. Muscle morphology (structural) characteristics of interest are muscle size, muscle quality, muscle stiffness, and intramuscular fat. Muscle size represents muscle thickness or cross-sectional area on an ultrasound image [@Naruse2022]. Muscle quality is assessed via echogenicity, wherein relatively higher ultrasound image brightness indicates a greater proportion of non-contractile tissue, such as fibrous connective tissue in the muscle [@Oranchuk2024]. A related property is intramuscular fat, which results in increased echogenicity and observable patterns of fat infiltration in ultrasound images [@Young2015]. Muscle stiffness indicates muscle tissue resistance to deformation, measured with a high-resolution ultrasound machine capable of strain elastography [@Chino2014].
+
+## Stepping as a Composite of Sensory Input, Central Processing, and Motor Output
+
+While sensory input and central processing can be operationalized and quantified, the focus in this research is on the specific contributions of neuromuscular activity and muscle morphology as they relate to the task of stepping in response to a cue. Muscle structure and function decline as part of the normal aging process, which may relate to reduced speed and quality of the balance recovery stepping response. To better understand this relationship, it is necessary to objectively measure stepping reaction in a standardized manner. @Lord2001 developed the Choice Stepping Reaction Time task as a composite measure of the neurological and physiological processes involved in the initiation of a fast and appropriate stepping response. The task requires participants to step as quickly as possible onto a designated target to the front, side or back with the indicated foot in response to a visual cue \[Figure 4\]. In the typical laboratory setup, research participants stand on a force plate and examiners use motion capture video to assess speed and kinematic characteristics of the stepping response. As a composite measure of fall risk, the task is intended to measure cognitive-motor function, coordination, balance, reaction speed, and overall fall risk.
+
+## Pertinent Muscles in Balance Recovery
+
+The hypothesis of this research project suggests that neuromuscular activity and muscle morphology influence stepping performance. Therefore, it is important to identify the muscles involved and the muscle features most relevant to this investigation. Previous research on this topic suggests that certain features of hip muscle strength, activation, and structure are predictive of performance in balance and mobility tasks [@Lanza2022]. Amongst older adults, capacity of hip abductor torque (i.e., rotational force of muscles used to bring the leg out to the side) is related to protective lateral, or side, stepping and inversely related to falling [Figure 5B, 5C]. Additionally, activation of the hip abductor muscles occurs later during lateral stepping in older adults, and neuromuscular activity of hip abductors predominates during the stance phase of walking [Figure 5B]. Older adults with a higher propensity for falling have greater intramuscular fat in the gluteus medius but not the tensor fascia latae. Not all combinations of hip muscle strength, activation, and structure were compared to all balance and mobility tasks between younger and older adults in any one study. Furthermore, much of the previous research systematically reviewed by @Lanza2022 focused on just one or two muscles: the gluteus medius [Figure 5B] and tensor fascia latae \[Figure 5C\]. Taken together, these findings and limitations suggest that hip muscle features may be predictive of fall risk among older adults, but a better understanding of this relationship is needed to inform interventions for preventing falls.
+
+# Data Components
+
+As of the time of writing this report, the data encompasses 21 participants, divided into two age-based cohorts: 13 younger adults and 8 older adults. The study aims to achieve a balanced sample size of 30 participants, with equal representation of 15 participants in each age group. We do not yet have access to the dataset and thus do not know the structure or specific contents of the data files.
+
+## Measurements
+
+For the first aim, we will analyze six dependent variables that capture different aspects of stepping performance. These variables are subdivided into two categories: temporal measures and speed measures. The temporal component comprises three weight transfer time measurements during lateral, forward, and backward stepping maneuvers. Complementing these are three corresponding speed measurements for each stepping direction, providing a comprehensive assessment of movement efficiency and control.
+
+The second aim delves deeper into the biomechanical underpinnings of stepping performance by examining the relationship between muscle architecture and functional movement. This analysis maintains age group as the independent variable but expands to encompass variables that characterize neuromuscular function and structural properties.
+
+The dependent variables for this aim include:
+
+-   Neuromuscular activation patterns, quantified through Electromyography (EMG) amplitude measurements (typically measured in mA) from six key lower limb muscles involved in stepping.
+
+-   Muscle architectural properties, assessed through four main parameters:
+
+1.  Muscle size or volume as measure by ultrasound imaging.
+2.  Muscle quality, measured as proportion of muscle tissue to non-contractile connective tissue in the muscle.
+3.  Muscle stiffness, evaluated as a measure of elasticity, comparing muscle from unflexed to flexed (lengthened versus shortened muscle).
+4.  Intramuscular fat density, measured as proportion of fat in the muscle.
+
+To maintain analytical consistency and enable cross-comparison between the two specific aims, we retain the same four clinical assessment covariates from Aim 1, incorporating their respective measurements of time, power, and force production capacity.
+
+To account for potential confounding factors and enhance the precision of our analysis, we expect to incorporate four standardized Clinical Assessments as covariates:
+
+1.  The Staircase Power Test (SCPT), yielding power (Joules/second) measurements
+2.  The Timed Up-and-Go Test, providing temporal measurements in milliseconds
+3.  The Four Square Step Test, also yielding temporal data in milliseconds
+4.  The Handgrip Strength Test, measuring force production in pounds
+
+## Description of Clinical Assessments
+
+The **Stair Climb Power Test (SCPT)** [@Ni2017] is a physical assessment in which participants are instructed to ascend a flight of stairs as quickly as possible. The test begins with participants standing at the base of the stairs, and they start climbing upon the tester's signal of "Ready, set, go." Timing starts immediately after the "go" command and stops when both feet of the participant reach the top step. Participants may use the handrail if they deem it necessary for safety. The power output is calculated using the formula: power = \[(body weight in kg) x (9.8 m/s²) x (stair height in meters)\] / (time in seconds), resulting in Joules/second. This test is used to measure the stair climbing power by considering the individual's body weight, the gravitational constant, the height of the stairs, and the time taken to complete the ascent.
+
+The **Timed Up-and-Go Test** [@Bhatt2011] involves a patient sitting in a chair with their back against the chair back. Upon the command "go," the patient stands up, walks 3 meters at a comfortable and safe pace, turns around, walks back to the chair, and sits down. Timing starts with the "go" command and ends when the patient is seated. It is recommended to stop the timer when the patient’s buttocks contacts the chair. A practice trial is allowed but not included in the final score. The patient must use the same assistive device each time they are tested to ensure score comparability. This test is thus scored by a variable of time.
+
+In the **Four Square Step Test** [@Mathurapongsakul2018], participants step over four canes arranged in a plus sign pattern. The administrator may demonstrate the test, and participants are allowed one practice trial to ensure understanding. Two timed trials are conducted, with the better time recorded as the score. Participants are instructed to complete the test as quickly as possible, ensuring both feet touch the floor in each square while facing forward and avoiding contact with the canes. The test begins with the participant standing in Square 1, facing Square 2, with Square 4 positioned to the right of Square 1. Timing starts when the participant's first foot touches Square 2 and stops when the last foot touches Square 1. The stepping sequence involves moving clockwise through Squares 1, 2, 3, 4, and back to 1, then counter-clockwise through Squares 4, 3, 2, and back to 1.
+
+The **Handgrip Strength Test** [@Abizanda2012] utilizes an instrument that measures the force in kilograms; it is crucial for the patient to be positioned correctly in this test. The subject should be seated with the back, pelvis, and knees positioned as close to 90 degrees as possible. The shoulder must be adducted and neutrally rotated, with the elbow flexed at 90 degrees, the forearm in a neutral position, and the wrist held between 0-15 degrees of ulnar deviation. Importantly, the arm should not be supported by either the examiner or an armrest, and the dynamometer must be aligned vertically and in line with the forearm. The maximum grip strength is determined by calculating the mean of three trials.
+
+\newpage
+
+# References

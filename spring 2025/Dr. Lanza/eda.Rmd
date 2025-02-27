@@ -1,0 +1,280 @@
+---
+title: "EDA"
+author: "Michael Pena"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+Open up the data 
+
+```{r}
+# read data
+Kine.dat = read.csv("Kinematic_Data_EMG.csv",header = T)
+# split into books 
+Kine.df = split(Kine.dat, Kine.dat$PID)
+
+# initialize the dataframes (we will store our bootstraps in)
+duration.bs <- onset.bs <- step.init.bs <- full.step.bs <- step.height.bs <-data.frame(NULL)
+
+# initialize the xbar vectors
+xbar.duration <- xbar.onset <- xbar.step.init <- xbar.full.step <-  xbar.step.height <- c()
+
+# being loop
+for(i in 1:20){
+  for(j in 1:5000){
+    # sample indices
+    k = sample(1:18,replace = T, size = 18)
+    # take means of the kth samples and store into the xbars
+    take = (Kine.df[[i]][["Weight_Transfer_Duration"]])[k]
+    xbar.duration[j] = mean(take)
+    take = (Kine.df[[i]][["Weight_Transfer_Onset_Initiation_Time"]])[k]
+    xbar.onset[j] = mean(take)
+    take = (Kine.df[[i]][["Step_Initiation_Time"]])[k]
+    xbar.step.init[j] = mean(take)
+    take = (Kine.df[[i]][["Full_Step_Length"]])[k]
+    xbar.full.step[j] = mean(take)
+    take = (Kine.df[[i]][["Step_Height"]])[k]
+    xbar.step.height[j] = mean(take)
+  }
+  # fill the BS data.frames row-by-row
+  duration.bs = rbind(duration.bs,xbar.duration)
+  onset.bs = rbind(onset.bs,xbar.onset)
+  step.init.bs = rbind(step.init.bs,xbar.step.init)
+  full.step.bs = rbind(full.step.bs,xbar.full.step)
+  step.height.bs = rbind(step.height.bs,xbar.step.height)
+}
+# attach corresponding Patient IDs for each row in every BS data.frame
+
+distinct(Kine.dat, PID, Age.Group..1.Younger..2.Older.)[,2]  -> group
+duration.bs = cbind(group,duration.bs)
+onset.bs = cbind(group,onset.bs)
+step.init.bs = cbind(group,step.init.bs)
+full.step.bs = cbind(group,full.step.bs)
+step.height.bs = cbind(group,step.height.bs)
+```
+
+
+```{r}
+#visualizations
+plot(density(as.numeric(duration.bs[1,2:5001])),
+     ylim = c(0,40),
+     xlim = c(0.15,.6),
+     col = duration.bs$group[1])
+for(i in 2:20){
+  lines(density(as.numeric(duration.bs[i,2:5001])),
+        col = duration.bs$group[i])
+}
+
+plot(density(as.numeric(onset.bs[1,2:5001])),
+     ylim = c(0,70),
+     xlim = c(0.15,.6))
+for(i in 2:20){
+  lines(density(as.numeric(onset.bs[i,2:5001])),
+        col = onset.bs$group[i])
+}
+
+plot(density(as.numeric(step.init.bs[1,2:5001])),
+     ylim = c(0,40),
+     xlim = c(0.35,1))
+for(i in 2:20){
+  lines(density(as.numeric(step.init.bs[i,2:5001])),
+        col = step.init.bs$group[i])
+}
+
+plot(density(as.numeric(full.step.bs[1,2:5001])),
+     ylim = c(0,35),
+     xlim = c(0.2,.6))
+for(i in 2:20){
+  lines(density(as.numeric(full.step.bs[i,2:5001])),
+        col = full.step.bs$group[i])
+}
+
+plot(density(as.numeric(step.height.bs[1,2:5001])),
+     ylim = c(0,100),
+     xlim = c(0,.14))
+for(i in 2:20){
+  lines(density(as.numeric(step.height.bs[i,2:5001])),
+        col = step.height.bs$group[i])
+}
+
+
+```
+
+
+```{r}
+distinct(Kine.dat, PID, Age.Group..1.Younger..2.Older.)  
+```
+
+```{r}
+######################################################
+#####   EDA/Data Summary and Data Visualization  #####
+######################################################
+
+## Load necessary libraries
+library(readxl)
+library(dplyr)
+library(ggplot2)
+
+## Load data from excel files provided by client
+demographics <- read_excel("Demographics_.xlsx", sheet = "Sheet1")
+muscle_data <- read_excel("Muscle_data.xlsx", sheet = "Muscledata_")
+kinematic_data <- read_excel("Kinematic_Data_EMG.xlsx", sheet = "Kinematic")
+```
+
+
+```{r}
+## Clean up datasets and merge them
+
+# Standardize subject IDs across the data files 
+muscle_data$ParticipantID[1:9] <- gsub("Pepper", "Pepper0",    # NOT ALL NEED A LEADING 0
+                                  muscle_data$ParticipantID[1:9])
+
+# Drop EMG columns from kinematic data for now? (Can undo this if we get this data)
+kinematic_data_clean <- kinematic_data %>% select(-matches("Electric Potential"))
+
+# get rid of 0 in Step Type
+kinematic_data_clean$`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` <- gsub(0,1,kinematic_data_clean$`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`)
+```
+
+
+```{r}
+## Merge all datasets into one
+
+# Sort demographic data by Subject before left joining
+demographics <- arrange(demographics, Subject) # first make sure these are in order
+
+# Merge into one by left joining dataframes
+merged_df <- demographics %>% 
+  left_join(muscle_data, by = c("Subject" = "ParticipantID")) %>%
+  left_join(kinematic_data_clean, by = c("Subject" = "PID"))
+
+## Find missing data
+missing_summary <- colSums(is.na(merged_df))
+
+# Display columns with missing values
+missing_summary[missing_summary>0]
+```
+
+
+```{r}
+## Try some summary statistics for data exploration and visualization to follow
+##  --->>> Need to determine what is relevant for summary stats!
+summary_stats <- merged_df %>%
+  summarise(
+        Mean_Age = mean(`Age (years old)`, na.rm = TRUE),
+        Mean_Step_Length = mean(Full_Step_Length, na.rm = TRUE),
+        Mean_Step_Height = mean(Step_Height, na.rm = TRUE),
+        Mean_Step_Initiation_Time = mean(Step_Initiation_Time, na.rm = TRUE),
+        Mean_Weight_Transfer_Duration = mean(Weight_Transfer_Duration, na.rm = TRUE)
+      )
+    
+print(summary_stats)
+```
+
+
+```{r}
+## Try some visualizations
+##  --->>> Need to determine what is relevant for summary stats!
+
+# step length by age group
+ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Full_Step_Length, fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+  geom_boxplot() +
+  labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Full Step Length (m)", title = "Step Length by Age Group") +
+  theme_minimal() +
+  scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") # Custom legend labels
+) 
+# step height by age group
+ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Step_Height, fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+  geom_boxplot() +
+  labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Step Height (m)", title = "Step Height by Age Group") +
+  theme_minimal() +
+  scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") # Custom legend labels
+)
+
+
+# distribution of sample vastus lateralis thickness
+ggplot(merged_df, aes(x = `VL_Thickness(cm)`)) +
+  geom_histogram(binwidth = 0.25, fill = "steelblue", color = "black") +
+  labs(x = "Vastus Lateralis Thickness (cm)", y = "Count", title = "Distribution of VL Thickness") +
+  theme_minimal()
+
+# step initiation time by age group
+ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`) , y = Step_Initiation_Time, fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`) )) +
+  geom_boxplot() +
+  labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Step Initiation Time", title = "Step Initiation by Age Group") +
+  theme_minimal() +
+  scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") # Custom legend labels
+)
+
+# Weight Transfer Onset Initiation Time by age group
+ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Weight_Transfer_Onset_Initiation_Time, fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+  geom_boxplot() +
+  labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Weight Transfer Onset Initiation Time", title = "Weight Transfer Onset Initiation Time by Age Group") +
+  theme_minimal() +
+  scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") # Custom legend labels
+)
+
+# Weight Transfer Duration by age group
+ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Weight_Transfer_Duration, fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+  geom_boxplot() +
+  labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Weight Transfer Duration", title = "Weight Transfer Duration by Age Group") +
+  theme_minimal()+
+  scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") # Custom legend labels
+)
+```
+
+
+```{r}
+demo <- demographics
+age <- factor(demo$`Group ( 1-young, 2-older adults)`)
+sex <- factor(demo$`Sex (1-male , 2-female)`)
+aov.data <- data.frame("grip.strength" = demo$`Handgrip Strenght Test (kg.f)`,
+                       age,
+                       sex)
+anova_model <- aov(grip.strength ~ age * sex, data=aov.data)
+age.cont <- demo$`Age (years old)`
+lin_model <- lm(grip.strength ~ age.cont * sex, data = aov.data)
+summary(lin_model)
+summary(anova_model)
+library(tidyverse)
+ggplot(aov.data, aes(x=age, y=grip.strength, fill=sex)) +
+  stat_summary(fun=mean, geom='bar', position='dodge') +
+  stat_summary(fun.data=mean_se, geom='errorbar', position=position_dodge(width = 0.9), width=0.2) +
+  theme_minimal()
+```
+
+```{r}
+
+```
+
+
+```{r}
+ggplot(merged_df, aes(
+  x = as.factor(`Group ( 1-young, 2-older adults)`), 
+  y = Step_Initiation_Time, 
+  fill = as.factor(`Step_Type (1 Lat : 2 Fwd : 3 Bwd)`)
+)) +
+geom_boxplot() +
+labs(
+  x = "Age Group (1 = Younger, 2 = Older)", 
+  y = "Step Initiation Time", 
+  title = "Step Initiation by Age Group",
+  fill = "Step Type" # Update legend title
+) +
+scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") # Custom legend labels
+) +
+theme_minimal()
+```
+
+
+
+-
+- False discovery rates
+- Bonferroni
+
+ + contingency tables
