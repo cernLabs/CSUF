@@ -1,66 +1,4 @@
 
-### Some practice with bootstrapping from Mike
-
-# # read data
-# Kine.dat = read.csv("Kinematic_Data_EMG.csv",header = T)
-# # split into books 
-# Kine.df = split(Kine.dat, Kine.dat$PID)
-# 
-# # initialize the dataframes (we will store our bootstraps in)
-# duration.bs <- onset.bs <- step.init.bs <- full.step.bs <- step.height.bs <- data.frame(NULL)
-# 
-# # initialize the xbar vectors
-# xbar.duration <- xbar.onset <- xbar.step.init <- xbar.full.step <-  xbar.step.height <- c()
-# 
-# # begin loop
-# for(i in 1:length(Kine.df)){  # loop through each subject
-#   for(j in 1:5000){  # 5000 bootstrap samples each
-#     # sample indices
-#     k = sample(1:18, replace = T, size = 18)  # 18 trials from 3 blocks
-#     # take means of the kth samples and store into the xbars
-#     take = (Kine.df[[i]][["Weight_Transfer_Duration"]])[k]
-#     xbar.duration[j] = mean(take)
-#     take = (Kine.df[[i]][["Weight_Transfer_Onset_Initiation_Time"]])[k]
-#     xbar.onset[j] = mean(take)
-#     take = (Kine.df[[i]][["Step_Initiation_Time"]])[k]
-#     xbar.step.init[j] = mean(take)
-#     take = (Kine.df[[i]][["Full_Step_Length"]])[k]
-#     xbar.full.step[j] = mean(take)
-#     take = (Kine.df[[i]][["Step_Height"]])[k]
-#     xbar.step.height[j] = mean(take)
-#   }
-#   # fill the BS data.frames row-by-row
-#   duration.bs = rbind(duration.bs,xbar.duration)
-#   onset.bs = rbind(onset.bs,xbar.onset)
-#   step.init.bs = rbind(step.init.bs,xbar.step.init)
-#   full.step.bs = rbind(full.step.bs,xbar.full.step)
-#   step.height.bs = rbind(step.height.bs,xbar.step.height)
-# }
-# # attach corresponding Patient IDs for each row in every BS data.frame
-# duration.bs = cbind(names(Kine.df),duration.bs)
-# onset.bs = cbind(names(Kine.df),onset.bs)
-# step.init.bs = cbind(names(Kine.df),step.init.bs)
-# full.step.bs = cbind(names(Kine.df),full.step.bs)
-# step.height.bs = cbind(names(Kine.df),step.height.bs)
-
-
-# demo <- read.csv('Demographics_.csv')
-# age <- factor(demo$Group...1.young..2.older.adults.)
-# sex <- factor(demo$Sex..1.male...2.female.)
-# aov.data <- data.frame("grip.strength" = demo$Handgrip.Strenght.Test..kg.f.,
-#                        age,
-#                        sex)
-# anova_model <- aov(grip.strength ~ age * sex, data=aov.data)
-# age.cont <- demo$Age..years.old.
-# lin_model <- lm(grip.strength ~ age.cont * sex, data = aov.data)
-# summary(lin_model)
-# summary(anova_model)
-# library(tidyverse)
-# ggplot(aov.data, aes(x=age, y=grip.strength, fill=sex)) +
-#   stat_summary(fun=mean, geom='bar', position='dodge') +
-#   stat_summary(fun.data=mean_se, geom='errorbar', position=position_dodge(width = 0.9), width=0.2) +
-#   theme_minimal()
-
 ######################################################
 #####   EDA/Data Summary and Data Visualization  #####
 ######################################################
@@ -77,45 +15,45 @@ kinematic_data <- read_excel("Kinematic_Data_EMG.xlsx", sheet = "Kinematic")
 ## Clean up datasets before merging them
 
 # Standardize subject IDs across the data files 
-muscle_data$ParticipantID[1:9] <- gsub("Pepper", "Pepper0",    # NOT ALL NEED A LEADING 0
-                                  muscle_data$ParticipantID[1:9])
+muscle_data$participant_id[1:9] <- gsub("Pepper", "Pepper0",    # NOT ALL NEED A LEADING 0
+                                  muscle_data$participant_id[1:9])
 
 # Drop EMG columns from kinematic data for now? (Can undo this if we get this data)
 kinematic_data_clean <- kinematic_data %>% select(-matches("Electric Potential"))
 
 # get rid of 0 in Step Type
-kinematic_data_clean$`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` <- 
-  gsub(0,1,kinematic_data_clean$`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`)
+kinematic_data_clean$`step_type` <- 
+  gsub(0,1,kinematic_data_clean$`step_type`)
 
 
 ## Make muscle data into Z-scores for composites
 
 # Thickness measures 
-muscle_data$Z_VL_Thickness <- (muscle_data$`VL_Thickness(cm)` - mean(muscle_data$`VL_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`VL_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_VI_Thickness <- (muscle_data$`VI_Thickness(cm)` - mean(muscle_data$`VI_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`VI_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_BF_Thickness <- (muscle_data$`BF_Thickness(cm)` - mean(muscle_data$`BF_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`BF_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_GM_Thickness <- (muscle_data$`GM_Thickness(cm)` - mean(muscle_data$`GM_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`GM_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_TFL_Thickness <- (muscle_data$`TFL_Thickness(cm)` - mean(muscle_data$`TFL_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`TFL_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_MG_Thickness <- (muscle_data$`MG_Thickness(cm)` - mean(muscle_data$`MG_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`MG_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_SOL_Thickness <- (muscle_data$`Sol_Thickness(cm)` - mean(muscle_data$`Sol_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`Sol_Thickness(cm)`, na.rm =TRUE)
-muscle_data$Z_TA_Thickness <- (muscle_data$`TA_Thickness(cm)` - mean(muscle_data$`TA_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`TA_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_VL_Thickness <- (muscle_data$`vl_thickness` - mean(muscle_data$`vl_thickness`, na.rm =TRUE))/sd(muscle_data$`vl_thickness`, na.rm =TRUE)
+muscle_data$Z_VI_Thickness <- (muscle_data$`vi_thickness` - mean(muscle_data$`vi_thickness`, na.rm =TRUE))/sd(muscle_data$`vi_thickness`, na.rm =TRUE)
+muscle_data$Z_BF_Thickness <- (muscle_data$`bf_thickness` - mean(muscle_data$`bf_thickness`, na.rm =TRUE))/sd(muscle_data$`bf_thickness`, na.rm =TRUE)
+muscle_data$Z_GM_Thickness <- (muscle_data$`gm_thickness` - mean(muscle_data$`gm_thickness`, na.rm =TRUE))/sd(muscle_data$`gm_thickness`, na.rm =TRUE)
+muscle_data$Z_TFL_Thickness <- (muscle_data$`tfl_thickness` - mean(muscle_data$`tfl_thickness`, na.rm =TRUE))/sd(muscle_data$`tfl_thickness`, na.rm =TRUE)
+muscle_data$Z_MG_Thickness <- (muscle_data$`mg_thickness` - mean(muscle_data$`mg_thickness`, na.rm =TRUE))/sd(muscle_data$`mg_thickness`, na.rm =TRUE)
+muscle_data$Z_SOL_Thickness <- (muscle_data$`sol_thickness` - mean(muscle_data$`sol_thickness`, na.rm =TRUE))/sd(muscle_data$`sol_thickness`, na.rm =TRUE)
+muscle_data$Z_TA_Thickness <- (muscle_data$`ta_thickness` - mean(muscle_data$`ta_thickness`, na.rm =TRUE))/sd(muscle_data$`ta_thickness`, na.rm =TRUE)
 
 # Quality measures  (*Note: reverse scored, higher au = worse)
-muscle_data$Z_VL_Quality <- -(muscle_data$`VL_Quality(au)` - mean(muscle_data$`VL_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`VL_Quality(au)`,na.rm =TRUE)
-muscle_data$Z_VI_Quality <- -(muscle_data$`VI_Quality(au)` - mean(muscle_data$`VI_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`VI_Quality(au)`,na.rm =TRUE)
-muscle_data$Z_BF_Quality <- -(muscle_data$`BF_Quality(au)` - mean(muscle_data$`BF_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`BF_Quality(au)`,na.rm =TRUE)
-muscle_data$Z_GM_Quality <- -(muscle_data$`GM_quality(au)` - mean(muscle_data$`GM_quality(au)`,na.rm =TRUE))/sd(muscle_data$`GM_quality(au)`,na.rm =TRUE)
-muscle_data$Z_TFL_Quality <- -(muscle_data$`TFL_Quality(au)` - mean(muscle_data$`TFL_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`TFL_Quality(au)`,na.rm =TRUE)
-muscle_data$Z_MG_Quality <- -(muscle_data$`MG_Quality(au)` - mean(muscle_data$`MG_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`MG_Quality(au)`,na.rm =TRUE)
-muscle_data$Z_SOL_Quality <- -(muscle_data$`SOL_quality(au)` - mean(muscle_data$`SOL_quality(au)`,na.rm =TRUE))/sd(muscle_data$`SOL_quality(au)`,na.rm =TRUE)
-muscle_data$Z_TA_Quality <- -(muscle_data$`TA_quality(au)` - mean(muscle_data$`TA_quality(au)`,na.rm =TRUE))/sd(muscle_data$`TA_quality(au)`,na.rm =TRUE)
+muscle_data$Z_VL_Quality <- -(muscle_data$`vl_quality` - mean(muscle_data$`vl_quality`,na.rm =TRUE))/sd(muscle_data$`vl_quality`,na.rm =TRUE)
+muscle_data$Z_VI_Quality <- -(muscle_data$`vi_quality` - mean(muscle_data$`vi_quality`,na.rm =TRUE))/sd(muscle_data$`vi_quality`,na.rm =TRUE)
+muscle_data$Z_BF_Quality <- -(muscle_data$`bf_quality` - mean(muscle_data$`bf_quality`,na.rm =TRUE))/sd(muscle_data$`bf_quality`,na.rm =TRUE)
+muscle_data$Z_GM_Quality <- -(muscle_data$`gm_quality` - mean(muscle_data$`gm_quality`,na.rm =TRUE))/sd(muscle_data$`gm_quality`,na.rm =TRUE)
+muscle_data$Z_TFL_Quality <- -(muscle_data$`tfl_quality` - mean(muscle_data$`tfl_quality`,na.rm =TRUE))/sd(muscle_data$`tfl_quality`,na.rm =TRUE)
+muscle_data$Z_MG_Quality <- -(muscle_data$`mg_quality` - mean(muscle_data$`mg_quality`,na.rm =TRUE))/sd(muscle_data$`mg_quality`,na.rm =TRUE)
+muscle_data$Z_SOL_Quality <- -(muscle_data$`sol_quality` - mean(muscle_data$`sol_quality`,na.rm =TRUE))/sd(muscle_data$`sol_quality`,na.rm =TRUE)
+muscle_data$Z_TA_Quality <- -(muscle_data$`ta_quality` - mean(muscle_data$`ta_quality`,na.rm =TRUE))/sd(muscle_data$`ta_quality`,na.rm =TRUE)
 
 # Stiffness measures (Only available for select muscles, (*Note: reverse scored, higher m/s = worse))
-muscle_data$Z_VL_Stiffness <- -(muscle_data$`SWVL(m/s)` - mean(muscle_data$`SWVL(m/s)`, na.rm =TRUE))/sd(muscle_data$`SWVL(m/s)`, na.rm =TRUE)
-muscle_data$Z_BF_Stiffness <- -(muscle_data$`SWBF(m/s)` - mean(muscle_data$`SWBF(m/s)`, na.rm =TRUE))/sd(muscle_data$`SWBF(m/s)`, na.rm =TRUE)
-muscle_data$Z_TFL_Stiffness <- -(muscle_data$`SWTFL(m/s)` - mean(muscle_data$`SWTFL(m/s)`, na.rm =TRUE))/sd(muscle_data$`SWTFL(m/s)`, na.rm =TRUE)
-muscle_data$Z_MG_Stiffness <- -(muscle_data$`SWMG(m/s)` - mean(muscle_data$`SWMG(m/s)`, na.rm =TRUE))/sd(muscle_data$`SWMG(m/s)`, na.rm =TRUE)
-muscle_data$Z_TA_Stiffness <- -(muscle_data$`SWTA(m/s)` - mean(muscle_data$`SWTA(m/s)`, na.rm =TRUE))/sd(muscle_data$`SWTA(m/s)`, na.rm =TRUE)
+muscle_data$Z_VL_Stiffness <- -(muscle_data$`swvl` - mean(muscle_data$`swvl`, na.rm =TRUE))/sd(muscle_data$`swvl`, na.rm =TRUE)
+muscle_data$Z_BF_Stiffness <- -(muscle_data$`swbf` - mean(muscle_data$`swbf`, na.rm =TRUE))/sd(muscle_data$`swbf`, na.rm =TRUE)
+muscle_data$Z_TFL_Stiffness <- -(muscle_data$`swtfl` - mean(muscle_data$`swtfl`, na.rm =TRUE))/sd(muscle_data$`swtfl`, na.rm =TRUE)
+muscle_data$Z_MG_Stiffness <- -(muscle_data$`swmg` - mean(muscle_data$`swmg`, na.rm =TRUE))/sd(muscle_data$`swmg`, na.rm =TRUE)
+muscle_data$Z_TA_Stiffness <- -(muscle_data$`swta` - mean(muscle_data$`swta`, na.rm =TRUE))/sd(muscle_data$`swta`, na.rm =TRUE)
 
 # Composite measures
 muscle_data$Z_VL <- rowMeans(cbind(muscle_data$Z_VL_Quality , muscle_data$Z_VL_Thickness, muscle_data$Z_VL_Stiffness), na.rm = TRUE)
@@ -129,13 +67,13 @@ muscle_data$Z_TA <- rowMeans(cbind(muscle_data$Z_TA_Quality , muscle_data$Z_TA_T
 
 ## Merge all datasets into one
 
-# Sort demographic data by Subject before left joining
-demographics <- arrange(demographics, Subject) # first make sure these are in order
+# Sort demographic data by subject before left joining
+demographics <- arrange(demographics, subject) # first make sure these are in order
 
 # Merge into one by left joining dataframes
 merged_df <- demographics %>% 
-  left_join(muscle_data, by = c("Subject" = "ParticipantID")) %>%
-  left_join(kinematic_data_clean, by = c("Subject" = "PID"))
+  left_join(muscle_data, by = c("subject" = "participant_id")) %>%
+  left_join(kinematic_data_clean, by = c("subject" = "pid"))
 
 ## Find missing data
 missing_summary <- colSums(is.na(merged_df))
@@ -143,17 +81,30 @@ missing_summary <- colSums(is.na(merged_df))
 # Display columns with missing values
 missing_summary[missing_summary>0]
 
+# getting the outliers for the full_step_length
+hist(kinematic_data_clean$step_length, breaks = 100)
+hist(kinematic_data_clean$weight_transfer, breaks = 100)
+hist(kinematic_data_clean$step_initiation_time, breaks = 100)
+hist(kinematic_data_clean$weight_transfer_onset, breaks = 100)
+hist(kinematic_data_clean$step_height, breaks = 100)
+
+kinematic_data_clean %>% filter(step_length < .1 | weight_transfer < .015 | step_initiation_time < 0.3 ) %>% select(pid) %>% unique() 
+kinematic_data_clean %>% filter(step_length < .1 ) %>% select(pid) %>% unique() 
+kinematic_data_clean %>% filter(weight_transfer < .015) %>% select(pid) %>% unique() 
+kinematic_data_clean %>% filter(step_initiation_time < 0.3 ) %>% select(pid) %>% unique() 
+kinematic_data_clean %>% filter(weight_transfer_onset < .001) %>% select(pid) %>% unique() 
+kinematic_data_clean %>% filter(step_height < 0.02 ) %>% select(pid) %>% unique() 
 
 ## Try some summary statistics for data exploration and visualization to follow
 ##  --->>> Need to determine what is relevant for summary stats!
 
 summary_stats <- merged_df %>%
   summarise(
-        Mean_Age = mean(`Age (years old)`, na.rm = TRUE),
-        Mean_Step_Length = mean(Full_Step_Length, na.rm = TRUE),
-        Mean_Step_Height = mean(Step_Height, na.rm = TRUE),
-        Mean_Step_Initiation_Time = mean(Step_Initiation_Time, na.rm = TRUE),
-        Mean_Weight_Transfer_Duration = mean(Weight_Transfer_Duration, na.rm = TRUE)
+        Mean_Age = mean(`age`, na.rm = TRUE),
+        Mean_Step_Length = mean(step_length, na.rm = TRUE),
+        Mean_step_height = mean(step_height, na.rm = TRUE),
+        Mean_step_initiation_time = mean(step_initiation_time, na.rm = TRUE),
+        Mean_weight_transfer = mean(weight_transfer, na.rm = TRUE)
       )
     
 print(summary_stats)
@@ -162,32 +113,13 @@ print(summary_stats)
 ## Try some visualizations
 ##  --->>> Need to determine what is relevant for summary stats!
 
-# # step length by age group
-# ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Full_Step_Length)) +
-#   geom_boxplot(fill = "lightblue") +
-#   labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Full Step Length (m)", title = "Step Length by Age Group") +
-#   theme_minimal()
-# 
-# # step height by age group
-# ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Step_Height)) +
-#   geom_boxplot(fill = "lightcoral") +
-#   labs(x = "Age Group (1 = Younger, 2 = Older)", y = "Step Height (m)", title = "Step Height by Age Group") +
-#   theme_minimal()
-
-# # distribution of sample vastus lateralis thickness
-# ggplot(merged_df, aes(x = `VL_Thickness(cm)`)) +
-#   geom_histogram(binwidth = 0.25, fill = "steelblue", color = "black") +
-#   labs(x = "Vastus Lateralis Thickness (cm)", y = "Count", title = "Distribution of VL Thickness") +
-#   theme_minimal()
-
-
 
 ### Questions about stepping kinematics for visual EDA
 
 # Step length by age group
-ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), 
-                      y = Full_Step_Length, 
-                      fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+ggplot(merged_df, aes(x = as.factor(`group`), 
+                      y = step_length, 
+                      fill = as.factor(`step_type`))) +
   geom_boxplot(na.rm = TRUE) +
   labs(x = "Age Group (1 = Younger, 2 = Older)", 
        y = "Full Step Length (m)", 
@@ -201,12 +133,12 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`),
 ggsave(file="test.svg") # Save to file
   
 # Step height by age group
-ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), 
-                      y = Step_Height, 
-                      fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+ggplot(merged_df, aes(x = as.factor(`group`), 
+                      y = step_height, 
+                      fill = as.factor(`step_type`))) +
   geom_boxplot() +
   labs(x = "Age Group (1 = Younger, 2 = Older)", 
-       y = "Step Height (m)", 
+       y = "Step height", 
        title = "Step Height by Age Group") +
   theme_minimal() +
   scale_fill_discrete(labels = c("Lateral Step", 
@@ -216,9 +148,9 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`),
   theme(legend.title = element_blank())
 
 # Step initiation time by age group
-ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), 
-                      y = Step_Initiation_Time, 
-                      fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`) )) +
+ggplot(merged_df, aes(x = as.factor(`group`), 
+                      y = step_initiation_time, 
+                      fill = as.factor(`step_type`) )) +
   geom_boxplot() +
   labs(x = "Age Group (1 = Younger, 2 = Older)", 
        y = "Time to Step Initiation (s)", 
@@ -231,9 +163,9 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`),
   theme(legend.title = element_blank())
 
 # Weight Transfer Onset Initiation Time by age group
-ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), 
-                      y = Weight_Transfer_Onset_Initiation_Time, 
-                      fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+ggplot(merged_df, aes(x = as.factor(`group`), 
+                      y = weight_transfer_onset, 
+                      fill = as.factor(`step_type`))) +
   geom_boxplot() +
   labs(x = "Age Group (1 = Younger, 2 = Older)", 
        y = "Weight Transfer Onset Initiation Time (s)", 
@@ -246,9 +178,9 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`),
   theme(legend.title = element_blank())
 
 # Weight Transfer Duration by age group
-ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), 
-                      y = Weight_Transfer_Duration, 
-                      fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`))) +
+ggplot(merged_df, aes(x = as.factor(`group`), 
+                      y = weight_transfer, 
+                      fill = as.factor(`step_type`))) +
   geom_boxplot() +
   labs(x = "Age Group (1 = Younger, 2 = Older)", 
        y = "Weight Transfer Duration (s)", 
@@ -268,13 +200,13 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`),
 
 ## Lateral, Step Leg, GM ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 1) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 1) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 1) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 1) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleGM = mean(Z_GM),  # Z_GM for each subject
-    stepLength = mean(Full_Step_Length),  # Mean of Full_Step_Length for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepLength = mean(step_length),  # Mean of step_length for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -292,13 +224,13 @@ ggplot(summary_df, aes(x = muscleGM, y = stepLength, color = as.factor(ageGroup)
 
 ## Lateral, Stance Leg, GM ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 2) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 1) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 2) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 1) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleGM = mean(Z_GM),  # Z_GM for each subject
-    stepLength = mean(Full_Step_Length),  # Mean of Full_Step_Length for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepLength = mean(step_length),  # Mean of step_length for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -316,13 +248,13 @@ ggplot(summary_df, aes(x = muscleGM, y = stepLength, color = as.factor(ageGroup)
 
 ## Forward, Step Leg, VL ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 1) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 2) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 1) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 2) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleVL = mean(Z_VL),  # Z_VL for each subject
-    stepLength = mean(Full_Step_Length),  # Mean of Full_Step_Length for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepLength = mean(step_length),  # Mean of step_length for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -340,13 +272,13 @@ ggplot(summary_df, aes(x = muscleVL, y = stepLength, color = as.factor(ageGroup)
 
 ## Forward, Stance Leg, VL ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 2) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 2) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 2) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 2) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleVL = mean(Z_VL),  # Z_VL for each subject
-    stepLength = mean(Full_Step_Length),  # Mean of Full_Step_Length for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepLength = mean(step_length),  # Mean of step_length for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -364,13 +296,13 @@ ggplot(summary_df, aes(x = muscleVL, y = stepLength, color = as.factor(ageGroup)
 
 ## Backward, Step Leg, BF ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 1) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 3) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 1) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 3) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleBF = mean(Z_BF),  # Z_VL for each subject
-    stepLength = mean(Full_Step_Length),  # Mean of Full_Step_Length for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepLength = mean(step_length),  # Mean of step_length for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -388,13 +320,13 @@ ggplot(summary_df, aes(x = muscleBF, y = stepLength, color = as.factor(ageGroup)
 
 ## Backward, Stance Leg, BF ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 2) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 3) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 2) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 3) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleBF = mean(Z_BF),  # Z_VL for each subject
-    stepLength = mean(Full_Step_Length),  # Mean of Full_Step_Length for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepLength = mean(step_length),  # Mean of step_length for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -410,17 +342,17 @@ ggplot(summary_df, aes(x = muscleBF, y = stepLength, color = as.factor(ageGroup)
        title = "Step Length vs. BF Structure/Function",
        subtitle = "in BACKWARD steps")  # Proper labels
 
-### STEP HEIGHT ###
+### STEP height ###
 
 ## Lateral, Step Leg, GM ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 1) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 1) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 1) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 1) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleGM = mean(Z_GM),  # Z_GM for each subject
-    stepHeight = mean(Step_Height),  # Mean of Step_Height for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepHeight = mean(step_height),  # Mean of step_height for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -432,19 +364,19 @@ ggplot(summary_df, aes(x = muscleGM, y = stepHeight, color = as.factor(ageGroup)
   scale_shape_manual(values = c(16,17), labels = c("Young", "Older")) +
   theme(legend.title = element_blank()) +
   labs(x = "Gluteus Medius composite (Z_GM) of STEPPING leg", 
-       y = "Step Height (m)",
+       y = "Step height",
        title = "Step Height vs. GM Structure/Function",
        subtitle = "in LATERAL steps")  # Proper labels
 
 ## Lateral, Stance Leg, GM ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 2) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 1) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 2) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 1) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleGM = mean(Z_GM),  # Z_GM for each subject
-    stepHeight = mean(Step_Height),  # Mean of Step_Height for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepHeight = mean(step_height),  # Mean of step_height for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -456,19 +388,19 @@ ggplot(summary_df, aes(x = muscleGM, y = stepHeight, color = as.factor(ageGroup)
   scale_shape_manual(values = c(16,17), labels = c("Young", "Older")) +
   theme(legend.title = element_blank()) +
   labs(x = "Gluteus Medius composite (Z_GM) of STANCE leg", 
-       y = "Step Height (m)",
+       y = "Step height",
        title = "Step Height vs. GM Structure/Function",
        subtitle = "in LATERAL steps")  # Proper labels
 
 ## Forward, Step Leg, VL ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 1) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 2) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 1) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 2) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleVL = mean(Z_VL),  # Z_VL for each subject
-    stepHeight = mean(Step_Height),  # Mean of Step_Height for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepHeight = mean(step_height),  # Mean of step_height for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -480,19 +412,19 @@ ggplot(summary_df, aes(x = muscleVL, y = stepHeight, color = as.factor(ageGroup)
   scale_shape_manual(values = c(16,17), labels = c("Young", "Older")) +
   theme(legend.title = element_blank()) +
   labs(x = "Vastus Lateralis composite (Z_VL) of STEPPING leg", 
-       y = "Step Height (m)",
+       y = "Step height",
        title = "Step Height vs. VL Structure/Function",
        subtitle = "in FORWARD steps")  # Proper labels
 
 ## Forward, Stance Leg, VL ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 2) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 2) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 2) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 2) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleVL = mean(Z_VL),  # Z_VL for each subject
-    stepHeight = mean(Step_Height),  # Mean of Step_Height for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepHeight = mean(step_height),  # Mean of step_height for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -504,19 +436,19 @@ ggplot(summary_df, aes(x = muscleVL, y = stepHeight, color = as.factor(ageGroup)
   scale_shape_manual(values = c(16,17), labels = c("Young", "Older")) +
   theme(legend.title = element_blank()) +
   labs(x = "Vastus Lateralis composite (Z_VL) of STANCE leg", 
-       y = "Step Height (m)",
+       y = "Step height",
        title = "Step Height vs. VL Structure/Function",
        subtitle = "in FORWARD steps")  # Proper labels
 
 ## Backward, Step Leg, BF ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 1) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 3) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 1) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 3) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleBF = mean(Z_BF),  # Z_VL for each subject
-    stepHeight = mean(Step_Height),  # Mean of Step_Height for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepHeight = mean(step_height),  # Mean of step_height for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -528,19 +460,19 @@ ggplot(summary_df, aes(x = muscleBF, y = stepHeight, color = as.factor(ageGroup)
   scale_shape_manual(values = c(16,17), labels = c("Young", "Older")) +
   theme(legend.title = element_blank()) +
   labs(x = "Biceps Femoris composite (Z_BF) of STEPPING leg", 
-       y = "Step Height (m)",
+       y = "Step height",
        title = "Step Height vs. BF Structure/Function",
        subtitle = "in BACKWARD steps")  # Proper labels
 
 ## Backward, Stance Leg, BF ##
 summary_df <- merged_df %>%
-  filter(`EMG_Leg (1 Stepping: 2 Stance)` == 2) %>%  # Filter for stepping leg trials
-  filter(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)` == 3) %>% # Filter for lateral steps
-  group_by(Subject) %>%  # Group by Subject
+  filter(`EMG_leg` == 2) %>%  # Filter for stepping leg trials
+  filter(`step_type` == 3) %>% # Filter for lateral steps
+  group_by(subject) %>%  # Group by subject
   summarize(
     muscleBF = mean(Z_BF),  # Z_VL for each subject
-    stepHeight = mean(Step_Height),  # Mean of Step_Height for each subject
-    ageGroup = mean(`Group ( 1-young, 2-older adults)`),  # Age group for each subject
+    stepHeight = mean(step_height),  # Mean of step_height for each subject
+    ageGroup = mean(`group`),  # Age group for each subject
     .groups = "drop"
   )
 
@@ -552,7 +484,73 @@ ggplot(summary_df, aes(x = muscleBF, y = stepHeight, color = as.factor(ageGroup)
   scale_shape_manual(values = c(16,17), labels = c("Young", "Older")) +
   theme(legend.title = element_blank()) +
   labs(x = "Biceps Femoris composite (Z_BF) of STANCE leg", 
-       y = "Step Height (m)",
+       y = "Step height",
        title = "Step Height vs. BF Structure/Function",
        subtitle = "in BACKWARD steps")  # Proper labels
 
+
+# generate summary table
+
+#### Summaries Table
+Q1 <- demographics %>% 
+  group_by(`Group ( 1-young, 2-older adults)`) %>%
+  summarise(
+    count = n(),
+    age = paste0(round(mean(`Age (years old)`, na.rm = TRUE), 2), ' (', round(sd(`Age (years old)`, na.rm = TRUE), 2), ')'),
+    male_count = paste0(sum(`Sex (1-male , 2-female)` == 1), '/', round((sum(`Sex (1-male , 2-female)` == 1) / count) * 100, 2), '%'),
+    female_count = paste0(sum(`Sex (1-male , 2-female)` == 2), '/', round((sum(`Sex (1-male , 2-female)` == 2) / count) * 100, 2), '%'),
+    right_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
+    left_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 2), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 2) / count) * 100, 2), '%'),
+    Four_Square_Step_Test = paste0(round(mean(`4SST (time - s)`, na.rm = TRUE), 2), ' (', round(sd(`4SST (time - s)`, na.rm = TRUE), 2), ')'),
+    Handgrip_Strength = paste0(round(mean(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ' (', round(sd(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ')')
+  )
+
+Q2 <- demographics %>% 
+  summarise(
+    count = n(),
+    age = paste0(round(mean(`Age (years old)`, na.rm = TRUE), 2), ' (', round(sd(`Age (years old)`, na.rm = TRUE), 2), ')'),
+    male_count = paste0(sum(`Sex (1-male , 2-female)` == 1), '/', round((sum(`Sex (1-male , 2-female)` == 1) / count) * 100, 2), '%'),
+    female_count = paste0(sum(`Sex (1-male , 2-female)` == 2), '/', round((sum(`Sex (1-male , 2-female)` == 2) / count) * 100, 2), '%'),
+    right_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
+    left_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 2), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 2) / count) * 100, 2), '%'),
+    Four_Square_Step_Test = paste0(round(mean(`4SST (time - s)`, na.rm = TRUE), 2), ' (', round(sd(`4SST (time - s)`, na.rm = TRUE), 2), ')'),
+    Handgrip_Strength = paste0(round(mean(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ' (', round(sd(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ')')
+  )
+######### Making table
+# Extract the P-value
+P_vals = c(
+  '-',
+  round(t.test(`Age (years old)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4),
+  '-',
+  '-',
+  '-',
+  '-',
+  round(t.test(`4SST (time - s)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4),
+  round(t.test(`Handgrip Strenght Test (kg.f)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4)
+)
+
+######### T-Test
+Q = t(rbind(Q2,Q1[,2:9],P_vals))
+colnames(Q) = c("All Participants","Younger","Older","P-Vals")
+library(kableExtra)
+kable(Q)
+
+
+
+
+####### Kinematics Summary Table
+
+## extract from kinematics data
+
+QkinL <- kinematic_data %>%   
+  summarise(
+    count = n(),
+    `Full Step Length` = paste0(round(mean(Full_Step_Length, na.rm = TRUE), 2), ' (',round(sd(Full_Step_Length, na.rm = TRUE), 2), ')'),
+    `Step Height` = paste0(round(mean(Step_Height, na.rm = TRUE), 2), ' (',round(sd(Step_Height, na.rm = TRUE), 2), ')'),
+    `Initiation Time` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')'),
+    `Weight Transfer Duration` = paste0(round(mean(Weight_Transfer_Duration, na.rm = TRUE), 2), ' (',round(sd(Weight_Transfer_Duration, na.rm = TRUE), 2), ')'),
+    `Weight Transfer Onset` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')'),
+    
+    right_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
+    left_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 2), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 2) / count) * 100, 2), '%')
+)

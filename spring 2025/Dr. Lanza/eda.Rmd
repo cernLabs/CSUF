@@ -197,11 +197,7 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Ste
 )
 
 
-# distribution of sample vastus lateralis thickness
-ggplot(merged_df, aes(x = `VL_Thickness(cm)`)) +
-  geom_histogram(binwidth = 0.25, fill = "steelblue", color = "black") +
-  labs(x = "Vastus Lateralis Thickness (cm)", y = "Count", title = "Distribution of VL Thickness") +
-  theme_minimal()
+
 
 # step initiation time by age group
 ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`) , y = Step_Initiation_Time, fill = as.factor(`Step_Type (1 Lat :  2 Fwd : 3 Bwd)`) )) +
@@ -230,6 +226,15 @@ ggplot(merged_df, aes(x = as.factor(`Group ( 1-young, 2-older adults)`), y = Wei
 
 
 ```{r}
+# distribution of sample vastus lateralis thickness
+ggplot(merged_df, aes(x = `VL_Thickness(cm)`)) +
+  geom_histogram(binwidth = 0.25, fill = "steelblue", color = "black") +
+  labs(x = "Vastus Lateralis Thickness (cm)", y = "Count", title = "Distribution of VL Thickness") +
+  theme_minimal()
+```
+
+
+```{r}
 demo <- demographics
 age <- factor(demo$`Group ( 1-young, 2-older adults)`)
 sex <- factor(demo$`Sex (1-male , 2-female)`)
@@ -249,7 +254,48 @@ ggplot(aov.data, aes(x=age, y=grip.strength, fill=sex)) +
 ```
 
 ```{r}
+plot(muscle_data$AgeGroup1Younger2Older, (muscle_data$`TFL_Quality(au)`+muscle_data$`GM_quality(au)`))
 
+plot(muscle_data$AgeGroup1Younger2Older, muscle_data$`VL_Quality(au)` + muscle_data$`VI_Quality(au)`)
+
+plot(muscle_data$AgeGroup1Younger2Older, muscle_data$`BF_Quality(au)`)
+```
+
+```{r}
+muscle_data$Z_VL_Thickness <- (muscle_data$`VL_Thickness(cm)` - mean(muscle_data$`VL_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`VL_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_VI_Thickness <- (muscle_data$`VI_Thickness(cm)` - mean(muscle_data$`VI_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`VI_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_BF_Thickness <- (muscle_data$`BF_Thickness(cm)` - mean(muscle_data$`BF_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`BF_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_GM_Thickness <- (muscle_data$`GM_Thickness(cm)` - mean(muscle_data$`GM_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`GM_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_TFL_Thickness <- (muscle_data$`TFL_Thickness(cm)` - mean(muscle_data$`TFL_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`TFL_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_MG_Thickness <- (muscle_data$`MG_Thickness(cm)` - mean(muscle_data$`MG_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`MG_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_SOL_Thickness <- (muscle_data$`Sol_Thickness(cm)` - mean(muscle_data$`Sol_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`Sol_Thickness(cm)`, na.rm =TRUE)
+muscle_data$Z_TA_Thickness <- (muscle_data$`TA_Thickness(cm)` - mean(muscle_data$`TA_Thickness(cm)`, na.rm =TRUE))/sd(muscle_data$`TA_Thickness(cm)`, na.rm =TRUE)
+
+```
+
+
+```{r}
+# do the same for quality
+
+muscle_data$Z_VL_Quality <- -(muscle_data$`VL_Quality(au)` - mean(muscle_data$`VL_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`VL_Quality(au)`,na.rm =TRUE)
+muscle_data$Z_VI_Quality <- -(muscle_data$`VI_Quality(au)` - mean(muscle_data$`VI_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`VI_Quality(au)`,na.rm =TRUE)
+muscle_data$Z_BF_Quality <- -(muscle_data$`BF_Quality(au)` - mean(muscle_data$`BF_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`BF_Quality(au)`,na.rm =TRUE)
+muscle_data$Z_GM_Quality <- -(muscle_data$`GM_quality(au)` - mean(muscle_data$`GM_quality(au)`,na.rm =TRUE))/sd(muscle_data$`GM_quality(au)`,na.rm =TRUE)
+muscle_data$Z_TFL_Quality <- -(muscle_data$`TFL_Quality(au)` - mean(muscle_data$`TFL_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`TFL_Quality(au)`,na.rm =TRUE)
+muscle_data$Z_MG_Quality <- -(muscle_data$`MG_Quality(au)` - mean(muscle_data$`MG_Quality(au)`,na.rm =TRUE))/sd(muscle_data$`MG_Quality(au)`,na.rm =TRUE)
+muscle_data$Z_SOL_Quality <- -(muscle_data$`SOL_quality(au)` - mean(muscle_data$`SOL_quality(au)`,na.rm =TRUE))/sd(muscle_data$`SOL_quality(au)`,na.rm =TRUE)
+muscle_data$Z_TA_Quality <- -(muscle_data$`TA_quality(au)` - mean(muscle_data$`TA_quality(au)`,na.rm =TRUE))/sd(muscle_data$`TA_quality(au)`,na.rm =TRUE)
+```
+
+
+```{r}
+muscle_data$Z_VL <- rowMeans(cbind(muscle_data$Z_VL_Quality , muscle_data$Z_VL_Thickness), na.rm = T)
+muscle_data$Z_VI <- rowMeans(cbind(muscle_data$Z_VI_Quality , muscle_data$Z_VI_Thickness), na.rm = T)
+muscle_data$Z_GM <- rowMeans(cbind(muscle_data$Z_GM_Quality , muscle_data$Z_GM_Thickness), na.rm = T)
+muscle_data$Z_TFL <- rowMeans(cbind(muscle_data$Z_TFL_Quality , muscle_data$Z_TFL_Thickness), na.rm = T)
+muscle_data$Z_MG <- rowMeans(cbind(muscle_data$Z_MG_Quality , muscle_data$Z_MG_Thickness), na.rm = T)
+muscle_data$Z_SOL <-rowMeans(cbind(muscle_data$Z_SOL_Quality , muscle_data$Z_SOL_Thickness), na.rm = T)
+muscle_data$Z_TA <- rowMeans(cbind(muscle_data$Z_TA_Quality , muscle_data$Z_TA_Thickness), na.rm = T)
 ```
 
 
@@ -271,6 +317,16 @@ scale_fill_discrete(labels = c("Lateral Step", "Forward Step", "Backward Step") 
 theme_minimal()
 ```
 
+
+
+
+```{r}
+
+
+
+
+
+```
 
 
 -
