@@ -497,40 +497,34 @@ Q1 <- demographics %>%
   summarise(
     count = n(),
     age = paste0(round(mean(`Age (years old)`, na.rm = TRUE), 2), ' (', round(sd(`Age (years old)`, na.rm = TRUE), 2), ')'),
-    male_count = paste0(sum(`Sex (1-male , 2-female)` == 1), '/', round((sum(`Sex (1-male , 2-female)` == 1) / count) * 100, 2), '%'),
-    female_count = paste0(sum(`Sex (1-male , 2-female)` == 2), '/', round((sum(`Sex (1-male , 2-female)` == 2) / count) * 100, 2), '%'),
-    right_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
-    left_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 2), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 2) / count) * 100, 2), '%'),
-    Four_Square_Step_Test = paste0(round(mean(`4SST (time - s)`, na.rm = TRUE), 2), ' (', round(sd(`4SST (time - s)`, na.rm = TRUE), 2), ')'),
-    Handgrip_Strength = paste0(round(mean(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ' (', round(sd(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ')')
+    `female count` = paste0(sum(`Sex (1-male , 2-female)` == 2), '/', round((sum(`Sex (1-male , 2-female)` == 2) / count) * 100, 2), '%'),
+    `Right dominant` = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
+    `Four Square Step Test` = paste0(round(mean(`4SST (time - s)`, na.rm = TRUE), 2), ' (', round(sd(`4SST (time - s)`, na.rm = TRUE), 2), ')'),
+    `Handgrip Strength` = paste0(round(mean(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ' (', round(sd(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ')')
   )
 
 Q2 <- demographics %>% 
   summarise(
     count = n(),
     age = paste0(round(mean(`Age (years old)`, na.rm = TRUE), 2), ' (', round(sd(`Age (years old)`, na.rm = TRUE), 2), ')'),
-    male_count = paste0(sum(`Sex (1-male , 2-female)` == 1), '/', round((sum(`Sex (1-male , 2-female)` == 1) / count) * 100, 2), '%'),
-    female_count = paste0(sum(`Sex (1-male , 2-female)` == 2), '/', round((sum(`Sex (1-male , 2-female)` == 2) / count) * 100, 2), '%'),
-    right_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
-    left_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 2), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 2) / count) * 100, 2), '%'),
-    Four_Square_Step_Test = paste0(round(mean(`4SST (time - s)`, na.rm = TRUE), 2), ' (', round(sd(`4SST (time - s)`, na.rm = TRUE), 2), ')'),
-    Handgrip_Strength = paste0(round(mean(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ' (', round(sd(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ')')
+    `female count` = paste0(sum(`Sex (1-male , 2-female)` == 2), '/', round((sum(`Sex (1-male , 2-female)` == 2) / count) * 100, 2), '%'),
+    `Right dominant` = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
+    `Four Square Step Test` = paste0(round(mean(`4SST (time - s)`, na.rm = TRUE), 2), ' (', round(sd(`4SST (time - s)`, na.rm = TRUE), 2), ')'),
+    `Handgrip Strength` = paste0(round(mean(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ' (', round(sd(`Handgrip Strenght Test (kg.f)`, na.rm = TRUE), 2), ')')
   )
 ######### Making table
 # Extract the P-value
 P_vals = c(
   '-',
-  round(t.test(`Age (years old)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4),
-  '-',
-  '-',
-  '-',
-  '-',
-  round(t.test(`4SST (time - s)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4),
-  round(t.test(`Handgrip Strenght Test (kg.f)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4)
+  signif(t.test(`Age (years old)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4),
+  signif(chisq.test(matrix(c(2,5,9,4), byrow = TRUE))$p.value,4),
+  signif(chisq.test(matrix(c(11,7,0,2), byrow = TRUE))$p.value,4),
+  signif(t.test(`4SST (time - s)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4),
+  signif(t.test(`Handgrip Strenght Test (kg.f)` ~ `Group ( 1-young, 2-older adults)`, data = demographics)$p.value,4)
 )
 
-######### T-Test
-Q = t(rbind(Q2,Q1[,2:9],P_vals))
+######### Bind Demographics Summary Table
+Q = t(rbind(Q2,Q1[,2:7],P_vals))
 colnames(Q) = c("All Participants","Younger","Older","P-Vals")
 library(kableExtra)
 kable(Q)
@@ -549,8 +543,117 @@ QkinL <- kinematic_data %>%
     `Step Height` = paste0(round(mean(Step_Height, na.rm = TRUE), 2), ' (',round(sd(Step_Height, na.rm = TRUE), 2), ')'),
     `Initiation Time` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')'),
     `Weight Transfer Duration` = paste0(round(mean(Weight_Transfer_Duration, na.rm = TRUE), 2), ' (',round(sd(Weight_Transfer_Duration, na.rm = TRUE), 2), ')'),
-    `Weight Transfer Onset` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')'),
-    
-    right_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 1), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 1) / count) * 100, 2), '%'),
-    left_dominant = paste0(sum(`Dominant Side (1- right, 2 -left)` == 2), '/', round((sum(`Dominant Side (1- right, 2 -left)` == 2) / count) * 100, 2), '%')
+    `Weight Transfer Onset` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')')
+    )
+
+QkinR <- kinematic_data %>% group_by(`Age Group (1 Younger; 2 Older)`) %>%
+  summarise(
+    count = n(),
+    `Full Step Length` = paste0(round(mean(Full_Step_Length, na.rm = TRUE), 2), ' (',round(sd(Full_Step_Length, na.rm = TRUE), 2), ')'),
+    `Step Height` = paste0(round(mean(Step_Height, na.rm = TRUE), 2), ' (',round(sd(Step_Height, na.rm = TRUE), 2), ')'),
+    `Initiation Time` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')'),
+    `Weight Transfer Duration` = paste0(round(mean(Weight_Transfer_Duration, na.rm = TRUE), 2), ' (',round(sd(Weight_Transfer_Duration, na.rm = TRUE), 2), ')'),
+    `Weight Transfer Onset` = paste0(round(mean(Step_Initiation_Time, na.rm = TRUE), 2), ' (',round(sd(Step_Initiation_Time, na.rm = TRUE), 2), ')')
+  )
+
+
+P_valsK = c(
+  '-',
+  signif(t.test(Full_Step_Length ~ `Age Group (1 Younger; 2 Older)`, data = kinematic_data)$p.value,4),
+  signif(t.test(Step_Height ~ `Age Group (1 Younger; 2 Older)`, data = kinematic_data)$p.value,4),
+  signif(t.test(Step_Initiation_Time ~ `Age Group (1 Younger; 2 Older)`, data = kinematic_data)$p.value,4),
+  signif(t.test(Weight_Transfer_Duration ~ `Age Group (1 Younger; 2 Older)`, data = kinematic_data)$p.value,4),
+  signif(t.test(Weight_Transfer_Onset_Initiation_Time ~ `Age Group (1 Younger; 2 Older)`, data = kinematic_data)$p.value,4)
 )
+
+
+##### Bind Kinematics Summary Table
+QK = t(rbind(QkinL,QkinR[,2:7],P_valsK))
+colnames(QK) = c("All Participants","Younger","Older","P-Vals")
+kable(QK)
+
+
+
+
+
+# select the data you need
+muscle_cummulatives <- muscle_data %>% 
+  mutate(thickness_added = 
+           `TFL_Thickness(cm)` +
+           `VL_Thickness(cm)`+
+           `MG_Thickness(cm)`+
+           `VI_Thickness(cm)`+
+           `BF_Thickness(cm)`+
+           `GM_Thickness(cm)`+
+           `TA_Thickness(cm)` +  
+           `Sol_Thickness(cm)`,
+         quality_added = 
+           `TFL_Quality(au)` + 
+           `VL_Quality(au)` + 
+           `MG_Quality(au)` + 
+           `VI_Quality(au)` + 
+           `BF_Quality(au)` + 
+           `GM_quality(au)` + 
+           `TA_quality(au)` + 
+          `SOL_quality(au)`,
+         stiffness_added =
+           `SWTA(m/s)` + 
+           `SWMG(m/s)` +
+           `SWVL(m/s)` + 
+           `SWBF(m/s)` + 
+           `SWTFL(m/s)`
+         ) %>% 
+  select(group = AgeGroup1Younger2Older,
+                          thickness_added,
+                          quality_added,
+                          stiffness_added) %>% 
+  mutate(group = case_when(
+                          group == 1 ~ 'younger',
+                          group == 2 ~ 'older'
+                          ))
+
+
+
+
+#### Thickness
+Muscle_thickness_na_removed <- muscle_cummulatives %>% filter(!is.na(thickness_added))
+ggplot(Muscle_thickness_na_removed, aes(x = thickness_added,
+                                        fill = group)) +
+  geom_histogram(alpha = 0.5) +
+  labs(x = 'Muscle Thickness',
+         title = "Cummulative Muscle Thickness Density") +
+ggplot(Muscle_thickness_na_removed, aes(x = thickness_added,
+                                        fill = group)) +
+  geom_boxplot(alpha = 0.5) + 
+  labs(x = 'Muscle Thickness',
+         title = "Cummulative Muscle Thickness")
+
+#### Quality 
+Muscle_qual_na_removed <- muscle_cummulatives %>% filter(!is.na(quality_added))
+ggplot(Muscle_qual_na_removed, aes(x = quality_added,
+                                   fill = group)) +
+  geom_histogram(alpha = 0.5)  +
+  labs(x = 'Muscle Quality',
+       title = "Cummulative Muscle Quality Density") +
+ggplot(Muscle_qual_na_removed, aes(x = quality_added,
+                                   fill = group)) +
+  geom_boxplot(alpha = 0.5) + 
+  labs(x = 'Muscle Quality',
+       title = "Cummulative Muscle Quality")
+
+#### Stiffness
+Muscle_stiff_na_removed <- muscle_cummulatives %>%
+  filter(!is.na(stiffness_added))
+ggplot(Muscle_stiff_na_removed, aes(x = stiffness_added,
+                                    fill = group)) +
+  geom_histogram(alpha = 0.5)  +
+  labs(x = 'Muscle Stiffness',
+       title = "Cummulative Muscle Stiffness Density") +
+ggplot(Muscle_stiff_na_removed, aes(x = stiffness_added,
+                                    fill = group)) +
+  geom_boxplot(alpha = 0.5)+ 
+  labs(x = 'Muscle Stiffness',
+       title = "Cummulative Muscle Stiffness")
+
+library(ggplot2)
+library(patchwork)

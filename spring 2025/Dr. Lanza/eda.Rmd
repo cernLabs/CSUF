@@ -324,7 +324,7 @@ theme_minimal()
 
 
 
-
+kable(Q)
 
 ```
 
