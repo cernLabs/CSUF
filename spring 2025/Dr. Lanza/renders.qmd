@@ -1,0 +1,10 @@
+---
+title: "rendering_visuals"
+format: html
+editor: visual
+---
+
+```{r}
+library(kableExtra)
+kable(Q, caption = "Demographic Data Summary")
+```

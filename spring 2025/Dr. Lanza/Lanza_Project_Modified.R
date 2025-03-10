@@ -567,41 +567,44 @@ P_valsK = c(
 )
 
 
-##### Bind Kinematics Summary Table
+##### Bind Kinematics Summary Table 
 QK = t(rbind(QkinL,QkinR[,2:7],P_valsK))
 colnames(QK) = c("All Participants","Younger","Older","P-Vals")
 kable(QK)
 
 
 
-
+#######################################################################################################################
+#############################  SUMMARIZING MUSCLE DATA  ###############################################################
+#######################################################################################################################
 
 # select the data you need
-muscle_cummulatives <- muscle_data %>% 
+
+muscle_cummulatives <- merged_df %>% 
   mutate(thickness_added = 
-           `TFL_Thickness(cm)` +
-           `VL_Thickness(cm)`+
-           `MG_Thickness(cm)`+
-           `VI_Thickness(cm)`+
-           `BF_Thickness(cm)`+
-           `GM_Thickness(cm)`+
-           `TA_Thickness(cm)` +  
-           `Sol_Thickness(cm)`,
+           Z_VL_Thickness +
+           Z_VI_Thickness +
+           Z_BF_Thickness + 
+           Z_GM_Thickness + 
+           Z_SOL_Thickness +
+           Z_TA_Thickness + 
+           Z_TFL_Thickness + 
+           Z_MG_Thickness,
          quality_added = 
-           `TFL_Quality(au)` + 
-           `VL_Quality(au)` + 
-           `MG_Quality(au)` + 
-           `VI_Quality(au)` + 
-           `BF_Quality(au)` + 
-           `GM_quality(au)` + 
-           `TA_quality(au)` + 
-          `SOL_quality(au)`,
+           Z_VL_Quality +
+           Z_VI_Quality +
+           Z_BF_Quality +
+           Z_GM_Quality +
+           Z_SOL_Quality +
+           Z_TA_Quality +
+           Z_TFL_Quality +
+           Z_MG_Quality,
          stiffness_added =
-           `SWTA(m/s)` + 
-           `SWMG(m/s)` +
-           `SWVL(m/s)` + 
-           `SWBF(m/s)` + 
-           `SWTFL(m/s)`
+           Z_VL_Stiffness + 
+           Z_BF_Stiffness +
+           Z_TFL_Stiffness + 
+           Z_MG_Stiffness + 
+           Z_TA_Stiffness
          ) %>% 
   select(group = AgeGroup1Younger2Older,
                           thickness_added,
@@ -613,47 +616,40 @@ muscle_cummulatives <- muscle_data %>%
                           ))
 
 
-
-
-#### Thickness
+#### remove NAs for each vizual
 Muscle_thickness_na_removed <- muscle_cummulatives %>% filter(!is.na(thickness_added))
-ggplot(Muscle_thickness_na_removed, aes(x = thickness_added,
-                                        fill = group)) +
-  geom_histogram(alpha = 0.5) +
-  labs(x = 'Muscle Thickness',
-         title = "Cummulative Muscle Thickness Density") +
-ggplot(Muscle_thickness_na_removed, aes(x = thickness_added,
-                                        fill = group)) +
-  geom_boxplot(alpha = 0.5) + 
-  labs(x = 'Muscle Thickness',
-         title = "Cummulative Muscle Thickness")
-
-#### Quality 
 Muscle_qual_na_removed <- muscle_cummulatives %>% filter(!is.na(quality_added))
-ggplot(Muscle_qual_na_removed, aes(x = quality_added,
-                                   fill = group)) +
-  geom_histogram(alpha = 0.5)  +
-  labs(x = 'Muscle Quality',
-       title = "Cummulative Muscle Quality Density") +
-ggplot(Muscle_qual_na_removed, aes(x = quality_added,
-                                   fill = group)) +
-  geom_boxplot(alpha = 0.5) + 
-  labs(x = 'Muscle Quality',
-       title = "Cummulative Muscle Quality")
-
-#### Stiffness
 Muscle_stiff_na_removed <- muscle_cummulatives %>%
   filter(!is.na(stiffness_added))
+#### Thickness
+ggplot(Muscle_thickness_na_removed, aes(x = thickness_added,
+                                        fill = group)) +
+  geom_density(alpha = 0.5) +
+  labs(x = 'Muscle Thickness',
+         title = "Composite Muscle Thickness between Older and Younger")+
+  scale_fill_manual(values = c("younger" = "#f8766d", "older" = "#00bfc4"))
+
+#### Quality 
+ggplot(Muscle_qual_na_removed, aes(x = quality_added,
+                                   fill = group)) +
+  geom_density(alpha = 0.5)  +
+  labs(x = 'Muscle Quality',
+       title = "Composite Muscle Quality between Older and Younger") +
+  scale_fill_manual(values = c("younger" = "#f8766d", "older" = "#00bfc4")) 
+
+#### Stiffness
+
 ggplot(Muscle_stiff_na_removed, aes(x = stiffness_added,
                                     fill = group)) +
-  geom_histogram(alpha = 0.5)  +
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = c("younger" = "#f8766d", "older" = "#00bfc4"))  +
   labs(x = 'Muscle Stiffness',
-       title = "Cummulative Muscle Stiffness Density") +
-ggplot(Muscle_stiff_na_removed, aes(x = stiffness_added,
-                                    fill = group)) +
-  geom_boxplot(alpha = 0.5)+ 
-  labs(x = 'Muscle Stiffness',
-       title = "Cummulative Muscle Stiffness")
+       title = "Composite Muscle Stiffness between Older and Younger")
 
 library(ggplot2)
 library(patchwork)
+library(kableExtra)
+
+#######################################################################################################################
+#############################  SUMMARIZING MUSCLE DATA END ############################################################
+#######################################################################################################################
